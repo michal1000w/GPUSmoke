@@ -408,8 +408,13 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
     state.velocity->swap();
 
     float3 location = state.impulseLoc;
-    location.x += 75.0*sinf(-0.003f*float(state.step));
-    location.y += 75.0*cosf(-0.003f*float(state.step));
+    float MOVEMENT_SIZE = 50.0;//75.0
+    /////Z - g³êbia
+    /////X - lewo prawo
+    /////Y - góra dó³
+    location.x += MOVEMENT_SIZE * 2.0 * sinf(-0.04f * float(state.step));//-0.003f
+    //location.y += cosf(-0.03f * float(state.step));//-0.003f
+    location.z += MOVEMENT_SIZE * cosf(-0.02f * float(state.step));//-0.003f
 
     if (TURBULANCE && false) {
         soft_impulse << <grid, block >> > (
@@ -423,10 +428,10 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
             state.impulseDensity, TURBULANCE_STRENGTH, state.dim);
     }
     else if (TURBULANCE) { //beta
-        float FREQUENCY = 50.0f;
+        float FREQUENCY = 40.0f;
         float3 SIZEE;
-        SIZEE.x = SIZEE.y = SIZEE.z = 40.0f;
-        TURBULANCE_STRENGTH = 2.0f;
+        SIZEE.x = SIZEE.y = SIZEE.z = 8.0f;
+        TURBULANCE_STRENGTH = 100.0f;//0.1f
 
         wavey_impulse << <grid, block >> > (
             state.temperature->readTarget(),
@@ -437,7 +442,7 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
         wavey_impulse << <grid, block >> > (
             state.density->readTarget(),
             location, SIZEE,
-            state.impulseDensity, TURBULANCE_STRENGTH, FREQUENCY, state.dim
+            state.impulseDensity, TURBULANCE_STRENGTH * 0.01, FREQUENCY, state.dim
             );
     }
       
@@ -520,14 +525,17 @@ __global__ void render_pixel( uint8_t *image, float *volume,
     ray_dir.z = dir_rot.y;
     const float3 dir_to_light = normalize(light_dir);
     const float occ_thresh = 0.001;
-    float d_accum = 1.0;
-    float light_accum = 0.0;
-    float temp_accum = 0.0;
+    float d_accum = 1.0;//1.0
+    float light_accum = 0.025;//0.0   background color
+    float temp_accum = 0.2;//0.0
+
+    float MAX_DENSITY = 1.0f;
 
     // Trace ray through volume
     for (int step=0; step<steps; step++) {
         // At each step, cast occlusion ray towards light source
         float c_density = get_cellF(ray_pos, vd, volume);
+        if (c_density > 1.0) c_density = MAX_DENSITY; //bo Ÿle siê renderuje beta
         float3 occ_pos = ray_pos;
         ray_pos += ray_dir*step_size;
         // Don't bother with occlusion ray if theres nothing there
@@ -535,6 +543,7 @@ __global__ void render_pixel( uint8_t *image, float *volume,
         float transparency = 1.0;
         for (int occ=0; occ<steps; occ++) {
             transparency *= fmax(1.0-get_cellF(occ_pos, vd, volume),0.0);
+            if (transparency > 1.0) transparency = 1.0; //beta
             if (transparency < occ_thresh) break;
             occ_pos += dir_to_light*step_size;
         }
@@ -596,11 +605,11 @@ void render_fluid(uint8_t *render_target, int3 img_dims,
 int main(int argc, char* args[])
 {
 
-    int DOMAIN_RESOLUTION = 450;
-    int FRAMES = 400;
-    int STEPS = 256; //512
+    int DOMAIN_RESOLUTION = 400;
+    int FRAMES = 450;
+    int STEPS = 128; //512
     bool TURBULANCE = true;
-    float TURBULANCE_STRENGTH = 8; // 0.01
+    float TURBULANCE_STRENGTH = 1; // 0.01
     int ACCURACY_STEPS = 8; //35
 
 
@@ -611,10 +620,10 @@ int main(int argc, char* args[])
     float3 cam;
     cam.x = static_cast<float>(vol_d.x)*0.5;
     cam.y = static_cast<float>(vol_d.y)*0.5;
-    cam.z = 0.0;
+    cam.z = static_cast<float>(vol_d.z) * -0.4;//0.0   minus do ty³u, plus do przodu
     float3 light;
-    light.x =  30;//0.1
-    light.y =  1.0;//1.0
+    light.x =  -1.0;//0.1
+    light.y =  -1.0;//1.0
     light.z = -0.5;//-0.5
 
     uint8_t *img = new uint8_t[3*img_d.x*img_d.y];
