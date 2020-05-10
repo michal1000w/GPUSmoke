@@ -408,30 +408,36 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
     state.velocity->swap();
 
     float3 location = state.impulseLoc;
-    float MOVEMENT_SIZE = 50.0;//75.0
+
+
     /////Z - g³êbia
     /////X - lewo prawo
     /////Y - góra dó³
-    location.x += MOVEMENT_SIZE * 2.0 * sinf(-0.04f * float(state.step));//-0.003f
-    //location.y += cosf(-0.03f * float(state.step));//-0.003f
-    location.z += MOVEMENT_SIZE * cosf(-0.02f * float(state.step));//-0.003f
+    float MOVEMENT_SIZE = 9.0;//90.0
+    float MOVEMENT_SPEED = 10.0;
+    bool MOVEMENT = true;
+    if (MOVEMENT) {
+        location.x += MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step));//-0.003f
+        //location.y += cosf(-0.03f * float(state.step));//-0.003f
+        location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
+    }
 
     if (TURBULANCE && false) {
         soft_impulse << <grid, block >> > (
             state.temperature->readTarget(),
             location, state.impulseRadius,
-            state.impulseTemp, 0.1, state.dim);
+            state.impulseTemp, TURBULANCE_STRENGTH, state.dim);
 
         soft_impulse << <grid, block >> > (
             state.density->readTarget(),
             location, state.impulseRadius,
-            state.impulseDensity, TURBULANCE_STRENGTH, state.dim);
+            state.impulseDensity, 0.1, state.dim);
     }
     else if (TURBULANCE) { //beta
-        float FREQUENCY = 40.0f;
+        float FREQUENCY = 800.0f;
         float3 SIZEE;
-        SIZEE.x = SIZEE.y = SIZEE.z = 8.0f;
-        TURBULANCE_STRENGTH = 100.0f;//0.1f
+        SIZEE.x = SIZEE.y = SIZEE.z = 16.0f;
+        TURBULANCE_STRENGTH = 500.0f;//0.1f 500
 
         wavey_impulse << <grid, block >> > (
             state.temperature->readTarget(),
@@ -442,7 +448,7 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
         wavey_impulse << <grid, block >> > (
             state.density->readTarget(),
             location, SIZEE,
-            state.impulseDensity, TURBULANCE_STRENGTH * 0.01, FREQUENCY, state.dim
+            state.impulseDensity, TURBULANCE_STRENGTH * (1.0 / TURBULANCE_STRENGTH), FREQUENCY, state.dim
             );
     }
       
@@ -611,6 +617,7 @@ int main(int argc, char* args[])
     bool TURBULANCE = true;
     float TURBULANCE_STRENGTH = 1; // 0.01
     int ACCURACY_STEPS = 8; //35
+    float ZOOM = 1.8; //1.0
 
 
 
@@ -620,7 +627,7 @@ int main(int argc, char* args[])
     float3 cam;
     cam.x = static_cast<float>(vol_d.x)*0.5;
     cam.y = static_cast<float>(vol_d.y)*0.5;
-    cam.z = static_cast<float>(vol_d.z) * -0.4;//0.0   minus do ty³u, plus do przodu
+    cam.z = static_cast<float>(vol_d.z) * -0.4 * (1.0 / ZOOM);//0.0   minus do ty³u, plus do przodu
     float3 light;
     light.x =  -1.0;//0.1
     light.y =  -1.0;//1.0
