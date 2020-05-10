@@ -613,8 +613,8 @@ int main(int argc, char* args[])
     cam.y = static_cast<float>(vol_d.y)*0.5;
     cam.z = 0.0;
     float3 light;
-    light.x =  0.4;//0.1
-    light.y =  30.0;//1.0
+    light.x =  30;//0.1
+    light.y =  1.0;//1.0
     light.z = -0.5;//-0.5
 
     uint8_t *img = new uint8_t[3*img_d.x*img_d.y];
