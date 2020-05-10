@@ -1,0 +1,26 @@
+--------!!!Short-term!!!--------
+- Render temperature (flames)
+- Simple Graphical Interface (OpenGL)
+- Sliders with most important factors
+- Camera and Light rotation (slider)
+
+--------Short-Medium-Term-------
+- Host memory usage for Huge Scale Simulations (GPU overload fix)
+- Adaptive Domain
+- Object Collision
+- Simple Forces --> (Wind, Turbulance, Noise)
+- Preset creator (LOAD/SAVE)
+
+
+--------Medium-Long-Term--------
+- OpenVDB import/export
+- Obj import
+- Simple Blender integration
+
+
+------------Long-Term-------------
+- SMOKE Adaptive Resolution
+- FLIP Fluid solver
+- Sparse Volume optimization: http://www.cs.utah.edu/~kwu/GVDB_FLIP/gvdb_flip.pdf
+- FLIP whitewater particles
+- FLIP mesh solver
