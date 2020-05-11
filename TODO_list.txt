@@ -10,12 +10,15 @@
 - Object Collision
 - Simple Forces --> (Wind, Turbulance, Noise)
 - Preset creator (LOAD/SAVE)
+- Fix Density over 1.0 issue in Render Engine
 
 
 --------Medium-Long-Term--------
+- Smoke Color
 - OpenVDB import/export
 - Obj import
 - Simple Blender integration
+- Faster and Better Render Engine
 
 
 ------------Long-Term-------------
