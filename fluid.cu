@@ -537,35 +537,42 @@ __global__ void render_pixel( uint8_t *image, float *volume,
     const float occ_thresh = 0.001;
     float d_accum = 1.0;//1.0
     float light_accum = 0.025;//0.0   background color
-    float temp_accum = 0.2;//0.0
+    float temp_accum = 1;//0.0
 
     float MAX_DENSITY = 1.0f;
 
-    // Trace ray through volume
-    for (int step=0; step<steps; step++) {
-        // At each step, cast occlusion ray towards light source
-        float c_density = get_cellF(ray_pos, vd, volume);
-        if (c_density > 1.0) c_density = MAX_DENSITY; //bo Ÿle siê renderuje beta
-        float3 occ_pos = ray_pos;
-        ray_pos += ray_dir*step_size;
-        // Don't bother with occlusion ray if theres nothing there
-        if (c_density < occ_thresh) continue;
-        float transparency = 1.0;
-        for (int occ=0; occ<steps; occ++) {
-            transparency *= fmax(1.0-get_cellF(occ_pos, vd, volume),0.0);
-            if (transparency > 1.0) transparency = 1.0; //beta
-            if (transparency < occ_thresh) break;
-            occ_pos += dir_to_light*step_size;
-        }
-        d_accum *= fmax(1.0-c_density,0.0);
-        light_accum += d_accum*c_density*transparency;
-        if (d_accum < occ_thresh) break;
-    }
 
-    const int pixel = 3*(y*img_dims.x+x);
-    image[pixel+0] = (uint8_t)(fmin(255.0*light_accum, 255.0));
-    image[pixel+1] = (uint8_t)(fmin(255.0*light_accum, 255.0));
-    image[pixel+2] = (uint8_t)(fmin(255.0*light_accum, 255.0));
+
+
+    bool SMOKE = true;
+    //RENDER SMOKE
+    if (SMOKE) {
+        // Trace ray through volume
+        for (int step = 0; step < steps; step++) {
+            // At each step, cast occlusion ray towards light source
+            float c_density = get_cellF(ray_pos, vd, volume);
+            if (c_density > 1.0) c_density = MAX_DENSITY; //bo Ÿle siê renderuje beta
+            float3 occ_pos = ray_pos;
+            ray_pos += ray_dir * step_size;
+            // Don't bother with occlusion ray if theres nothing there
+            if (c_density < occ_thresh) continue;
+            float transparency = 1.0;
+            for (int occ = 0; occ < steps; occ++) {
+                transparency *= fmax(1.0 - get_cellF(occ_pos, vd, volume), 0.0);
+                if (transparency > 1.0) transparency = 1.0; //beta
+                if (transparency < occ_thresh) break;
+                occ_pos += dir_to_light * step_size;
+            }
+            d_accum *= fmax(1.0 - c_density, 0.0);
+            light_accum += d_accum * c_density * transparency;
+            if (d_accum < occ_thresh) break;
+        }
+
+        const int pixel = 3 * (y * img_dims.x + x);
+        image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+        image[pixel + 1] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+        image[pixel + 2] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+    }
 }
 
 void render_fluid(uint8_t *render_target, int3 img_dims, 
@@ -613,7 +620,7 @@ void render_fluid(uint8_t *render_target, int3 img_dims,
 int main(int argc, char* args[])
 {
 
-    int DOMAIN_RESOLUTION = 450;
+    int DOMAIN_RESOLUTION = 300;
     int FRAMES = 450;
     int STEPS = 196; //512
     bool TURBULANCE = true;
@@ -678,6 +685,8 @@ int main(int argc, char* args[])
     printf("CUDA: %s\n", cudaGetErrorString( cudaGetLastError() ) );
 
     cudaThreadExit();
+
+    std::system("pause");
 
     return 0;
 }
