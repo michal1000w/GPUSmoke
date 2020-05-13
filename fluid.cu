@@ -434,9 +434,13 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
             state.impulseDensity, 0.1, state.dim);
     }
     else if (TURBULANCE) { //beta
-        float FREQUENCY = 800.0f;
+        float FREQUENCY = 80.0f;
         float3 SIZEE;
-        SIZEE.x = SIZEE.y = SIZEE.z = 16.0f;
+        //SIZEE.x = SIZEE.y = SIZEE.z = 16.0f;
+
+        float SIZEE_MAX = 32.0f;
+        SIZEE_MAX /= 2.0;
+        SIZEE.x = SIZEE.y = SIZEE.z = SIZEE_MAX * sinf(0.5f * float(state.step)) + SIZEE_MAX;
         TURBULANCE_STRENGTH = 500.0f;//0.1f 500
 
         wavey_impulse << <grid, block >> > (
@@ -558,8 +562,6 @@ __global__ void render_pixel( uint8_t *image, float *volume,
         if (d_accum < occ_thresh) break;
     }
 
-    // gamma correction
-    //light_accum = pow(light_accum, 0.45);  //beta
     const int pixel = 3*(y*img_dims.x+x);
     image[pixel+0] = (uint8_t)(fmin(255.0*light_accum, 255.0));
     image[pixel+1] = (uint8_t)(fmin(255.0*light_accum, 255.0));
@@ -611,12 +613,12 @@ void render_fluid(uint8_t *render_target, int3 img_dims,
 int main(int argc, char* args[])
 {
 
-    int DOMAIN_RESOLUTION = 400;
+    int DOMAIN_RESOLUTION = 450;
     int FRAMES = 450;
-    int STEPS = 128; //512
+    int STEPS = 196; //512
     bool TURBULANCE = true;
     float TURBULANCE_STRENGTH = 1; // 0.01
-    int ACCURACY_STEPS = 8; //35
+    int ACCURACY_STEPS = 16; //8
     float ZOOM = 1.8; //1.0
 
 
@@ -629,8 +631,11 @@ int main(int argc, char* args[])
     cam.y = static_cast<float>(vol_d.y)*0.5;
     cam.z = static_cast<float>(vol_d.z) * -0.4 * (1.0 / ZOOM);//0.0   minus do ty³u, plus do przodu
     float3 light;
-    light.x =  -1.0;//0.1
-    light.y =  -1.0;//1.0
+    //X - lewo prawo
+    //Y - góra dó³
+    //Z - przód ty³
+    light.x =  5.0;//0.1
+    light.y =  1.0;//1.0
     light.z = -0.5;//-0.5
 
     uint8_t *img = new uint8_t[3*img_d.x*img_d.y];
@@ -649,34 +654,11 @@ int main(int argc, char* args[])
     dim3 full_grid(vol_d.x/8+1, vol_d.y/8+1, vol_d.z/8+1);
     dim3 full_block(8,8,8);
 
-    // zero out buffers
-    /*
-    //impulse -> emitter
-
-    impulse<<<full_grid, full_block>>>( state.velocity->readTarget(), 
-        make_float3(0.0), 100000.0f, make_float3(0.0), vol_d);
-
-    impulse<<<full_grid, full_block>>>( state.temperature->readTarget(), 
-        make_float3(0.0), 100000.0f, 0.0f, vol_d);
-
-    impulse<<<full_grid, full_block>>>( state.density->readTarget(), 
-        make_float3(0.0), 100000.0f, 0.0f, vol_d);
-
-    wavey_impulse<<<full_grid, full_block>>>( state.density->readTarget(),
-        state.impulseLoc + make_float3(0.0, 70.0, 0.0),
-        make_float3(100.0, 15.0, 100.0), 0.25f, 0.0f, 1.0f, vol_d);
-
-    wavey_impulse<<<full_grid, full_block>>>( state.temperature->readTarget(),
-        state.impulseLoc + make_float3(0.0, 70.0, 0.0),
-        make_float3(100.0, 15.0, 100.0), 0.0f, 3.0f, 0.15f, vol_d);
-    */
 
     for (int f=0; f<=FRAMES; f++) {
         
-        std::cout << "\rStep " << f+1 << "  -  ";
+        std::cout << "\rFrame " << f+1 << "  -  ";
         
-        light.x = 1.05*sinf(0.006*float(state.step));
-        light.z = 1.05*cosf(0.006*float(state.step));
         render_fluid(
                 img, img_d, 
                 state.density->readTarget(), 
