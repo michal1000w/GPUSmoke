@@ -45,9 +45,9 @@ struct fluid_state_huge {
         temperature = new UnifiedBuffer<float>((int)nelems);
         pressure = new UnifiedBuffer<float>((int)nelems);
         
-
+#ifdef EXPERIMENTAL
         cuMemAllocHost_v2((void**)diverge, sizeof(float) * nelems);
-
+#endif
         //cudaDeviceSynchronize();
     }
 
@@ -56,6 +56,8 @@ struct fluid_state_huge {
         delete density;
         delete temperature;
         delete pressure;
+#ifdef EXPERIMENTAL
         cuMemFreeHost(diverge);
+#endif
     }
 };
