@@ -362,7 +362,7 @@ __global__ void buoyancy( V *v_src, T *t_src, T *d_src, V *v_dest,
 }
 
 // Runs a single iteration of the simulation
-void simulate_fluid( fluid_state& state, std::vector<OBJECT> object_list, int ACCURACY_STEPS = 35)
+void simulate_fluid( fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35)
 {
     float AMBIENT_TEMPERATURE = 0.0f;//0.0f
     float BUOYANCY = 1.0f; //1.0f
@@ -398,7 +398,7 @@ void simulate_fluid( fluid_state& state, std::vector<OBJECT> object_list, int AC
             state.velocity->readTarget(),
             state.density->readTarget(),
             state.density->writeTarget(),
-            state.dim, state.time_step, 0.9999);//0.9999
+            state.dim, state.time_step, 0.99);//0.9999
     state.density->swap();
 
     buoyancy<<<grid,block>>>( 
@@ -462,6 +462,8 @@ void simulate_fluid( fluid_state& state, std::vector<OBJECT> object_list, int AC
     
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
+        if (current.get_type() == "smoke")
+            object_list.erase(object_list.begin() + i); //remove emmiter from the list
 
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 
