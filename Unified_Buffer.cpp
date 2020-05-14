@@ -13,8 +13,8 @@ template <typename T>
 UnifiedBuffer<T>::UnifiedBuffer(int nelements)
 {
     nbytes = sizeof(T) * nelements;
-    cudaMallocManaged((void**)&A, nbytes);
-    cudaMallocManaged((void**)&B, nbytes);
+    cudaMalloc((void**)&A, nbytes);
+    cudaMalloc((void**)&B, nbytes);
     if (0 == A || 0 == B)
     {
         printf("couldn't allocate GPU memory\n");

@@ -13,8 +13,9 @@
 #include "Fluid_Kernels.cuh"
 #include "Unified_Buffer.cpp"
 
-
-
+//#define EXPERIMENTAL
+//#include <driver_functions.h>
+//#include <driver_types.h>
 
 
 
@@ -45,9 +46,8 @@ struct fluid_state_huge {
         temperature = new UnifiedBuffer<float>((int)nelems);
         pressure = new UnifiedBuffer<float>((int)nelems);
         
-#ifdef EXPERIMENTAL
-        cuMemAllocHost_v2((void**)diverge, sizeof(float) * nelems);
-#endif
+
+        cudaMalloc((void**)&diverge, sizeof(float) * nelems);
         //cudaDeviceSynchronize();
     }
 
@@ -56,8 +56,6 @@ struct fluid_state_huge {
         delete density;
         delete temperature;
         delete pressure;
-#ifdef EXPERIMENTAL
-        cuMemFreeHost(diverge);
-#endif
+        cudaFree(diverge);
     }
 };
