@@ -1,11 +1,11 @@
-#ifndef __OBJECT
-#define __OBJECT
+#ifndef __OBJECT__
+#define __OBJECT__
 
 #include <string>
 #include <iostream>
 #include "cutil_math.h"
-#include "double_buffer.cpp"
 #include <cuda_runtime.h>
+#include "double_buffer.cpp"
 
 #define EMMITER 1
 #define SMOKE 2

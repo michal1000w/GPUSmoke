@@ -13,15 +13,20 @@
   <ItemGroup>
     <ClInclude Include="cutil_math.h" />
     <ClInclude Include="double_buffer.h" />
+    <ClInclude Include="Fluid_Kernels.cuh" />
+    <ClInclude Include="Fluid_State.cuh" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="openvdb\openvdb_export.h" />
+    <ClInclude Include="Unified_Buffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="Unified_Buffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu" />
+    <CudaCompile Include="HugeScaleSolver.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4AC2887C-CF72-405D-A7DF-FDEDD7398F6B}</ProjectGuid>
@@ -83,11 +88,17 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>
+      <FastMath>true</FastMath>
+      <Optimization>InheritFromHost</Optimization>
+      <Runtime>InheritFromHost</Runtime>
     </CudaCompile>
+    <CudaLink>
+      <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </CudaLink>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
