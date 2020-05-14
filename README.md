@@ -27,33 +27,33 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 
 ## TODO list
 ### Short Term
-1. Render temperature
-2. Simple Graphical Interface
-3. Sliders with most important factors
-4. Camera and light rotation
+* [ ] Render temperature
+* [ ] Simple Graphical Interface
+* [ ] Sliders with most important factors
+* [ ] Camera and light rotation
 
 ### Short-Medium Term
-1. Host memory usage for Huge Scale Simulations (resolution over 512^3)
-2. Adaptive Domain
-3. Object Collision
-4. Simple Forces --> (Wind, Turbulance, Noise)
-5. Preset creator (LOAD/SAVE)
-6. Fix Density over 1.0 issue
+* [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
+* [ ] Adaptive Domain
+* [ ] Object Collision
+* [ ] Simple Forces --> (Wind, Turbulance, Noise)
+* [ ] Preset creator (LOAD/SAVE)
+* [ ] Fix Density over 1.0 issue
 
 ### Medium-Long Term
-1. Smoke Colors
-2. OpenVDB import/export
-3. Obj import
-4. Simple Blender integration
-5. Faster and better Render Engine
+* [ ] Smoke Colors
+* [ ] OpenVDB import/export
+* [ ] Obj import
+* [ ] Simple Blender integration
+* [ ] Faster and better Render Engine
 
 ### Long Term
-1. Smoke adaptive resolution
-2. Liquids!!!
-3. FLIP fluid solver
-4. Sparse Volume optimization
-5. FLIP whitewater particles
-6. FLIP mesh solver
+* [ ] Smoke adaptive resolution
+* [ ] Liquids!!!
+* [ ] FLIP fluid solver
+* [ ] Sparse Volume optimization
+* [ ] FLIP whitewater particles
+* [ ] FLIP mesh solver
 
 ## Authors
 
