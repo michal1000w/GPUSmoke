@@ -620,7 +620,7 @@ void render_fluid(uint8_t *render_target, int3 img_dims,
 int main(int argc, char* args[])
 {
 
-    int DOMAIN_RESOLUTION = 300;
+    int DOMAIN_RESOLUTION = 450;
     int FRAMES = 450;
     int STEPS = 196; //512
     bool TURBULANCE = true;
