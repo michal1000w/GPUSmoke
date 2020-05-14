@@ -4,9 +4,11 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <cuda_fp16.h>
 #include "cutil_math.h"
 #include "double_buffer.cpp"
+#include "Object.h"
 
 
 // Container for simulation state
@@ -360,7 +362,7 @@ __global__ void buoyancy( V *v_src, T *t_src, T *d_src, V *v_dest,
 }
 
 // Runs a single iteration of the simulation
-void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULANCE_STRENGTH = 0.01, int ACCURACY_STEPS = 35)
+void simulate_fluid( fluid_state& state, std::vector<OBJECT> object_list, int ACCURACY_STEPS = 35)
 {
     float AMBIENT_TEMPERATURE = 0.0f;//0.0f
     float BUOYANCY = 1.0f; //1.0f
@@ -422,7 +424,8 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
         location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
     }
 
-    if (TURBULANCE && false) {
+    /*
+    if (false) {
         soft_impulse << <grid, block >> > (
             state.temperature->readTarget(),
             location, state.impulseRadius,
@@ -433,7 +436,7 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
             location, state.impulseRadius,
             state.impulseDensity, 0.1, state.dim);
     }
-    else if (TURBULANCE) { //beta
+    else if (true) { //beta
         float FREQUENCY = 80.0f;
         float3 SIZEE;
         //SIZEE.x = SIZEE.y = SIZEE.z = 16.0f;
@@ -441,7 +444,7 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
         float SIZEE_MAX = 32.0f;
         SIZEE_MAX /= 2.0;
         SIZEE.x = SIZEE.y = SIZEE.z = SIZEE_MAX * sinf(0.5f * float(state.step)) + SIZEE_MAX;
-        TURBULANCE_STRENGTH = 500.0f;//0.1f 500
+        bool TURBULANCE_STRENGTH = 500.0f;//0.1f 500
 
         wavey_impulse << <grid, block >> > (
             state.temperature->readTarget(),
@@ -455,6 +458,27 @@ void simulate_fluid( fluid_state& state, bool TURBULANCE = false, float TURBULAN
             state.impulseDensity, TURBULANCE_STRENGTH * (1.0 / TURBULANCE_STRENGTH), FREQUENCY, state.dim
             );
     }
+    */
+    
+    for (int i = 0; i < object_list.size(); i++) {
+        OBJECT current = object_list[i];
+
+        float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
+
+        wavey_impulse <<< grid, block >> > (
+            state.temperature->readTarget(),
+            current.get_location(), SIZEE,
+            state.impulseTemp, current.get_initial_velocity(), current.get_velocity_frequence(),
+            state.dim
+            );
+        wavey_impulse <<< grid, block >> > (
+            state.density->readTarget(),
+            current.get_location(), SIZEE,
+            state.impulseDensity, current.get_initial_velocity() * (1.0 / current.get_initial_velocity()), current.get_velocity_frequence(),
+            state.dim
+            );
+    }
+    
       
 
     divergence<<<grid,block>>>(
@@ -544,9 +568,9 @@ __global__ void render_pixel( uint8_t *image, float *volume,
 
 
 
-    bool SMOKE = true;
+    bool _SMOKE = true;
     //RENDER SMOKE
-    if (SMOKE) {
+    if (_SMOKE) {
         // Trace ray through volume
         for (int step = 0; step < steps; step++) {
             // At each step, cast occlusion ray towards light source
@@ -627,11 +651,26 @@ int main(int argc, char* args[])
     float TURBULANCE_STRENGTH = 1; // 0.01
     int ACCURACY_STEPS = 16; //8
     float ZOOM = 1.8; //1.0
+    std::vector<OBJECT> object_list;
+
+
+
+
 
 
 
     const int3 vol_d = make_int3(DOMAIN_RESOLUTION,DOMAIN_RESOLUTION,DOMAIN_RESOLUTION); //Domain resolution
     const int3 img_d = make_int3(720,720,0);
+
+
+
+
+    //adding emmiters
+    object_list.push_back(OBJECT("emmiter",16.0f,500,100, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    object_list.push_back(OBJECT("smoke", 10, 500, 100, make_float3(vol_d.x*0.5, 10.0, 200.0)));
+
+
+
 
     float3 cam;
     cam.x = static_cast<float>(vol_d.x)*0.5;
@@ -675,7 +714,7 @@ int main(int argc, char* args[])
 
         save_image(img, img_d, "output/R" + pad_number(f+1) + ".ppm");
         for (int st=0; st<1; st++) {
-            simulate_fluid(state, TURBULANCE, TURBULANCE_STRENGTH, ACCURACY_STEPS);
+            simulate_fluid(state, object_list, ACCURACY_STEPS);
             state.step++;
         }
     }

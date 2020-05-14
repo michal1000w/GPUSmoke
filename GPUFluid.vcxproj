@@ -13,9 +13,11 @@
   <ItemGroup>
     <ClInclude Include="cutil_math.h" />
     <ClInclude Include="double_buffer.h" />
+    <ClInclude Include="Object.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
+    <ClCompile Include="Object.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu" />
