@@ -727,6 +727,8 @@ int main(int argc, char* args[])
 
     cudaThreadExit();
 
+    std::cout << "Rendering animation video..." << std::endl;
+    std::system("make_video.sh");
     std::system("pause");
 
     return 0;
