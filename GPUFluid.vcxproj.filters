@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="openvdb\openvdb_export.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="cutil_math.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="double_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Unified_Buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_Kernels.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_State.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="OpenVDB">
+      <UniqueIdentifier>{e9d760ee-462c-4c44-9837-b269ad4cea5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{9d2cda9a-3438-4360-a86b-4c8fbcb63884}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{7c1ccf3e-4ce9-4d16-9937-8ef1d784ae4c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="double_buffer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Unified_Buffer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="fluid.cu">
+      <Filter>Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="HugeScaleSolver.cu">
+      <Filter>Sources</Filter>
+    </CudaCompile>
+  </ItemGroup>
+</Project>
