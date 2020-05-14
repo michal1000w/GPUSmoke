@@ -4,9 +4,12 @@
 #include <string>
 #include <iostream>
 #include "cutil_math.h"
+#include "double_buffer.cpp"
+#include <cuda_runtime.h>
 
 #define EMMITER 1
 #define SMOKE 2
+#define MS_TO_SEC 0.001
 
 class OBJECT {
 public:

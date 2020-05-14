@@ -42,7 +42,9 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 
 ### Medium-Long Term
 * [ ] Smoke Colors
-* [ ] OpenVDB import/export
+* [ ] OpenVDB IO
+    * [ ] Import
+    * [ ] Export
 * [ ] Obj import
 * [ ] Simple Blender integration
 * [ ] Faster and better Render Engine

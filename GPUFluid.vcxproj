@@ -14,6 +14,7 @@
     <ClInclude Include="cutil_math.h" />
     <ClInclude Include="double_buffer.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="openvdb\openvdb_export.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
