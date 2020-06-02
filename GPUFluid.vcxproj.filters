@@ -22,6 +22,18 @@
     <ClInclude Include="Fluid_State.cuh">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Libraries.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="IO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

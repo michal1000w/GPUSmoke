@@ -15,8 +15,12 @@
     <ClInclude Include="double_buffer.h" />
     <ClInclude Include="Fluid_Kernels.cuh" />
     <ClInclude Include="Fluid_State.cuh" />
+    <ClInclude Include="IO.h" />
+    <ClInclude Include="Libraries.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="openvdb\openvdb_export.h" />
+    <ClInclude Include="Renderer.cuh" />
+    <ClInclude Include="Simulation.cuh" />
     <ClInclude Include="Unified_Buffer.h" />
   </ItemGroup>
   <ItemGroup>
@@ -43,7 +47,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
