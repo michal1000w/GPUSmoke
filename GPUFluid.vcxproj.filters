@@ -1,9 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClInclude Include="openvdb\openvdb_export.h">
-      <Filter>OpenVDB</Filter>
-    </ClInclude>
     <ClInclude Include="cutil_math.h">
       <Filter>Headers</Filter>
     </ClInclude>
@@ -34,6 +31,27 @@
     <ClInclude Include="Renderer.cuh">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="openvdb\openvdb_capi.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\openvdb_util.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\intern\openvdb_dense_convert.h">
+      <Filter>OpenVDB\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\intern\openvdb_level_set.h">
+      <Filter>OpenVDB\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\intern\openvdb_reader.h">
+      <Filter>OpenVDB\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\intern\openvdb_transform.h">
+      <Filter>OpenVDB\intern</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\intern\openvdb_writer.h">
+      <Filter>OpenVDB\intern</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -45,6 +63,9 @@
     <Filter Include="Headers">
       <UniqueIdentifier>{7c1ccf3e-4ce9-4d16-9937-8ef1d784ae4c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OpenVDB\intern">
+      <UniqueIdentifier>{977cad68-1a99-4164-a494-2a2c62ee6058}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">
@@ -55,6 +76,27 @@
     </ClCompile>
     <ClCompile Include="Unified_Buffer.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\openvdb_capi.cc">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\openvdb_util.cc">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\intern\openvdb_dense_convert.cc">
+      <Filter>OpenVDB\intern</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\intern\openvdb_level_set.cc">
+      <Filter>OpenVDB\intern</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\intern\openvdb_reader.cc">
+      <Filter>OpenVDB\intern</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\intern\openvdb_transform.cc">
+      <Filter>OpenVDB\intern</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\intern\openvdb_writer.cc">
+      <Filter>OpenVDB\intern</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
