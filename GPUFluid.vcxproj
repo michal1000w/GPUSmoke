@@ -18,13 +18,6 @@
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="openvdb\intern\openvdb_dense_convert.h" />
-    <ClInclude Include="openvdb\intern\openvdb_level_set.h" />
-    <ClInclude Include="openvdb\intern\openvdb_reader.h" />
-    <ClInclude Include="openvdb\intern\openvdb_transform.h" />
-    <ClInclude Include="openvdb\intern\openvdb_writer.h" />
-    <ClInclude Include="openvdb\openvdb_capi.h" />
-    <ClInclude Include="openvdb\openvdb_util.h" />
     <ClInclude Include="Renderer.cuh" />
     <ClInclude Include="Simulation.cuh" />
     <ClInclude Include="Unified_Buffer.h" />
@@ -32,13 +25,6 @@
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="openvdb\intern\openvdb_dense_convert.cc" />
-    <ClCompile Include="openvdb\intern\openvdb_level_set.cc" />
-    <ClCompile Include="openvdb\intern\openvdb_reader.cc" />
-    <ClCompile Include="openvdb\intern\openvdb_transform.cc" />
-    <ClCompile Include="openvdb\intern\openvdb_writer.cc" />
-    <ClCompile Include="openvdb\openvdb_capi.cc" />
-    <ClCompile Include="openvdb\openvdb_util.cc" />
     <ClCompile Include="Unified_Buffer.cpp" />
   </ItemGroup>
   <ItemGroup>
