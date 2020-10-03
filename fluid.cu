@@ -5,20 +5,14 @@
 
 void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS) {
     fluid_state state(vol_d);
-
-    state.impulseLoc = make_float3(0.5 * float(vol_d.x),
-        0.5 * float(vol_d.y) - 170.0,
-        0.5 * float(vol_d.z));
-    state.impulseTemp = 20.0;//4.0
-    state.impulseDensity = 0.6;//0.35
-    state.impulseRadius = 18.0;//18.0
+   
     state.f_weight = 0.05;
     state.time_step = 0.1;
 
     dim3 full_grid(vol_d.x / 8 + 1, vol_d.y / 8 + 1, vol_d.z / 8 + 1);
     dim3 full_block(8, 8, 8);
 
-
+    bool DEBUG = true;
     for (int f = 0; f <= FRAMES; f++) {
 
         std::cout << "\rFrame " << f + 1 << "  -  ";
@@ -32,8 +26,9 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vecto
 
         save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
         for (int st = 0; st < 1; st++) {
-            simulate_fluid(state, object_list, ACCURACY_STEPS);
+            simulate_fluid(state, object_list, ACCURACY_STEPS, DEBUG, f);
             state.step++;
+            //DEBUG = false;
         }
     }
 
@@ -94,13 +89,13 @@ int main(int argc, char* args[])
 {
 
     int DOMAIN_RESOLUTION = 450;
-    int FRAMES = 450;
-    int STEPS = 196; //512
-    int ACCURACY_STEPS = 16; //8
+    int FRAMES = 300;
+    int STEPS = 96; //512 Rendering Samples
+    int ACCURACY_STEPS = 8; //8
     float ZOOM = 1.8; //1.0
     std::vector<OBJECT> object_list;
 
-
+    float Dissolve = 0.95;
 
 
 
@@ -113,8 +108,10 @@ int main(int argc, char* args[])
 
 
     //adding emmiters
-    object_list.push_back(OBJECT("emmiter", 16.0f, 500, 100, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-    object_list.push_back(OBJECT("smoke", 10, 500, 100, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+    //object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
 
 
 
@@ -145,7 +142,7 @@ int main(int argc, char* args[])
     
     std::cout << "Rendering animation video..." << std::endl;
     std::system("make_video.sh");
-    std::system("pause");
+    //std::system("pause");
 
     return 0;
 }

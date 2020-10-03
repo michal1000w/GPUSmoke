@@ -259,8 +259,68 @@ __global__ void soft_impulse(T* target, float3 c,
 }
 
 template <typename T>
+__global__ void wavey_impulse_temperature(T* target, float3 c,
+    float3 size, T base, float amp, float freq, int3 vd, int frame)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    //float dist = length(p-c);
+    float3 minC = c - size;
+    float3 maxC = c + size;
+
+    //T cur = target[ get_voxel(x,y,z, vd) ];
+
+    if (p.x > minC.x && p.y > minC.y && p.z > minC.z &&
+        p.x < maxC.x && p.y < maxC.y && p.z < maxC.z) {
+        float random = float((frame * (x + y - z)) % 1000) / 1000.0;
+        float v = 0.5 * (sin(freq * p.x + random) + sin(freq * p.z + random) + 0.0);
+        v = v * v * v * v * v;
+        if (base + amp * v > 0)
+            target[get_voxel(x, y, z, vd)] = base + amp * v;
+        else
+            target[get_voxel(x, y, z, vd)] = base;
+    }
+}
+
+template <typename T>
+__global__ void wavey_impulse_density(T* target, float3 c,
+    float3 size, T base, float amp, float freq, int3 vd,int frame)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    //float dist = length(p-c);
+    float3 minC = c - size;
+    float3 maxC = c + size;
+
+    //T cur = target[ get_voxel(x,y,z, vd) ];
+
+    if (p.x > minC.x && p.y > minC.y && p.z > minC.z &&
+        p.x < maxC.x && p.y < maxC.y && p.z < maxC.z) {
+        float random = float((frame * (x + y - z)) % 1000) / 1000.0;
+        float v = 0.5 * (sin(freq * p.x + random) + sin(freq * p.z + random) + 0.0);
+        v = v * v * v * v * v;
+        amp = 0.5;
+        if (base + amp * v <= 1.0)
+            target[get_voxel(x, y, z, vd)] = base + amp * v;
+    }
+}
+
+
+template <typename T>
 __global__ void wavey_impulse(T* target, float3 c,
-    float3 size, T base, float amp, float freq, int3 vd)
+    float3 size, T base, float amp, float freq, int3 vd, bool temp = false)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -281,8 +341,11 @@ __global__ void wavey_impulse(T* target, float3 c,
         float v = 0.5 * (sin(freq * p.x) + sin(freq * p.z) + 0.0);
         v = v * v * v * v * v;
         target[get_voxel(x, y, z, vd)] = base + amp * v;
+        if (temp && target[get_voxel(x, y, z, vd)] <= 1)
+            target[get_voxel(x, y, z, vd)] = 1;
     }
 }
+
 
 
 template <typename V, typename T>

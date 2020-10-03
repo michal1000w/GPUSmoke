@@ -6,7 +6,7 @@
 
 
 // Runs a single iteration of the simulation
-void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35)
+void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0)
 {
     float AMBIENT_TEMPERATURE = 0.0f;//0.0f
     float BUOYANCY = 1.0f; //1.0f
@@ -42,7 +42,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
         state.velocity->readTarget(),
         state.density->readTarget(),
         state.density->writeTarget(),
-        state.dim, state.time_step, 0.995);//0.9999
+        state.dim, state.time_step, 0.99);//0.995
     state.density->swap();
 
     buoyancy << <grid, block >> > (
@@ -68,6 +68,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
         location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
     }
 
+    if (DEBUG)
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         if (current.get_type() == "smoke")
@@ -75,18 +76,37 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
 
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 
-        wavey_impulse << < grid, block >> > (
-            state.temperature->readTarget(),
-            current.get_location(), SIZEE,
-            state.impulseTemp, current.get_initial_velocity(), current.get_velocity_frequence(),
-            state.dim
-            );
-        wavey_impulse << < grid, block >> > (
-            state.density->readTarget(),
-            current.get_location(), SIZEE,
-            state.impulseDensity, current.get_initial_velocity() * (1.0 / current.get_initial_velocity()), current.get_velocity_frequence(),
-            state.dim
-            );
+
+        if (current.get_type() == "emmiter") {
+            wavey_impulse_temperature << < grid, block >> > (
+                state.temperature->readTarget(),
+                current.get_location(), SIZEE,
+                current.get_impulseTemp(), current.get_initial_velocity(), current.get_velocity_frequence(),
+                state.dim,
+                frame
+                );
+            wavey_impulse_density << < grid, block >> > (
+                state.density->readTarget(),
+                current.get_location(), SIZEE,
+                current.get_impulseDensity(), 1.0f, current.get_velocity_frequence(),
+                state.dim,
+                frame
+                );
+        }
+        else if (current.get_type() == "smoke"){
+            impulse << <grid, block >> > (
+                state.temperature->readTarget(),
+                current.get_location(), current.get_size(),
+                current.get_impulseTemp(),
+                state.dim
+                );
+            impulse << <grid, block >> > (
+                state.density->readTarget(),
+                current.get_location(), current.get_size(),
+                current.get_impulseDensity(),
+                state.dim
+                );
+        }
     }
 
 
