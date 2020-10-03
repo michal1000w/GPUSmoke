@@ -3,7 +3,7 @@
 #include "Renderer.cuh"
 
 
-void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, float Ambient_temp) {
+void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, float Ambient_temp, float Fire_Max_Temp, bool Smoke_and_Fire) {
     fluid_state state(vol_d);
    
     state.f_weight = 0.05;
@@ -22,7 +22,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vecto
             state.density->readTarget(),
             state.temperature->readTarget(),
             vol_d, 1.0, light, cam, 0.0 * float(state.step),
-            STEPS);
+            STEPS, Fire_Max_Temp, Smoke_and_Fire);
 
         save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
         for (int st = 0; st < 1; st++) {
@@ -88,11 +88,9 @@ void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<
 int main(int argc, char* args[])
 {
 
+    //simulation settings
     int DOMAIN_RESOLUTION = 450;
-    int FRAMES = 300;
-    int STEPS = 96; //512 Rendering Samples
     int ACCURACY_STEPS = 8; //8
-    float ZOOM = 1.8; //1.0
     std::vector<OBJECT> object_list;
 
     float Smoke_Dissolve = 0.995f; //0.995f
@@ -100,11 +98,20 @@ int main(int argc, char* args[])
     
 
 
+    //rendering settings
+    int FRAMES = 100;
+    float Fire_Max_Temperature = 10.0f;
+    float Image_Resolution[2] = { 640, 640 };
+    int STEPS = 100; //512 Rendering Samples
+    float ZOOM = 1.8; //1.0
+    bool Smoke_And_Fire = false;
+
+
 
 
 
     const int3 vol_d = make_int3(DOMAIN_RESOLUTION, DOMAIN_RESOLUTION, DOMAIN_RESOLUTION); //Domain resolution
-    const int3 img_d = make_int3(720, 720, 0);
+    const int3 img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
 
 
 
@@ -136,7 +143,7 @@ int main(int argc, char* args[])
     std::system("erase_imgs.sh");
 
     if (DOMAIN_RESOLUTION <= 450)
-        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature);
+        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
         //Huge_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
