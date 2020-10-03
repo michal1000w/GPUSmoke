@@ -6,10 +6,10 @@
 
 
 // Runs a single iteration of the simulation
-void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0)
+void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0, float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f)
 {
-    float AMBIENT_TEMPERATURE = 0.0f;//0.0f
-    float BUOYANCY = 1.0f; //1.0f
+    float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
+    //float BUOYANCY = buoancy; //1.0f
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -42,7 +42,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
         state.velocity->readTarget(),
         state.density->readTarget(),
         state.density->writeTarget(),
-        state.dim, state.time_step, 0.99);//0.995
+        state.dim, state.time_step, Dissolve_rate);//0.995
     state.density->swap();
 
     buoyancy << <grid, block >> > (

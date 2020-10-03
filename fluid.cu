@@ -3,7 +3,7 @@
 #include "Renderer.cuh"
 
 
-void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS) {
+void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, float Ambient_temp) {
     fluid_state state(vol_d);
    
     state.f_weight = 0.05;
@@ -26,7 +26,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vecto
 
         save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
         for (int st = 0; st < 1; st++) {
-            simulate_fluid(state, object_list, ACCURACY_STEPS, DEBUG, f);
+            simulate_fluid(state, object_list, ACCURACY_STEPS, DEBUG, f, Dissolve_rate, Ambient_temp);
             state.step++;
             //DEBUG = false;
         }
@@ -95,7 +95,9 @@ int main(int argc, char* args[])
     float ZOOM = 1.8; //1.0
     std::vector<OBJECT> object_list;
 
-    float Dissolve = 0.95;
+    float Smoke_Dissolve = 0.995f; //0.995f
+    float Ambient_Temperature = 0.0f; //0.0f
+    
 
 
 
@@ -134,7 +136,7 @@ int main(int argc, char* args[])
     std::system("erase_imgs.sh");
 
     if (DOMAIN_RESOLUTION <= 450)
-        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
+        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
         //Huge_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
