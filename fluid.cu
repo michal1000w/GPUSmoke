@@ -1,7 +1,7 @@
 ﻿#include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
-#include "OpenVDB/tinyvdbio.h"
+
 
 
 void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, 

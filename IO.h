@@ -1,6 +1,7 @@
 #ifndef __IO
 #define __IO
 #include "Libraries.h"
+#include "OpenVDB/tinyvdbio.h"
 
 // A couple IO utility functions
 
