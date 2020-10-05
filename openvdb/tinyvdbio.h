@@ -1426,7 +1426,7 @@ extern "C" {
 #endif
 
 #if defined(TINYVDBIO_USE_BLOSC)
-#include <blosc.h>
+    #include "blosc.h"
 #endif
 
 #include <iostream>  // HACK

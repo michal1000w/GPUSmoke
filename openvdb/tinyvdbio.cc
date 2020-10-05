@@ -4,4 +4,5 @@
 #endif
 
 #define TINYVDBIO_IMPLEMENTATION
+#define TINYVDBIO_USE_BLOSC
 #include "tinyvdbio.h"

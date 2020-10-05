@@ -114,7 +114,7 @@ int main(int argc, char* args[])
     bool Smoke_And_Fire = true;
 
 
-
+    load_vdb("sphere-div1");
 
 
 
