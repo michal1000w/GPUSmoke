@@ -31,6 +31,12 @@
     <ClInclude Include="Renderer.cuh">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="openvdb\tinyvdbio.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb\miniz.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -52,6 +58,12 @@
     </ClCompile>
     <ClCompile Include="Unified_Buffer.cpp">
       <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\tinyvdbio.cc">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb\miniz.c">
+      <Filter>OpenVDB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

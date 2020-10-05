@@ -18,6 +18,8 @@
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="openvdb\miniz.h" />
+    <ClInclude Include="openvdb\tinyvdbio.h" />
     <ClInclude Include="Renderer.cuh" />
     <ClInclude Include="Simulation.cuh" />
     <ClInclude Include="Unified_Buffer.h" />
@@ -25,6 +27,8 @@
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
     <ClCompile Include="Object.cpp" />
+    <ClCompile Include="openvdb\miniz.c" />
+    <ClCompile Include="openvdb\tinyvdbio.cc" />
     <ClCompile Include="Unified_Buffer.cpp" />
   </ItemGroup>
   <ItemGroup>

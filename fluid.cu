@@ -1,13 +1,18 @@
 ﻿#include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
+#include "OpenVDB/tinyvdbio.h"
 
 
-void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, float Ambient_temp, float Fire_Max_Temp, bool Smoke_and_Fire) {
+void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, 
+    float3 light, std::vector<OBJECT>& object_list, float3 cam, 
+    int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, 
+    float Ambient_temp, float Fire_Max_Temp, bool Smoke_and_Fire,
+    float time_step) {
     fluid_state state(vol_d);
    
     state.f_weight = 0.05;
-    state.time_step = 0.1;
+    state.time_step = time_step;// 0.1;
 
     dim3 full_grid(vol_d.x / 8 + 1, vol_d.y / 8 + 1, vol_d.z / 8 + 1);
     dim3 full_block(8, 8, 8);
@@ -89,25 +94,32 @@ int main(int argc, char* args[])
 {
 
     //simulation settings
-    int DOMAIN_RESOLUTION = 450;
+    int DOMAIN_RESOLUTION = 250;
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
     float Smoke_Dissolve = 0.995f; //0.995f
     float Ambient_Temperature = 0.0f; //0.0f
+    float speed = 1.0; //1.0
+
     
 
 
     //rendering settings
-    int FRAMES = 100;
+    int FRAMES = 400;
     float Fire_Max_Temperature = 10.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
     float ZOOM = 1.8; //1.0
-    bool Smoke_And_Fire = false;
+    bool Smoke_And_Fire = true;
 
 
 
+
+
+
+    float time_step = 0.1; //0.1
+    time_step = speed * 0.1; //chyba dobre
 
 
     const int3 vol_d = make_int3(DOMAIN_RESOLUTION, DOMAIN_RESOLUTION, DOMAIN_RESOLUTION); //Domain resolution
@@ -143,7 +155,7 @@ int main(int argc, char* args[])
     std::system("erase_imgs.sh");
 
     if (DOMAIN_RESOLUTION <= 450)
-        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire);
+        Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
         //Huge_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
