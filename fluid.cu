@@ -116,6 +116,7 @@ int main(int argc, char* args[])
 
     load_vdb("sphere-div1");
     //load_vdb("fluid_data_0000");
+    exit(0);
 
 
 

@@ -65,8 +65,14 @@ int load_vdb(std::string filename) {
         return EXIT_FAILURE;
     }
 
-
+    std::system("pause");
+    std::system("cls");
     std::cout << "Load OK" << std::endl;
+
+    std::cout << "Grids:" << std::endl;
+    for (const auto& desc : gd_map) {
+        std::cout << "    -name: " << desc.second.GridName() << "\n";
+    }
 
     return EXIT_SUCCESS;
 }

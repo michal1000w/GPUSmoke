@@ -32,6 +32,7 @@ public:
 	float3 get_location();
 	void set_location(float x = 0, float y = 0, float z = 0);
 	void set_location(float3 location);
+	void load_density_grid();
 	
 
 private:
