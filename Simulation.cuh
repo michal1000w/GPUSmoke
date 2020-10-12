@@ -59,20 +59,26 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
     /////Z - glebia
     /////X - lewo prawo
     /////Y - gora dol
-    float MOVEMENT_SIZE = 9.0;//90.0
-    float MOVEMENT_SPEED = 10.0;
+    float MOVEMENT_SIZE = 3.0;//9
+    float MOVEMENT_SPEED = 20;//10
     bool MOVEMENT = true;
-    if (MOVEMENT) {
-        location.x += MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step));//-0.003f
-        //location.y += cosf(-0.03f * float(state.step));//-0.003f
-        location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
-    }
+
 
     if (DEBUG)
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         if (current.get_type() == "smoke")
             object_list.erase(object_list.begin() + i); //remove emmiter from the list
+
+
+        if (MOVEMENT) {
+            object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
+                current.get_location().y + cosf(-0.03f * float(state.step)) ,
+                current.get_location().z + MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step))
+            );
+        }
+
+
 
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 
@@ -209,16 +215,21 @@ void simulate_fluid(fluid_state_huge& state, std::vector<OBJECT>& object_list, i
     float MOVEMENT_SIZE = 9.0;//90.0
     float MOVEMENT_SPEED = 10.0;
     bool MOVEMENT = true;
-    if (MOVEMENT) {
-        location.x += MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step));//-0.003f
-        //location.y += cosf(-0.03f * float(state.step));//-0.003f
-        location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
-    }
+    
 
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         if (current.get_type() == "smoke")
             object_list.erase(object_list.begin() + i); //remove emmiter from the list
+
+        if (MOVEMENT) {
+            object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
+                current.get_location().y,
+                current.get_location().z + MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step))
+                );
+            //location.y += cosf(-0.03f * float(state.step));//-0.003f
+            //location.z += MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step));//-0.003f
+        }
 
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 

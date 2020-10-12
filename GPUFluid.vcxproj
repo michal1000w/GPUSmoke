@@ -18,19 +18,21 @@
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="openvdb\blosc-export.h" />
-    <ClInclude Include="openvdb\blosc.h" />
-    <ClInclude Include="openvdb\miniz.h" />
-    <ClInclude Include="openvdb\tinyvdbio.h" />
+    <ClInclude Include="openvdb-old\blosc-export.h" />
+    <ClInclude Include="openvdb-old\blosc.h" />
+    <ClInclude Include="openvdb-old\miniz.h" />
+    <ClInclude Include="openvdb-old\tinyvdbio.h" />
     <ClInclude Include="Renderer.cuh" />
     <ClInclude Include="Simulation.cuh" />
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h" />
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\NanoVDB.h" />
     <ClInclude Include="Unified_Buffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
     <ClCompile Include="Object.cpp" />
-    <ClCompile Include="openvdb\miniz.c" />
-    <ClCompile Include="openvdb\tinyvdbio.cc" />
+    <ClCompile Include="openvdb-old\miniz.c" />
+    <ClCompile Include="openvdb-old\tinyvdbio.cc" />
     <ClCompile Include="Unified_Buffer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -91,6 +93,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>openvdb/include;third_party/openvdb/nanovdb/nanovdb;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -98,7 +101,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
       <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;blosc.lib;libblosc.lib;openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>C:\Users\micha\source\repos\GPUFluid\third_party\blosc_headers;C:\Users\micha\source\repos\GPUFluid\third_party\openvdb_headers\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\micha\source\repos\GPUFluid\third_party\blosc_headers;C:\Users\micha\source\repos\GPUFluid\openvdb\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>

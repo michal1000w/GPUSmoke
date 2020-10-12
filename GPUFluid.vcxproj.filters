@@ -31,17 +31,23 @@
     <ClInclude Include="Renderer.cuh">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="openvdb\miniz.h">
+    <ClInclude Include="openvdb-old\miniz.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\tinyvdbio.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\blosc.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\blosc-export.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
-    <ClInclude Include="openvdb\tinyvdbio.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="openvdb\blosc.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="openvdb\blosc-export.h">
-      <Filter>Headers</Filter>
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\NanoVDB.h">
+      <Filter>OpenVDB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -65,10 +71,10 @@
     <ClCompile Include="Unified_Buffer.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="openvdb\miniz.c">
-      <Filter>OpenVDB</Filter>
+    <ClCompile Include="openvdb-old\tinyvdbio.cc">
+      <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="openvdb\tinyvdbio.cc">
+    <ClCompile Include="openvdb-old\miniz.c">
       <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>

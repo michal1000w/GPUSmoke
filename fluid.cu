@@ -94,7 +94,7 @@ int main(int argc, char* args[])
 {
 
     //simulation settings
-    int DOMAIN_RESOLUTION = 250;
+    int DOMAIN_RESOLUTION = 450;
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -106,7 +106,7 @@ int main(int argc, char* args[])
 
 
     //rendering settings
-    int FRAMES = 400;
+    int FRAMES = 200;
     float Fire_Max_Temperature = 10.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
@@ -114,9 +114,9 @@ int main(int argc, char* args[])
     bool Smoke_And_Fire = true;
 
 
-    load_vdb("sphere-div1");
+    //load_vdb("sphere-div1");
     //load_vdb("fluid_data_0000");
-    exit(0);
+    //exit(0);
 
 
 
