@@ -105,11 +105,16 @@ void OBJECT::set_location(float3 location) {
 	this->location.z = location.z;
 }
 
-void OBJECT::load_density_grid(GRID3D obj) {
+void OBJECT::load_density_grid(GRID3D obj, float temp) {
+	this->initial_temperature = temp;
 	this->vdb_object = obj;
 	this->vdb_object.copyToDevice();
 }
 
 GRID3D OBJECT::get_density_grid() {
 	return this->vdb_object;
+}
+
+float OBJECT::get_initial_temp() {
+	return this->initial_temperature;
 }

@@ -64,7 +64,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
     bool MOVEMENT = true;
 
 
-    if (DEBUG)
+    if (DEBUG || true)
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         if (current.get_type() == "smoke" || current.get_type() == "vdb")
@@ -114,17 +114,17 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 );
         }
         else if (current.get_type() == "vdb") {
-            if (false)
             impulse_vdb << <grid, block >> > (
                 state.temperature->readTarget(),
-                current.get_location(),// current.get_size(),
+                current.get_location(),
                 current.get_impulseTemp(),
-                state.dim
-                ,current.get_density_grid().get_grid_device_temp()
+                state.dim,
+                current.get_density_grid().get_grid_device_temp(),
+                current.get_initial_temp()
                 );
             impulse_vdb << <grid, block >> > (
                 state.density->readTarget(),
-                current.get_location(),// current.get_size(),
+                current.get_location(),
                 current.get_impulseDensity(),
                 state.dim
                 ,current.get_density_grid().get_grid_device()

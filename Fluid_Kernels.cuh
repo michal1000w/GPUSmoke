@@ -243,7 +243,7 @@ __global__ void impulse(T* target, float3 c,
 }
 
 template <typename T>
-__global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb)
+__global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb, float temp = 1.0)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -252,7 +252,7 @@ __global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb)
     if (x >= vd.x || y >= vd.y || z >= vd.z) return;
 
     
-    target[get_voxel(x, y, z, vd)] = get_voxel_density(x,y,z,vd,vdb);
+    target[get_voxel(x, y, z, vd)] = temp * get_voxel_density(x,y,z,vd,vdb);
     
 }
 

@@ -146,8 +146,9 @@ public:
 	float3 get_location();
 	void set_location(float x = 0, float y = 0, float z = 0);
 	void set_location(float3 location);
-    void load_density_grid(GRID3D obj);
+    void load_density_grid(GRID3D obj,float temp = 1.0);
     GRID3D get_density_grid();
+    float get_initial_temp();
 	
 
 private:
@@ -159,6 +160,7 @@ private:
 	float impulseDensity;
 	float3 location;
     GRID3D vdb_object;
+    float initial_temperature;
 };
 
 

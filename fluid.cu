@@ -113,7 +113,7 @@ int main(int argc, char* args[])
 
 
     //rendering settings
-    int FRAMES = 200;
+    int FRAMES = 800;
     float Fire_Max_Temperature = 10.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
@@ -141,7 +141,7 @@ int main(int argc, char* args[])
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
     OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
-    SPHERE.load_density_grid(sphere);
+    SPHERE.load_density_grid(sphere,4.0);
     object_list.push_back(SPHERE);
 
     object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
