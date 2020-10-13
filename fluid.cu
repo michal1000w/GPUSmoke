@@ -9,8 +9,15 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
     int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, 
     float Ambient_temp, float Fire_Max_Temp, bool Smoke_and_Fire,
     float time_step) {
+    
+    
     fluid_state state(vol_d);
-   
+
+    //VDB
+    
+    //VDB
+
+
     state.f_weight = 0.05;
     state.time_step = time_step;// 0.1;
 
@@ -110,13 +117,8 @@ int main(int argc, char* args[])
     float Fire_Max_Temperature = 10.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
-    float ZOOM = 1.8; //1.0
+    float ZOOM = 0.6; //1.8
     bool Smoke_And_Fire = true;
-
-
-    //load_vdb("sphere-div1");
-    //load_vdb("fluid_data_0000");
-    //exit(0);
 
 
 
@@ -129,11 +131,27 @@ int main(int argc, char* args[])
 
 
 
+    /////////VDB
+    export_vdb("sphere",vol_d);
+
+
+
+    clock_t startTime = clock();
+    GRID3D sphere = load_vdb("sphere",vol_d);
+    std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
+
+    OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
+    SPHERE.load_density_grid(sphere);
+    object_list.push_back(SPHERE);
+
+    object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    ////////////////
+
 
     //adding emmiters
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
     //object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
 
 

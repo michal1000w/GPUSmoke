@@ -28,6 +28,11 @@ inline __device__ int get_voxel(int x, int y, int z, int3 d)
     return z * d.y * d.x + y * d.x + x;
 }
 
+inline __device__ float get_voxel_density(int x, int y, int z,int3 d, float* vdb)
+{
+    return vdb[get_voxel(x,y,z,d)];
+}
+
 template <typename T> inline __device__ T zero() { return 0.0; }
 
 template <> inline __device__ float  zero<float>() { return 0.0f; }
@@ -235,6 +240,20 @@ __global__ void impulse(T* target, float3 c,
     if (dist < radius) {
         target[get_voxel(x, y, z, vd)] = val;
     }
+}
+
+template <typename T>
+__global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    
+    target[get_voxel(x, y, z, vd)] = get_voxel_density(x,y,z,vd,vdb);
+    
 }
 
 template <typename T>

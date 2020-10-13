@@ -67,7 +67,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
     if (DEBUG)
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
-        if (current.get_type() == "smoke")
+        if (current.get_type() == "smoke" || current.get_type() == "vdb")
             object_list.erase(object_list.begin() + i); //remove emmiter from the list
 
 
@@ -112,6 +112,23 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 current.get_impulseDensity(),
                 state.dim
                 );
+        }
+        else if (current.get_type() == "vdb") {
+            impulse_vdb << <grid, block >> > (
+                state.temperature->readTarget(),
+                current.get_location(),// current.get_size(),
+                current.get_impulseTemp(),
+                state.dim
+                ,current.get_density_grid().get_grid_device_temp()
+                );
+            impulse_vdb << <grid, block >> > (
+                state.density->readTarget(),
+                current.get_location(),// current.get_size(),
+                current.get_impulseDensity(),
+                state.dim
+                ,current.get_density_grid().get_grid_device()
+                );
+                
         }
     }
 

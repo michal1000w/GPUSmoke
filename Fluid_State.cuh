@@ -19,6 +19,8 @@ struct fluid_state {
     DoubleBuffer<float>* pressure;
     float* diverge;
 
+    
+
     fluid_state(int3 dims) {
         step = 0;
         dim = dims;

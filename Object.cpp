@@ -30,6 +30,8 @@ std::string OBJECT::get_type() {
 		return "emmiter";
 	else if (this->type == SMOKE)
 		return "smoke";
+	else if (this->type == VDBOBJECT)
+		return "vdb";
 }
 
 float OBJECT::get_size() {
@@ -63,6 +65,8 @@ void OBJECT::set_type(std::string type) {
 		this->type = EMMITER;
 	else if (type == "SMOKE" || type == "smoke")
 		this->type = SMOKE;
+	else if (type == "VDB" || type == "vdb")
+		this->type = VDBOBJECT;
 	else {
 		std::cout << "Type: " << type << " not known!!!" << std::endl;
 		exit(1);
@@ -99,4 +103,13 @@ void OBJECT::set_location(float3 location) {
 	this->location.x = location.x;
 	this->location.y = location.y;
 	this->location.z = location.z;
+}
+
+void OBJECT::load_density_grid(GRID3D obj) {
+	this->vdb_object = obj;
+	this->vdb_object.copyToDevice();
+}
+
+GRID3D OBJECT::get_density_grid() {
+	return this->vdb_object;
 }
