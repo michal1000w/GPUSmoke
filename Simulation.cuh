@@ -114,6 +114,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 );
         }
         else if (current.get_type() == "vdb") {
+            if (false)
             impulse_vdb << <grid, block >> > (
                 state.temperature->readTarget(),
                 current.get_location(),// current.get_size(),

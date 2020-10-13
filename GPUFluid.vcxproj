@@ -22,6 +22,8 @@
     <ClInclude Include="openvdb-old\blosc.h" />
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
+    <CudaCompile Include="openvdb\common.h" />
+    <CudaCompile Include="openvdb\ComputePrimitives.h" />
     <ClInclude Include="Renderer.cuh" />
     <ClInclude Include="Simulation.cuh" />
     <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h" />
@@ -38,6 +40,7 @@
   <ItemGroup>
     <CudaCompile Include="fluid.cu" />
     <CudaCompile Include="HugeScaleSolver.cu" />
+    <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4AC2887C-CF72-405D-A7DF-FDEDD7398F6B}</ProjectGuid>
@@ -108,6 +111,11 @@
       <FastMath>true</FastMath>
       <Optimization>InheritFromHost</Optimization>
       <Runtime>InheritFromHost</Runtime>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+      <Defines>
+      </Defines>
+      <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink>
       <AdditionalLibraryDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>

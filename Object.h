@@ -47,7 +47,7 @@ public:
     }
     float operator()(int x, int y, int z) {
         float output = 0.0;
-        long long iter = (x * resolution.y * resolution.z) + (y * resolution.x) + z;
+        long long iter = z * resolution.y * resolution.x + y * resolution.x + x;
         if (iter <= size())
             output = grid[iter];
         else {
@@ -70,7 +70,7 @@ public:
 
     void normalizeData() {
         for (int i = 0; i < size(); i++) {
-            grid[i] = max(grid[i], 0.8);
+            grid[i] = max(grid[i], 1.0);
             grid[i] = min(grid[i], 0.0);
         }       
     }
@@ -85,7 +85,7 @@ public:
     }
 
     void set(int x, int y, int z, float value) {
-        grid[(x * resolution.y * resolution.z) + (y * resolution.x) + z] = value;
+        grid[z * resolution.y * resolution.x + y * resolution.x + x] = value;
     }
     int3 get_resolution() {
         return resolution;

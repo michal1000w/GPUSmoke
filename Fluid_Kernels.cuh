@@ -30,7 +30,7 @@ inline __device__ int get_voxel(int x, int y, int z, int3 d)
 
 inline __device__ float get_voxel_density(int x, int y, int z,int3 d, float* vdb)
 {
-    return vdb[get_voxel(x,y,z,d)];
+    return vdb[z * d.y * d.x + y * d.x + x];
 }
 
 template <typename T> inline __device__ T zero() { return 0.0; }

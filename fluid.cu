@@ -101,7 +101,7 @@ int main(int argc, char* args[])
 {
 
     //simulation settings
-    int DOMAIN_RESOLUTION = 450;
+    int3 DOMAIN_RESOLUTION = make_int3(256,256,450);
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -126,18 +126,18 @@ int main(int argc, char* args[])
     time_step = speed * 0.1; //chyba dobre
 
 
-    const int3 vol_d = make_int3(DOMAIN_RESOLUTION, DOMAIN_RESOLUTION, DOMAIN_RESOLUTION); //Domain resolution
+    const int3 vol_d = make_int3(DOMAIN_RESOLUTION.x, DOMAIN_RESOLUTION.y, DOMAIN_RESOLUTION.z); //Domain resolution
     const int3 img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
 
 
 
     /////////VDB
-    export_vdb("sphere",vol_d);
+    export_vdb2("sphere",vol_d);
 
 
 
     clock_t startTime = clock();
-    GRID3D sphere = load_vdb("sphere",vol_d);
+    GRID3D sphere = load_vdb3("sphere",vol_d);
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
     OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
@@ -145,8 +145,12 @@ int main(int argc, char* args[])
     object_list.push_back(SPHERE);
 
     object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    
+    
+    
+    //renderImage("sphere", 1);
+    //exit(1);
     ////////////////
-
 
     //adding emmiters
     //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
@@ -174,7 +178,7 @@ int main(int argc, char* args[])
     std::cout << "Clearing previous frames\n";
     std::system("erase_imgs.sh");
 
-    if (DOMAIN_RESOLUTION <= 450)
+    if (max(max(DOMAIN_RESOLUTION.x,DOMAIN_RESOLUTION.y),DOMAIN_RESOLUTION.z) <= 450)
         Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;

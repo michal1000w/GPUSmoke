@@ -85,5 +85,14 @@
     <CudaCompile Include="HugeScaleSolver.cu">
       <Filter>Sources</Filter>
     </CudaCompile>
+    <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="openvdb\common.h">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="openvdb\ComputePrimitives.h">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
   </ItemGroup>
 </Project>
