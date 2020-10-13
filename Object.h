@@ -87,11 +87,11 @@ public:
     }
 
     void addNoise() {
-        float ratio = 10000.0 / 500.0;
+        float ratio = 10000.0 / 300.0;
         ratio = ratio * 0.5;
         for (int i = 0; i < size(); i++) {
             if (grid_temp[i] > 0.0) {
-                float random = (float)(rand() % 10000) / 500.0;
+                float random = (float)(rand() % 10000) / 300.0;
                 random -= ratio;
                 
                 grid_temp[i] += random;
