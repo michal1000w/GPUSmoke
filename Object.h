@@ -70,8 +70,8 @@ public:
 
     void normalizeData() {
         for (int i = 0; i < size(); i++) {
-            grid[i] = max(grid[i], 1.0);
-            grid[i] = min(grid[i], 0.0);
+            grid[i] = min(grid[i], 1.0);
+            grid[i] = max(grid[i], 0.0);
         }       
     }
     void copyToDevice() {

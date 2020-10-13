@@ -148,7 +148,7 @@ int main(int argc, char* args[])
     
     
     
-    //renderImage("sphere", 1);
+    //renderImage("sphere", 2);
     //exit(1);
     ////////////////
 

@@ -80,25 +80,35 @@ GRID3D load_vdb3(std::string filename, int3 domain_resolution, bool DEBUG = fals
         auto* grid = handle[0].grid<float>(); // get a (raw) pointer to a NanoVDB grid of value type float on the CPU
         auto object = grid->getAccessor();
 
-        std::cout << grid->activeVoxelCount() << std::endl;
+
         std::cout << domain_resolution.x * domain_resolution.y * domain_resolution.z << std::endl;
         
+        std::cout << grid->activeVoxelCount() << std::endl;
+        auto dims = grid->indexBBox().dim();
+        std::cout << "X: " << dims.x() << " Y: " << dims.y() << " Z: " << dims.z() << std::endl;
+        int3 dims3 = make_int3(dims.x(), dims.y(), dims.x());
+        
+        float mini, maxi;
+        grid->tree().extrema(mini, maxi);
+        std::cout << "Min: " << mini << " Max: " << maxi << std::endl;
         //for (int x = 0; x < domain_resolution.x; x++)
+        
         int THREADS = 8;//8
-        int sizee = ceil((double)domain_resolution.x / (double)THREADS);
+        int sizee = ceil((double)dims3.x / (double)THREADS);
         concurrency::parallel_for(0, THREADS, [&](int n) {
             int end = (n * sizee) + (sizee - 1);
-            if (end > domain_resolution.x) {
-                end = domain_resolution.x;
+            if (end > dims3.x) {
+                end = dims3.x;
             }
             for (int x = n * sizee; x < end; x++)
-                for (int y = 0; y < domain_resolution.y; y++)
-                    for (int z = 0; z < domain_resolution.z; z++) {
+                for (int y = 0; y < dims3.y; y++)
+                    for (int z = 0; z < dims3.z; z++) {
                         if (DEBUG)
                             std::cout << "\r" << object.getValue(nanovdb::Coord(x, y, z)) << " , ";
                         outputt.set(x, y, z, object.getValue(nanovdb::Coord(x, y, z)));
                     }
             });
+            
     }
     catch (const std::exception& e) {
         std::cout << "[Import] An exception occurred: \"" << e.what() << "\"" << std::endl;
@@ -182,7 +192,7 @@ using BufferT = nanovdb::CudaDeviceBuffer;
 int export_vdb2(std::string filename, int3 domain_resolution) {
     filename = "input//" + filename + ".nvdb";
     try {
-        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(-20, 0, 0), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 100, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
        
         nanovdb::io::writeGrid(filename, handle, nanovdb::io::Codec::BLOSC);
     }
@@ -207,7 +217,7 @@ void renderImage(std::string filename, int ac) {
             std::cout << "Loaded NanoVDB grid[" << handle.gridMetaData()->gridName() << "]...\n";
         }
         else {
-            handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(-20, 0, 0), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+            handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 100, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
         }
 
         if (handle.gridMetaData()->isFogVolume() == false) {
