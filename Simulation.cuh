@@ -128,11 +128,28 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 state.dim
                 ,current.get_density_grid().get_grid_device()
                 );
-                
+        }
+        else if (current.get_type() == "vdbs") {
+            impulse_vdb_single << <grid, block >> > (
+                state.temperature->readTarget(),
+                current.get_location(),
+                current.get_impulseTemp(),
+                state.dim,
+                current.get_density_grid().get_grid_device_temp(),
+                current.get_initial_temp()
+                );
+            impulse_vdb_single << <grid, block >> > (
+                state.density->readTarget(),
+                current.get_location(),
+                current.get_impulseDensity(),
+                state.dim
+                , current.get_density_grid().get_grid_device()
+                );
+
         }
 
-
-        if (current.get_type() == "smoke" || current.get_type() == "vdb") {
+        //if (false)
+        if (current.get_type() == "smoke" || current.get_type() == "vdbs") {
             current.cudaFree();
             object_list.erase(object_list.begin() + i); //remove emmiter from the list
         }

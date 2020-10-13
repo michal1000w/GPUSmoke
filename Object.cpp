@@ -32,6 +32,8 @@ std::string OBJECT::get_type() {
 		return "smoke";
 	else if (this->type == VDBOBJECT)
 		return "vdb";
+	else if (this->type == VDBSINGLE)
+		return "vdbs";
 }
 
 float OBJECT::get_size() {
@@ -67,6 +69,8 @@ void OBJECT::set_type(std::string type) {
 		this->type = SMOKE;
 	else if (type == "VDB" || type == "vdb")
 		this->type = VDBOBJECT;
+	else if (type == "VDBSINGLE" || type == "vdbsingle")
+		this->type = VDBSINGLE;
 	else {
 		std::cout << "Type: " << type << " not known!!!" << std::endl;
 		exit(1);

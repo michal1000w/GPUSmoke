@@ -114,7 +114,7 @@ int main(int argc, char* args[])
 
     //rendering settings
     int FRAMES = 500;
-    float Fire_Max_Temperature = 10.0f;
+    float Fire_Max_Temperature = 50.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
     float ZOOM = 0.45; //1.8
@@ -140,11 +140,16 @@ int main(int argc, char* args[])
     GRID3D sphere = load_vdb3("sphere",vol_d);
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
-    OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
-    SPHERE.load_density_grid(sphere,6.0);
-    object_list.push_back(SPHERE);
-
-    //object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    if (false) {
+        OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
+        SPHERE.load_density_grid(sphere, 3.0);
+        object_list.push_back(SPHERE);
+    }
+    else {
+        OBJECT SPHERE("vdbsingle", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
+        SPHERE.load_density_grid(sphere, 6.0);
+        object_list.push_back(SPHERE);
+    }
     
     
     

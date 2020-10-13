@@ -10,6 +10,7 @@
 #define EMMITER 1
 #define SMOKE 2
 #define VDBOBJECT 3
+#define VDBSINGLE 4
 #define MS_TO_SEC 0.001
 
 
@@ -81,6 +82,8 @@ public:
 
     void normalizeData() {
         for (int i = 0; i < size(); i++) {
+            if (grid[i] < 0.01)
+                grid[i] = 0.0f;
             grid[i] = min(grid[i], 1.0);
             grid[i] = max(grid[i], 0.0);
         }       

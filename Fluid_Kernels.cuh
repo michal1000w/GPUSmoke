@@ -251,9 +251,22 @@ __global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb, flo
 
     if (x >= vd.x || y >= vd.y || z >= vd.z) return;
 
-    
-    target[get_voxel(x, y, z, vd)] = temp * get_voxel_density(x,y,z,vd,vdb);
-    
+    float adding = temp * get_voxel_density(x, y, z, vd, vdb);
+    float sum = adding + target[get_voxel(x, y, z, vd)];
+    if (target[get_voxel(x, y, z, vd)] < adding*0.7)
+        target[get_voxel(x, y, z, vd)] = sum; 
+}
+
+template <typename T>
+__global__ void impulse_vdb_single(T* target, float3 c, T val, int3 vd, float* vdb, float temp = 1.0)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    target[get_voxel(x, y, z, vd)] += temp * get_voxel_density(x, y, z, vd, vdb);
 }
 
 template <typename T>
