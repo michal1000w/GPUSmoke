@@ -67,8 +67,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
     if (DEBUG || true)
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
-        if (current.get_type() == "smoke" || current.get_type() == "vdb")
-            object_list.erase(object_list.begin() + i); //remove emmiter from the list
+        
 
 
         if (MOVEMENT) {
@@ -130,6 +129,12 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 ,current.get_density_grid().get_grid_device()
                 );
                 
+        }
+
+
+        if (current.get_type() == "smoke" || current.get_type() == "vdb") {
+            current.cudaFree();
+            object_list.erase(object_list.begin() + i); //remove emmiter from the list
         }
     }
 

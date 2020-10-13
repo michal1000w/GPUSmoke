@@ -106,6 +106,7 @@ GRID3D load_vdb3(std::string filename, int3 domain_resolution, bool DEBUG = fals
                         if (DEBUG)
                             std::cout << "\r" << object.getValue(nanovdb::Coord(x, y, z)) << " , ";
                         outputt.set(x, y, z, object.getValue(nanovdb::Coord(x, y, z)));
+                        outputt.set_temp(x, y, z, object.getValue(nanovdb::Coord(x, y, z)));
                     }
             });
             
@@ -192,7 +193,7 @@ using BufferT = nanovdb::CudaDeviceBuffer;
 int export_vdb2(std::string filename, int3 domain_resolution) {
     filename = "input//" + filename + ".nvdb";
     try {
-        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 100, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 40, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
        
         nanovdb::io::writeGrid(filename, handle, nanovdb::io::Codec::BLOSC);
     }

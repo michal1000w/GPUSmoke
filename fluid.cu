@@ -99,9 +99,9 @@ void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<
 
 int main(int argc, char* args[])
 {
-
+    srand(0);
     //simulation settings
-    int3 DOMAIN_RESOLUTION = make_int3(256,256,450);
+    int3 DOMAIN_RESOLUTION = make_int3(256,600,256);
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -113,11 +113,11 @@ int main(int argc, char* args[])
 
 
     //rendering settings
-    int FRAMES = 800;
+    int FRAMES = 500;
     float Fire_Max_Temperature = 10.0f;
     float Image_Resolution[2] = { 640, 640 };
     int STEPS = 100; //512 Rendering Samples
-    float ZOOM = 0.6; //1.8
+    float ZOOM = 0.45; //1.8
     bool Smoke_And_Fire = true;
 
 
@@ -141,10 +141,10 @@ int main(int argc, char* args[])
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
     OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
-    SPHERE.load_density_grid(sphere,4.0);
+    SPHERE.load_density_grid(sphere,6.0);
     object_list.push_back(SPHERE);
 
-    object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    //object_list.push_back(OBJECT("smoke", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
     
     
     
@@ -178,11 +178,15 @@ int main(int argc, char* args[])
     std::cout << "Clearing previous frames\n";
     std::system("erase_imgs.sh");
 
-    if (max(max(DOMAIN_RESOLUTION.x,DOMAIN_RESOLUTION.y),DOMAIN_RESOLUTION.z) <= 450)
+    if (DOMAIN_RESOLUTION.x*DOMAIN_RESOLUTION.y*DOMAIN_RESOLUTION.z <= 100000000)
         Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
         //Huge_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
+    }
+
+    for (int i = 0; i < object_list.size(); i++) { //czyszczenie pamięci GPU
+        object_list[i].cudaFree();
     }
     
     std::cout << "Rendering animation video..." << std::endl;

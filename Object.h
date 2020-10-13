@@ -26,6 +26,8 @@ public:
         resolution.x = resolution.y = resolution.z = 1;
         grid = new float[1];
         grid[0] = 0.0;
+        grid_temp = new float[1];
+        grid_temp[0] = 0.0;
     }
     GRID3D(int x, int y, int z) {
         resolution.x = x;
@@ -33,8 +35,11 @@ public:
         resolution.z = z;
 
         grid = new float[(long long)x * (long long)y * (long long)z];
-        for (long long i = 0; i < size(); i++)
+        grid_temp = new float[(long long)x * (long long)y * (long long)z];
+        for (long long i = 0; i < size(); i++) {
             grid[i] = 0.0;
+            grid_temp[i] = 0.0;
+        }
     }
     GRID3D(int x, int y, int z, float* vdb) {
         resolution.x = x;
@@ -42,8 +47,11 @@ public:
         resolution.z = z;
 
         grid = new float[(long long)x * (long long)y * (long long)z];
-        for (long long i = 0; i < size(); i++)
-            grid[i] = 0.0;
+        grid_temp = new float[(long long)x * (long long)y * (long long)z];
+        for (long long i = 0; i < size(); i++) {
+            grid[i] = vdb[i];
+            grid_temp[i] = vdb[i];
+        }
     }
     float operator()(int x, int y, int z) {
         float output = 0.0;
@@ -63,8 +71,11 @@ public:
         resolution.z = rhs.resolution.z;
 
         grid = new float[(long long)rhs.resolution.x * (long long)rhs.resolution.y * (long long)rhs.resolution.z];
-        for (long long i = 0; i < size(); i++)
+        grid_temp = new float[(long long)rhs.resolution.x * (long long)rhs.resolution.y * (long long)rhs.resolution.z];
+        for (long long i = 0; i < size(); i++) {
             grid[i] = rhs.grid[i];
+            grid_temp[i] = rhs.grid_temp[i];
+        }
         return *this;
     }
 
@@ -74,9 +85,24 @@ public:
             grid[i] = max(grid[i], 0.0);
         }       
     }
+
+    void addNoise() {
+        float ratio = 10000.0 / 500.0;
+        ratio = ratio * 0.5;
+        for (int i = 0; i < size(); i++) {
+            if (grid_temp[i] > 0.0) {
+                float random = (float)(rand() % 10000) / 500.0;
+                random -= ratio;
+                
+                grid_temp[i] += random;
+            }
+        }
+    }
+
     void copyToDevice() {
+        addNoise();
         cudaMalloc((void**)&vdb_temp, sizeof(float) * size());
-        cudaMemcpy(vdb_temp, grid, sizeof(float) * size(), cudaMemcpyHostToDevice);
+        cudaMemcpy(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice);
 
         normalizeData();
         //copy to device
@@ -87,19 +113,29 @@ public:
     void set(int x, int y, int z, float value) {
         grid[z * resolution.y * resolution.x + y * resolution.x + x] = value;
     }
+    void set_temp(int x, int y, int z, float value) {
+        grid_temp[z * resolution.y * resolution.x + y * resolution.x + x] = value;
+    }
     int3 get_resolution() {
         return resolution;
     }
     void free() {
         //std::cout << "Free grid memory" << std::endl;
         deletep(*grid);
-
+        
+    }
+    void freeCuda() {
+        cudaFree(vdb);
+        cudaFree(vdb_temp);
     }
     ~GRID3D() {
         free();
     }
     float* get_grid() {
         return this->grid;
+    }
+    float* get_grid_temp() {
+        return this->grid_temp;
     }
 
     float* get_grid_device() {
@@ -113,6 +149,7 @@ private:
         return (long long)resolution.x * (long long)resolution.y * (long long)resolution.z;
     }
     float* grid;
+    float* grid_temp;
     int3 resolution;
     float* vdb;
     float* vdb_temp;
@@ -149,6 +186,7 @@ public:
     void load_density_grid(GRID3D obj,float temp = 1.0);
     GRID3D get_density_grid();
     float get_initial_temp();
+    void cudaFree() { vdb_object.freeCuda(); }
 	
 
 private:
