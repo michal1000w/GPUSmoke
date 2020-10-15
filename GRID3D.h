@@ -48,7 +48,16 @@ public:
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         //grid_temp = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost);
+        
         //cudaMemcpy(grid_temp, grid_src_temp, sizeof(float) * size(), cudaMemcpyDeviceToHost);
+    }
+
+    void load_from_device(int3 dim, float* grid_src) {
+        free();
+        this->resolution = dim;
+        grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+        cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost);
+
     }
 
     GRID3D(int x, int y, int z, float* vdb) {
@@ -88,6 +97,7 @@ public:
     }
 
     GRID3D operator=(const GRID3D& rhs) {
+        free();
         resolution.x = rhs.resolution.x;
         resolution.y = rhs.resolution.y;
         resolution.z = rhs.resolution.z;
@@ -99,6 +109,26 @@ public:
             grid_temp[i] = rhs.grid_temp[i];
         }
         return *this;
+    }
+    GRID3D operator=(const GRID3D* rhs) {
+        free();
+        resolution.x = rhs->resolution.x;
+        resolution.y = rhs->resolution.y;
+        resolution.z = rhs->resolution.z;
+
+        grid = rhs->grid;
+        grid_temp = rhs->grid_temp;
+        return *this;
+    }
+
+    void set_pointer(const GRID3D* rhs) {
+        free();
+        resolution.x = rhs->resolution.x;
+        resolution.y = rhs->resolution.y;
+        resolution.z = rhs->resolution.z;
+
+        grid = rhs->grid;
+        grid_temp = rhs->grid_temp;
     }
 
     void normalizeData() {
@@ -149,6 +179,7 @@ public:
     void free() {
         //std::cout << "Free grid memory" << std::endl;
         deletep(*grid);
+        deletep(*grid_temp);
 
     }
     void freeCuda() {

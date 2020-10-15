@@ -26,7 +26,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
 
     bool DEBUG = true;
     for (int f = 0; f <= FRAMES; f++) {
-
+        
         std::cout << "\rFrame " << f + 1 << "  -  ";
 
         render_fluid(
@@ -43,11 +43,15 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
             //DEBUG = false;
         }
 
-        GRID3D arr = state.density->readToGrid();
-        //GRID3D arr_temp = state.temperature->readToGrid(vol_d);
-        export_openvdb("frame."+std::to_string(f), vol_d, arr);
-        
-        //delete arr;
+        GRID3D* arr = new GRID3D();
+        GRID3D* arr_temp = new GRID3D();
+        arr->set_pointer(state.density->readToGrid());
+        arr_temp->set_pointer(state.temperature->readToGrid());
+        /*
+        */
+        export_openvdb("frame."+std::to_string(f), vol_d, arr,arr_temp);
+        arr->free();
+        arr_temp->free();
     }
 
     delete[] img;

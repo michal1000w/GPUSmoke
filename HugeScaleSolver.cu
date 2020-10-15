@@ -15,6 +15,8 @@
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/SignedFloodFill.h>
+#include <openvdb/io/Stream.h>
+#include <openvdb/io/Compression.h>
 ////////////////////////////////////////////
 #include "third_party/openvdb/nanovdb/nanovdb/NanoVDB.h"
 #include <windows.h>
