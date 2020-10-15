@@ -28,6 +28,8 @@
 #include <nanovdb/util/IO.h>
 #include <nanovdb/util/CudaDeviceBuffer.h>
 #include <nanovdb/util/GridBuilder.h>
+#include <nanovdb/util/NanoToOpenVDB.h>
+#include <nanovdb/util/OpenToNanoVDB.h>
 ////////////////////////////////////////////
 
 
