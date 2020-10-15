@@ -15,6 +15,7 @@
     <ClInclude Include="double_buffer.h" />
     <ClInclude Include="Fluid_Kernels.cuh" />
     <ClInclude Include="Fluid_State.cuh" />
+    <ClInclude Include="GRID3D.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="Object.h" />

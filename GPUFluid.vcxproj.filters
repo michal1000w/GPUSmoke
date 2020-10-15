@@ -49,6 +49,9 @@
     <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\NanoVDB.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
+    <ClInclude Include="GRID3D.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

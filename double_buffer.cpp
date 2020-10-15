@@ -1,6 +1,7 @@
 #include "double_buffer.h"
 #include <utility>
 
+
 template <typename T>
 DoubleBuffer<T>::DoubleBuffer()
 {
@@ -28,6 +29,13 @@ T* DoubleBuffer<T>::readTarget()
 {
     return A;
 }
+ 
+
+
+template<typename T>
+void DoubleBuffer<T>::setDim(int3 dim) {
+    this->dim = dim;
+}
 
 template <typename T>
 T* DoubleBuffer<T>::writeTarget()
@@ -52,4 +60,5 @@ DoubleBuffer<T>::~DoubleBuffer()
 {
     cudaFree(A);
     cudaFree(B);
+    //grid->free();
 }

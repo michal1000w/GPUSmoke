@@ -42,6 +42,12 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
             state.step++;
             //DEBUG = false;
         }
+
+        GRID3D arr = state.density->readToGrid(vol_d);
+        //GRID3D arr_temp = state.temperature->readToGrid(vol_d);
+        export_openvdb("frame."+std::to_string(f), vol_d, arr);
+        
+        //delete arr;
     }
 
     delete[] img;
@@ -99,6 +105,7 @@ void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<
 */
 int main(int argc, char* args[])
 {
+    openvdb::initialize();
     srand(0);
     //simulation settings
     int3 DOMAIN_RESOLUTION = make_int3(256,600,256);
@@ -132,10 +139,7 @@ int main(int argc, char* args[])
 
 
 
-    std::cout << "Writing sphere" << std::endl;
-    export_openvdb("sphere", vol_d);
-    std::cout << "Done" << std::endl;
-    exit(1);
+    
 
 
 

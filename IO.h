@@ -29,73 +29,79 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 }
 
 
-void
-makeSphere(openvdb::FloatGrid& grid, float radius, const openvdb::Vec3f& c)
-{
+
+void create_grid(openvdb::FloatGrid& grid_dst, GRID3D& grid_src, const openvdb::Vec3f& c) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
-    // Distance value for the constant region exterior to the narrow band
-    const ValueT outside = grid.background();
-    // Distance value for the constant region interior to the narrow band
-    // (by convention, the signed distance is negative in the interior of
-    // a level set)
-    const ValueT inside = -outside;
-    // Use the background value as the width in voxels of the narrow band.
-    // (The narrow band is centered on the surface of the sphere, which
-    // has distance 0.)
+    const ValueT outside = grid_dst.background();
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
-    // The bounding box of the narrow band is 2*dim voxels on a side.
-    int dim = int(radius + padding);
+
+    //get bounding box
+    int3 dim = grid_src.get_resolution();
+
     // Get a voxel accessor.
-    typename openvdb::FloatGrid::Accessor accessor = grid.getAccessor();
-    // Compute the signed distance from the surface of the sphere of each
-    // voxel within the bounding box and insert the value into the grid
-    // if it is smaller in magnitude than the background value.
-    openvdb::Coord ijk;
-    int& i = ijk[0], & j = ijk[1], & k = ijk[2];
-    for (i = c[0] - dim; i < c[0] + dim; ++i) {
-        const float x2 = openvdb::math::Pow2(i - c[0]);
-        for (j = c[1] - dim; j < c[1] + dim; ++j) {
-            const float x2y2 = openvdb::math::Pow2(j - c[1]) + x2;
-            for (k = c[2] - dim; k < c[2] + dim; ++k) {
-                // The distance from the sphere surface in voxels
-                const float dist = openvdb::math::Sqrt(x2y2
-                    + openvdb::math::Pow2(k - c[2])) - radius;
-                // Convert the floating-point distance to the grid's value type.
-                ValueT val = ValueT(dist);
-                // Only insert distances that are smaller in magnitude than
-                // the background value.
-                if (val < inside || outside < val) continue;
-                // Set the distance for voxel (i,j,k).
-                accessor.setValue(ijk, val);
-            }
+    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
+
+    float* grid_src_arr = grid_src.get_grid();
+//#define MULTI
+#ifndef MULTI
+    for (int x = 0; x < dim.x; x++) {
+#else
+    int THREADS = 2;//8
+    int sizee = ceil((double)dim.x / (double)THREADS);
+    concurrency::parallel_for(0, THREADS, [&](int n) {
+        int end = (n * sizee) + (sizee - 1);
+        if (end > dim.x) {
+            end = dim.x;
         }
+        for (int x = n * sizee; x < end; x++)
+#endif
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
+                    accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+                }
+            }
+#ifdef MULTI
+    });
+#else
     }
-    // Propagate the outside/inside sign information from the narrow band
-    // throughout the grid.
-    openvdb::tools::signedFloodFill(grid.tree());
+#endif
+    //delete[] grid_src_arr;
+    openvdb::tools::signedFloodFill(grid_dst.tree());
 }
 
-GRID3D export_openvdb(std::string filename, int3 domain_resolution, bool DEBUG = false) {
+int export_openvdb(std::string filename, int3 domain_resolution, GRID3D& grid_dst, bool DEBUG = false) {
     filename = "output/cache/" + filename + ".vdb";
-
-    GRID3D output(domain_resolution.x, domain_resolution.y, domain_resolution.z);
     
-    openvdb::initialize();
+    std::cout << " || Saving OpenVDB:  ";
+    //clock_t startTime = clock();
+    
+    //std::cout << "Done" << std::endl;
     // Create a FloatGrid and populate it with a narrow-band
     // signed distance field of a sphere.
     openvdb::FloatGrid::Ptr grid =
-        openvdb::FloatGrid::create(/*background value=*/3.0);
+        openvdb::FloatGrid::create(/*background value=*/0.0);
 
-    makeSphere(*grid, /*radius=*/50.0, /*center=*/openvdb::Vec3f(1.5, 2, 3));
+
+    
+    clock_t startTime = clock();
+
+    //std::cout << "Grid created" << std::endl;
+    create_grid(*grid, grid_dst, /*center=*/openvdb::Vec3f(0, 0, 0));
+    //std::cout << "Grid copied" << std::endl;
 
     // Associate some metadata with the grid.
-    grid->insertMeta("radius", openvdb::FloatMetadata(50.0));
+    //grid->insertMeta("radius", openvdb::FloatMetadata(50.0));
     // Name the grid "LevelSetSphere".
+    std::cout << (clock() - startTime);
+    startTime = clock();
+    
     grid->setName("density");
-    // Create a VDB file object and write out the grid.
     openvdb::io::File(filename).write({ grid });
+    
+    std::cout << " ; "<< (clock() - startTime);
 
-    return output;
+    return 1;
 }
 
 
