@@ -13,6 +13,7 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
 #include <openvdb/openvdb.h>
+#include <openvdb/tools/LevelSetSphere.h>
 ////////////////////////////////////////////
 #include "third_party/openvdb/nanovdb/nanovdb/NanoVDB.h"
 #include <windows.h>
