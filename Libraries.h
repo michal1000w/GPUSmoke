@@ -25,14 +25,6 @@
 
 
 
-#include "third_party/openvdb/nanovdb/nanovdb/NanoVDB.h"
-#include <windows.h>
-#include <ppl.h>
-#include <thread>
-//#include "OpenVDB-old/tinyvdbio.h"
-#include <nanovdb/util/GridBuilder.h>
-#include <nanovdb/util/IO.h>
-#include <nanovdb/util/CudaDeviceBuffer.h>
-#include <nanovdb/util/GridBuilder.h>
+
 
 #endif
