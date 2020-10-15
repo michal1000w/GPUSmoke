@@ -17,6 +17,7 @@
 #include <openvdb/tools/SignedFloodFill.h>
 #include <openvdb/io/Stream.h>
 #include <openvdb/io/Compression.h>
+#include <openvdb/tree/ValueAccessor.h>
 ////////////////////////////////////////////
 #include "third_party/openvdb/nanovdb/nanovdb/NanoVDB.h"
 #include <windows.h>

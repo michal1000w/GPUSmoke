@@ -1,9 +1,8 @@
 #ifndef __IO
 #define __IO
 #include "Libraries.h"
+#include <vector>
 //#include "OpenVDB/tinyvdbio.h"
-
-
 
 
 
@@ -39,14 +38,19 @@ void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::
     int3 dim = grid_src->get_resolution();
 
     // Get a voxel accessor.
-    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
 
     float* grid_src_arr = grid_src->get_grid();
 //#define MULTI
 #ifndef MULTI
+    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
     for (int x = 0; x < dim.x; x++) {
 #else
-    int THREADS = 2;//8
+    int THREADS = 24;//8
+    std::vector<typename openvdb::FloatGrid::Accessor> accessors;
+    //std::vector<typename openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType,true>> accessors;
+    for (int i = 0; i < THREADS; i++)
+        //accessors.push_back(openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType, true>(grid_dst.getAccessor()));
+        accessors.push_back(grid_dst.getAccessor());
     int sizee = ceil((double)dim.x / (double)THREADS);
     concurrency::parallel_for(0, THREADS, [&](int n) {
         int end = (n * sizee) + (sizee - 1);
@@ -54,20 +58,31 @@ void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::
             end = dim.x;
         }
         for (int x = n * sizee; x < end; x++)
-#endif
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
                     //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
-                    accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+                    accessors[n].setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
                 }
             }
-#ifdef MULTI
     });
+    for (int i = 0; i < THREADS; i++)
+        accessors[0].clear();
+    accessors.clear();
+#endif
+#ifdef MULTI
 #else
+        for (int y = 0; y < dim.y; y++) {
+            for (int z = 0; z < dim.z; z++) {
+                //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
+                accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+            }
+        }
     }
 #endif
     delete[] grid_src_arr;
-    openvdb::tools::signedFloodFill(grid_dst.tree());
+    auto tree = grid_dst.tree();
+    tree.clearAllAccessors();
+    openvdb::tools::signedFloodFill(tree);
 }
 
 int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
@@ -83,6 +98,8 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
         openvdb::FloatGrid::create(/*background value=*/0.0);
     clock_t startTime = clock();
 
+    
+
     create_grid(*grid, grid_dst, /*center=*/openvdb::Vec3f(0, 0, 0));
 
     grid_dst->free();
@@ -96,12 +113,17 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     create_grid(*grid_temp2, grid_temp, /*center=*/openvdb::Vec3f(0, 0, 0));
 
     grid_temp->free();
+
+    ////////////////////////////////////////////////////////
+    //reduce size
+    grid_temp2->saveFloatAsHalf();
+    grid->saveFloatAsHalf();
     ////////////////////////////////////////////////////////
     grid->setName("density");
     grids->push_back(grid);
     grid_temp2->setName("temperature");
     grids->push_back(grid_temp2);
-
+    ////////////////////////////////////////////////////////
 
 
 

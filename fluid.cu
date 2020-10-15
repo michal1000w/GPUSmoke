@@ -148,6 +148,7 @@ int main(int argc, char* args[])
 
 
     /////////VDB
+#ifdef VDBB
     export_vdb("sphere",vol_d);
 
 
@@ -156,7 +157,7 @@ int main(int argc, char* args[])
     GRID3D sphere = load_vdb("sphere",vol_d);
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
-    if (false) {
+    if (true) {
         OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
         SPHERE.load_density_grid(sphere, 3.0);
         object_list.push_back(SPHERE);
@@ -166,20 +167,18 @@ int main(int argc, char* args[])
         SPHERE.load_density_grid(sphere, 6.0);
         object_list.push_back(SPHERE);
     }
+#else
     
     
-    
-    //renderImage("sphere", 2);
-    //exit(1);
     ////////////////
 
     //adding emmiters
-    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
-    //object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
-    //object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+    object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
 
-
+#endif
 
 
     float3 cam;
