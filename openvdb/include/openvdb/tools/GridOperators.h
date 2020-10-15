@@ -1,37 +1,10 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
-/// @file GridOperators.h
+/// @file tools/GridOperators.h
 ///
-/// @brief Applies an operator on an input grid to produce an output
-/// grid with the same topology but potentially different value type.
+/// @brief Apply an operator to an input grid to produce an output grid
+/// with the same active voxel topology but a potentially different value type.
 
 #ifndef OPENVDB_TOOLS_GRID_OPERATORS_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_GRID_OPERATORS_HAS_BEEN_INCLUDED
@@ -41,6 +14,7 @@
 #include <openvdb/util/NullInterrupter.h>
 #include <openvdb/tree/LeafManager.h>
 #include <openvdb/tree/ValueAccessor.h>
+#include "ValueTransformer.h" // for tools::foreach()
 #include <tbb/parallel_for.h>
 
 
@@ -74,10 +48,6 @@ template<typename ScalarGridType> struct ScalarToVectorConverter {
 /// @details When a mask grid is specified, the solution is calculated only in
 /// the intersection of the mask active topology and the input active topology
 /// independent of the transforms associated with either grid.
-/// @note The current implementation assumes all the input distance values
-/// are represented by leaf voxels and not tiles.  This is true for all
-/// narrow-band level sets, which this class was originally developed for.
-/// In the future we will expand this class to also handle tile values.
 template<typename GridType, typename InterruptT> inline
 typename ScalarToVectorConverter<GridType>::Type::Ptr
 cpt(const GridType& grid, bool threaded, InterruptT* interrupt);
@@ -314,15 +284,11 @@ struct ToMaskGrid {
 };
 
 
-/// @brief Apply an operator on an input grid to produce an output grid
-/// with the same topology but a possibly different value type.
+/// @brief Apply an operator to an input grid to produce an output grid
+/// with the same active voxel topology but a potentially different value type.
 /// @details To facilitate inlining, this class is also templated on a Map type.
 ///
 /// @note This is a helper class and should never be used directly.
-///
-/// @note The current implementation assumes all the input
-/// values are represented by leaf voxels and not tiles. In the
-/// future we will expand this class to also handle tile values.
 template<
     typename InGridT,
     typename MaskGridType,
@@ -338,8 +304,12 @@ public:
     typedef typename tree::LeafManager<OutTreeT>  LeafManagerT;
 
     GridOperator(const InGridT& grid, const MaskGridType* mask, const MapT& map,
-        InterruptT* interrupt = nullptr):
-        mAcc(grid.getConstAccessor()), mMap(map), mInterrupt(interrupt), mMask(mask)
+        InterruptT* interrupt = nullptr, bool densify = true)
+        : mAcc(grid.getConstAccessor())
+        , mMap(map)
+        , mInterrupt(interrupt)
+        , mMask(mask)
+        , mDensify(densify) ///< @todo consider adding a "NeedsDensification" operator trait
     {
     }
     GridOperator(const GridOperator&) = default;
@@ -354,9 +324,13 @@ public:
         typename InGridT::TreeType tmp(mAcc.tree().background());
         typename OutGridT::ValueType backg = OperatorT::result(mMap, tmp, math::Coord(0));
 
-        // output tree = topology copy of input tree!
+        // The output tree is topology copy, optionally densified, of the input tree.
+        // (Densification is necessary for some operators because applying the operator to
+        // a constant tile produces distinct output values, particularly along tile borders.)
+        /// @todo Can tiles be handled correctly without densification, or by densifying
+        /// only to the width of the operator stencil?
         typename OutTreeT::Ptr tree(new OutTreeT(mAcc.tree(), backg, TopologyCopy()));
-
+        if (mDensify) tree->voxelizeActiveTiles();
 
         // create grid with output tree and unit transform
         typename OutGridT::Ptr result(new OutGridT(tree));
@@ -377,13 +351,33 @@ public:
             (*this)(leafManager.leafRange());
         }
 
+        // If the tree wasn't densified, it might have active tiles that need to be processed.
+        if (!mDensify) {
+            using TileIter = typename OutTreeT::ValueOnIter;
+
+            TileIter tileIter = tree->beginValueOn();
+            tileIter.setMaxDepth(tileIter.getLeafDepth() - 1); // skip leaf values (i.e., voxels)
+
+            AccessorT inAcc = mAcc; // each thread needs its own accessor, captured by value
+            auto tileOp = [this, inAcc](const TileIter& it) {
+                // Apply the operator to the input grid's tile value at the iterator's
+                // current coordinates, and set the output tile's value to the result.
+                it.setValue(OperatorT::result(this->mMap, inAcc, it.getCoord()));
+            };
+
+            // Apply the operator to tile values, optionally in parallel.
+            // (But don't share the functor; each thread needs its own accessor.)
+            tools::foreach(tileIter, tileOp, threaded, /*shareFunctor=*/false);
+        }
+
+        if (mDensify) tree->prune();
+
         if (mInterrupt) mInterrupt->end();
         return result;
     }
 
     /// @brief Iterate sequentially over LeafNodes and voxels in the output
-    /// grid and compute the Laplacian using a valueAccessor for the
-    /// input grid.
+    /// grid and apply the operator using a value accessor for the input grid.
     ///
     /// @note Never call this public method directly - it is called by
     /// TBB threads only!
@@ -404,6 +398,7 @@ protected:
     const MapT&         mMap;
     InterruptT*         mInterrupt;
     const MaskGridType* mMask;
+    const bool          mDensify;
 }; // end of GridOperator class
 
 } // namespace gridop
@@ -476,11 +471,11 @@ private:
         {
             if (mWorldSpace) {
                 gridop::GridOperator<InGridType, MaskGridType, OutGridType, MapT, WsOpT, InterruptT>
-                    op(mInputGrid, mMask, map, mInterrupt);
+                    op(mInputGrid, mMask, map, mInterrupt, /*densify=*/false);
                 mOutputGrid = op.process(mThreaded); // cache the result
             } else {
                 gridop::GridOperator<InGridType, MaskGridType, OutGridType, MapT, IsOpT, InterruptT>
-                    op(mInputGrid, mMask, map, mInterrupt);
+                    op(mInputGrid, mMask, map, mInterrupt, /*densify=*/false);
                 mOutputGrid = op.process(mThreaded); // cache the result
             }
         }
@@ -728,7 +723,7 @@ protected:
         {
             typedef math::Laplacian<MapT, math::CD_SECOND> OpT;
             gridop::GridOperator<GridT, MaskGridType, GridT, MapT, OpT, InterruptT>
-                op(mInputGrid, mMask, map);
+                op(mInputGrid, mMask, map, mInterrupt);
             mOutputGrid = op.process(mThreaded); // cache the result
         }
 
@@ -787,7 +782,7 @@ protected:
         {
             typedef math::MeanCurvature<MapT, math::CD_SECOND, math::CD_2ND> OpT;
             gridop::GridOperator<GridT, MaskGridType, GridT, MapT, OpT, InterruptT>
-                op(mInputGrid, mMask, map);
+                op(mInputGrid, mMask, map, mInterrupt);
             mOutputGrid = op.process(mThreaded); // cache the result
         }
 
@@ -851,7 +846,7 @@ protected:
         void operator()(const MapT& map)
         {
             gridop::GridOperator<InGridType, MaskGridType, OutGridType, MapT, OpT, InterruptT>
-                op(mInputGrid, mMask, map);
+                op(mInputGrid, mMask, map, mInterrupt, /*densify=*/false);
             mOutputGrid = op.process(mThreaded); // cache the result
         }
 
@@ -927,7 +922,7 @@ protected:
         void operator()(const MapT& map)
         {
             gridop::GridOperator<GridT, MaskGridType, GridT, MapT, OpT, InterruptT>
-                op(mInputGrid, mMask,map);
+                op(mInputGrid, mMask, map, mInterrupt, /*densify=*/false);
             mOutputGrid = op.process(mThreaded); // cache the result
         }
 
@@ -1086,7 +1081,3 @@ normalize(const GridType& grid, const MaskT& mask, bool threaded, InterruptT* in
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_GRID_OPERATORS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

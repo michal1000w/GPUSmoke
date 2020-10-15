@@ -1,34 +1,7 @@
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
-//
-/// @file Iterator.h
+/// @file tree/Iterator.h
 ///
 /// @author Peter Cucka and Ken Museth
 
@@ -36,9 +9,7 @@
 #define OPENVDB_TREE_ITERATOR_HAS_BEEN_INCLUDED
 
 #include <sstream>
-#include <boost/static_assert.hpp>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/type_traits/remove_const.hpp>
+#include <type_traits>
 #include <openvdb/util/NodeMasks.h>
 #include <openvdb/Exceptions.h>
 
@@ -142,10 +113,10 @@ template<
     typename ItemT>     // type of value to which this iterator points
 struct SparseIteratorBase: public IteratorBase<MaskIterT, NodeT>
 {
-    typedef NodeT NodeType;
-    typedef ItemT ValueType;
-    typedef typename boost::remove_const<NodeT>::type NonConstNodeType;
-    typedef typename boost::remove_const<ItemT>::type NonConstValueType;
+    using NodeType = NodeT;
+    using ValueType = ItemT;
+    using NonConstNodeType = typename std::remove_const<NodeT>::type;
+    using NonConstValueType = typename std::remove_const<ItemT>::type;
     static const bool IsSparseIterator = true, IsDenseIterator = false;
 
     SparseIteratorBase() {}
@@ -173,7 +144,7 @@ struct SparseIteratorBase: public IteratorBase<MaskIterT, NodeT>
     /// (Not valid for const iterators.)
     void setValue(const ItemT& value) const
     {
-        BOOST_STATIC_ASSERT(!boost::is_const<NodeT>::value);
+        static_assert(!std::is_const<NodeT>::value, "setValue() not allowed for const iterators");
         static_cast<const IterT*>(this)->setItem(this->pos(), value); // static polymorphism
     }
     /// @brief Apply a functor to the item to which this iterator is pointing.
@@ -184,7 +155,8 @@ struct SparseIteratorBase: public IteratorBase<MaskIterT, NodeT>
     template<typename ModifyOp>
     void modifyValue(const ModifyOp& op) const
     {
-        BOOST_STATIC_ASSERT(!boost::is_const<NodeT>::value);
+        static_assert(!std::is_const<NodeT>::value,
+            "modifyValue() not allowed for const iterators");
         static_cast<const IterT*>(this)->modifyItem(this->pos(), op); // static polymorphism
     }
 }; // class SparseIteratorBase
@@ -205,12 +177,12 @@ template<
     typename UnsetItemT> // type of unset value (ValueType, usually)
 struct DenseIteratorBase: public IteratorBase<MaskIterT, NodeT>
 {
-    typedef NodeT NodeType;
-    typedef UnsetItemT ValueType;
-    typedef SetItemT ChildNodeType;
-    typedef typename boost::remove_const<NodeT>::type NonConstNodeType;
-    typedef typename boost::remove_const<UnsetItemT>::type NonConstValueType;
-    typedef typename boost::remove_const<SetItemT>::type NonConstChildNodeType;
+    using NodeType = NodeT;
+    using ValueType = UnsetItemT;
+    using ChildNodeType = SetItemT;
+    using NonConstNodeType = typename std::remove_const<NodeT>::type;
+    using NonConstValueType = typename std::remove_const<UnsetItemT>::type;
+    using NonConstChildNodeType = typename std::remove_const<SetItemT>::type;
     static const bool IsSparseIterator = false, IsDenseIterator = true;
 
     DenseIteratorBase() {}
@@ -279,7 +251,3 @@ struct DenseIteratorBase: public IteratorBase<MaskIterT, NodeT>
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_ITERATOR_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

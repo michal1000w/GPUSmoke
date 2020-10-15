@@ -1,36 +1,9 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @author Ken Museth
 ///
-/// @file Filter.h
+/// @file tools/Filter.h
 ///
 /// @brief Filtering of VDB volumes. Note that only the values in the
 /// grid are changed, not its topology! All operations can optionally
@@ -40,9 +13,6 @@
 #define OPENVDB_TOOLS_FILTER_HAS_BEEN_INCLUDED
 
 #include <tbb/parallel_for.h>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
 #include <openvdb/Types.h>
 #include <openvdb/math/Math.h>
 #include <openvdb/math/Stencils.h>
@@ -51,6 +21,10 @@
 #include <openvdb/util/NullInterrupter.h>
 #include <openvdb/Grid.h>
 #include "Interpolation.h"
+#include <algorithm> // for std::max()
+#include <functional>
+#include <type_traits>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -66,25 +40,26 @@ template<typename GridT,
 class Filter
 {
 public:
-    typedef GridT                                GridType;
-    typedef MaskT                                MaskType;
-    typedef typename GridType::TreeType          TreeType;
-    typedef typename TreeType::LeafNodeType      LeafType;
-    typedef typename GridType::ValueType         ValueType;
-    typedef typename MaskType::ValueType         AlphaType;
-    typedef typename tree::LeafManager<TreeType> LeafManagerType;
-    typedef typename LeafManagerType::LeafRange  RangeType;
-    typedef typename LeafManagerType::BufferType BufferType;
-    BOOST_STATIC_ASSERT(boost::is_floating_point<AlphaType>::value);
+    using GridType = GridT;
+    using MaskType = MaskT;
+    using TreeType = typename GridType::TreeType;
+    using LeafType = typename TreeType::LeafNodeType;
+    using ValueType = typename GridType::ValueType;
+    using AlphaType = typename MaskType::ValueType;
+    using LeafManagerType = typename tree::LeafManager<TreeType>;
+    using RangeType = typename LeafManagerType::LeafRange;
+    using BufferType = typename LeafManagerType::BufferType;
+    static_assert(std::is_floating_point<AlphaType>::value,
+        "openvdb::tools::Filter requires a mask grid with floating-point values");
 
     /// Constructor
     /// @param grid Grid to be filtered.
     /// @param interrupt Optional interrupter.
-    Filter(GridT& grid, InterruptT* interrupt = NULL)
+    Filter(GridT& grid, InterruptT* interrupt = nullptr)
         : mGrid(&grid)
-        , mTask(0)
+        , mTask(nullptr)
         , mInterrupter(interrupt)
-        , mMask(NULL)
+        , mMask(nullptr)
         , mGrainSize(1)
         , mMinMask(0)
         , mMaxMask(1)
@@ -143,7 +118,7 @@ public:
     /// @param width The width of the mean-value filter is 2*width+1 voxels.
     /// @param iterations Number of times the mean-value filter is applied.
     /// @param mask Optional alpha mask.
-    void mean(int width = 1, int iterations = 1, const MaskType* mask = NULL);
+    void mean(int width = 1, int iterations = 1, const MaskType* mask = nullptr);
 
     /// @brief One iteration of a fast separable Gaussian filter.
     ///
@@ -152,7 +127,7 @@ public:
     /// @param width The width of the mean-value filter is 2*width+1 voxels.
     /// @param iterations Number of times the mean-value filter is applied.
     /// @param mask Optional alpha mask.
-    void gaussian(int width = 1, int iterations = 1, const MaskType* mask = NULL);
+    void gaussian(int width = 1, int iterations = 1, const MaskType* mask = nullptr);
 
     /// @brief One iteration of a median-value filter
     ///
@@ -160,12 +135,12 @@ public:
     /// @param width The width of the mean-value filter is 2*width+1 voxels.
     /// @param iterations Number of times the mean-value filter is applied.
     /// @param mask Optional alpha mask.
-    void median(int width = 1, int iterations = 1, const MaskType* mask = NULL);
+    void median(int width = 1, int iterations = 1, const MaskType* mask = nullptr);
 
     /// Offsets (i.e. adds) a constant value to all active voxels.
     /// @param offset Offset in the same units as the grid.
     /// @param mask Optional alpha mask.
-    void offset(ValueType offset, const MaskType* mask = NULL);
+    void offset(ValueType offset, const MaskType* mask = nullptr);
 
     /// @brief Used internally by tbb::parallel_for()
     /// @param range Range of LeafNodes over which to multi-thread.
@@ -178,12 +153,12 @@ public:
     }
 
 private:
-    typedef typename TreeType::LeafNodeType                  LeafT;
-    typedef typename LeafT::ValueOnIter                      VoxelIterT;
-    typedef typename LeafT::ValueOnCIter                     VoxelCIterT;
-    typedef typename tree::LeafManager<TreeType>::BufferType BufferT;
-    typedef typename RangeType::Iterator                     LeafIterT;
-    typedef tools::AlphaMask<GridT, MaskT>                   AlphaMaskT;
+    using LeafT = typename TreeType::LeafNodeType;
+    using VoxelIterT = typename LeafT::ValueOnIter;
+    using VoxelCIterT = typename LeafT::ValueOnCIter;
+    using BufferT = typename tree::LeafManager<TreeType>::BufferType;
+    using LeafIterT = typename RangeType::Iterator;
+    using AlphaMaskT = tools::AlphaMask<GridT, MaskT>;
 
     void cook(LeafManagerType& leafs);
 
@@ -200,15 +175,15 @@ private:
     template <typename AvgT>
     void doBox( const RangeType& r, Int32 w);
     void doBoxX(const RangeType& r, Int32 w) { this->doBox<Avg<0> >(r,w); }
-    void doBoxZ(const RangeType& r, Int32 w) { this->doBox<Avg<1> >(r,w); }
-    void doBoxY(const RangeType& r, Int32 w) { this->doBox<Avg<2> >(r,w); }
+    void doBoxY(const RangeType& r, Int32 w) { this->doBox<Avg<1> >(r,w); }
+    void doBoxZ(const RangeType& r, Int32 w) { this->doBox<Avg<2> >(r,w); }
     void doMedian(const RangeType&, int);
     void doOffset(const RangeType&, ValueType);
     /// @return true if the process was interrupted
     bool wasInterrupted();
 
     GridType*        mGrid;
-    typename boost::function<void (Filter*, const RangeType&)> mTask;
+    typename std::function<void (Filter*, const RangeType&)> mTask;
     InterruptT*      mInterrupter;
     const MaskType*  mMask;
     int              mGrainSize;
@@ -236,7 +211,10 @@ Filter<GridT, MaskT, InterruptT>::Avg<Axis>::operator()(Coord xyz)
     ValueType sum = zeroVal<ValueType>();
     Int32 &i = xyz[Axis], j = i + width;
     for (i -= width; i <= j; ++i) filter_internal::accum(sum, acc.getValue(xyz));
-    return static_cast<ValueType>(sum * frac);
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+    ValueType value = static_cast<ValueType>(sum * frac);
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+    return value;
 }
 
 
@@ -256,13 +234,16 @@ Filter<GridT, MaskT, InterruptT>::mean(int width, int iterations, const MaskType
     LeafManagerType leafs(mGrid->tree(), 1, mGrainSize==0);
 
     for (int i=0; i<iterations && !this->wasInterrupted(); ++i) {
-        mTask = boost::bind(&Filter::doBoxX, _1, _2, w);
+        mTask = std::bind(&Filter::doBoxX, std::placeholders::_1, std::placeholders::_2, w);
         this->cook(leafs);
 
-        mTask = boost::bind(&Filter::doBoxY, _1, _2, w);
+        // note that the order of the YZ passes are flipped to maintain backwards-compatibility
+        // with an indexing typo in the original logic
+
+        mTask = std::bind(&Filter::doBoxZ, std::placeholders::_1, std::placeholders::_2, w);
         this->cook(leafs);
 
-        mTask = boost::bind(&Filter::doBoxZ, _1, _2, w);
+        mTask = std::bind(&Filter::doBoxY, std::placeholders::_1, std::placeholders::_2, w);
         this->cook(leafs);
     }
 
@@ -284,13 +265,16 @@ Filter<GridT, MaskT, InterruptT>::gaussian(int width, int iterations, const Mask
 
     for (int i=0; i<iterations; ++i) {
         for (int n=0; n<4 && !this->wasInterrupted(); ++n) {
-            mTask = boost::bind(&Filter::doBoxX, _1, _2, w);
+            mTask = std::bind(&Filter::doBoxX, std::placeholders::_1, std::placeholders::_2, w);
             this->cook(leafs);
 
-            mTask = boost::bind(&Filter::doBoxY, _1, _2, w);
+            // note that the order of the YZ passes are flipped to maintain backwards-compatibility
+            // with an indexing typo in the original logic
+
+            mTask = std::bind(&Filter::doBoxZ, std::placeholders::_1, std::placeholders::_2, w);
             this->cook(leafs);
 
-            mTask = boost::bind(&Filter::doBoxZ, _1, _2, w);
+            mTask = std::bind(&Filter::doBoxY, std::placeholders::_1, std::placeholders::_2, w);
             this->cook(leafs);
         }
     }
@@ -309,7 +293,8 @@ Filter<GridT, MaskT, InterruptT>::median(int width, int iterations, const MaskTy
 
     LeafManagerType leafs(mGrid->tree(), 1, mGrainSize==0);
 
-    mTask = boost::bind(&Filter::doMedian, _1, _2, std::max(1, width));
+    mTask = std::bind(&Filter::doMedian,
+        std::placeholders::_1, std::placeholders::_2, std::max(1, width));
     for (int i=0; i<iterations && !this->wasInterrupted(); ++i) this->cook(leafs);
 
     if (mInterrupter) mInterrupter->end();
@@ -326,7 +311,7 @@ Filter<GridT, MaskT, InterruptT>::offset(ValueType value, const MaskType* mask)
 
     LeafManagerType leafs(mGrid->tree(), 0, mGrainSize==0);
 
-    mTask = boost::bind(&Filter::doOffset, _1, _2, value);
+    mTask = std::bind(&Filter::doOffset, std::placeholders::_1, std::placeholders::_2, value);
     this->cook(leafs);
 
     if (mInterrupter) mInterrupter->end();
@@ -367,7 +352,10 @@ Filter<GridT, MaskT, InterruptT>::doBox(const RangeType& range, Int32 w)
             for (VoxelCIterT iter = leafIter->cbeginValueOn(); iter; ++iter) {
                 const Coord xyz = iter.getCoord();
                 if (alpha(xyz, a, b)) {
-                    buffer.setValue(iter.pos(), ValueType(b*(*iter) + a*avg(xyz)));
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+                    const ValueType value(b*(*iter) + a*avg(xyz));
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+                    buffer.setValue(iter.pos(), value);
                 }
             }
         }
@@ -397,7 +385,10 @@ Filter<GridT, MaskT, InterruptT>::doMedian(const RangeType& range, int width)
             for (VoxelCIterT iter = leafIter->cbeginValueOn(); iter; ++iter) {
                 if (alpha(iter.getCoord(), a, b)) {
                     stencil.moveTo(iter);
-                    buffer.setValue(iter.pos(), ValueType(b*(*iter) + a*stencil.median()));
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+                    ValueType value(b*(*iter) + a*stencil.median());
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+                    buffer.setValue(iter.pos(), value);
                 }
             }
         }
@@ -424,7 +415,12 @@ Filter<GridT, MaskT, InterruptT>::doOffset(const RangeType& range, ValueType off
         AlphaMaskT alpha(*mGrid, *mMask, mMinMask, mMaxMask, mInvertMask);
         for (LeafIterT leafIter=range.begin(); leafIter; ++leafIter) {
             for (VoxelIterT iter = leafIter->beginValueOn(); iter; ++iter) {
-                if (alpha(iter.getCoord(), a, b)) iter.setValue(ValueType(*iter + a*offset));
+                if (alpha(iter.getCoord(), a, b)) {
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+                    ValueType value(*iter + a*offset);
+                    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+                    iter.setValue(value);
+                }
             }
         }
     } else {
@@ -453,7 +449,3 @@ Filter<GridT, MaskT, InterruptT>::wasInterrupted()
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_FILTER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

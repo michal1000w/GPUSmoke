@@ -1,36 +1,9 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @author Ken Museth
 ///
-/// @file LevelSetMorph.h
+/// @file tools/LevelSetMorph.h
 ///
 /// @brief Shape morphology of level sets. Morphing from a source
 /// narrow-band level sets to a target narrow-band level set.
@@ -41,12 +14,14 @@
 #include "LevelSetTracker.h"
 #include "Interpolation.h" // for BoxSampler, etc.
 #include <openvdb/math/FiniteDifference.h>
+#include <functional>
+#include <limits>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
 namespace OPENVDB_VERSION_NAME {
 namespace tools {
-
 
 /// @brief Shape morphology of level sets. Morphing from a source
 /// narrow-band level sets to a target narrow-band level set.
@@ -72,13 +47,13 @@ template<typename GridT,
 class LevelSetMorphing
 {
 public:
-    typedef GridT                              GridType;
-    typedef typename GridT::TreeType           TreeType;
-    typedef LevelSetTracker<GridT, InterruptT> TrackerT;
-    typedef typename TrackerT::LeafRange       LeafRange;
-    typedef typename TrackerT::LeafType        LeafType;
-    typedef typename TrackerT::BufferType      BufferType;
-    typedef typename TrackerT::ValueType       ValueType;
+    using GridType = GridT;
+    using TreeType = typename GridT::TreeType;
+    using TrackerT = LevelSetTracker<GridT, InterruptT>;
+    using LeafRange = typename TrackerT::LeafRange;
+    using LeafType = typename TrackerT::LeafType;
+    using BufferType = typename TrackerT::BufferType;
+    using ValueType = typename TrackerT::ValueType;
 
     /// Main constructor
     LevelSetMorphing(GridT& sourceGrid, const GridT& targetGrid, InterruptT* interrupt = nullptr)
@@ -252,7 +227,7 @@ private:
         inline void euler34(const LeafRange& r, ValueType t) {this->euler<3,4>(r, t, 1, 2, 3);}
         inline void euler13(const LeafRange& r, ValueType t) {this->euler<1,3>(r, t, 1, 2, 3);}
 
-        typedef typename boost::function<void (Morph*, const LeafRange&)> FuncType;
+        using FuncType = typename std::function<void (Morph*, const LeafRange&)>;
         LevelSetMorphing* mParent;
         ValueType         mMinAbsS, mMaxAbsS;
         const MapT*       mMap;
@@ -351,7 +326,7 @@ Morph(LevelSetMorphing<GridT, InterruptT>& parent)
     : mParent(&parent)
     , mMinAbsS(ValueType(1e-6))
     , mMap(parent.mTracker.grid().transform().template constMap<MapT>().get())
-    , mTask(0)
+    , mTask(nullptr)
 {
 }
 
@@ -393,6 +368,8 @@ LevelSetMorphing<GridT, InterruptT>::
 Morph<MapT, SpatialScheme, TemporalScheme>::
 advect(ValueType time0, ValueType time1)
 {
+    namespace ph = std::placeholders;
+
     // Make sure we have enough temporal auxiliary buffers for the time
     // integration AS WELL AS an extra buffer with the speed function!
     static const Index auxBuffers = 1 + (TemporalScheme == math::TVD_RK3 ? 2 : 1);
@@ -408,7 +385,7 @@ advect(ValueType time0, ValueType time1)
         case math::TVD_RK1:
             // Perform one explicit Euler step: t1 = t0 + dt
             // Phi_t1(1) = Phi_t0(0) - dt * Speed(2) * |Grad[Phi(0)]|
-            mTask = boost::bind(&Morph::euler01, _1, _2, dt, /*speed*/2);
+            mTask = std::bind(&Morph::euler01, ph::_1, ph::_2, dt, /*speed*/2);
 
             // Cook and swap buffer 0 and 1 such that Phi_t1(0) and Phi_t0(1)
             this->cook(PARALLEL_FOR, 1);
@@ -416,14 +393,14 @@ advect(ValueType time0, ValueType time1)
         case math::TVD_RK2:
             // Perform one explicit Euler step: t1 = t0 + dt
             // Phi_t1(1) = Phi_t0(0) - dt * Speed(2) * |Grad[Phi(0)]|
-            mTask = boost::bind(&Morph::euler01, _1, _2, dt, /*speed*/2);
+            mTask = std::bind(&Morph::euler01, ph::_1, ph::_2, dt, /*speed*/2);
 
             // Cook and swap buffer 0 and 1 such that Phi_t1(0) and Phi_t0(1)
             this->cook(PARALLEL_FOR, 1);
 
             // Convex combine explict Euler step: t2 = t0 + dt
             // Phi_t2(1) = 1/2 * Phi_t0(1) + 1/2 * (Phi_t1(0) - dt * Speed(2) * |Grad[Phi(0)]|)
-            mTask = boost::bind(&Morph::euler12, _1, _2, dt);
+            mTask = std::bind(&Morph::euler12, ph::_1, ph::_2, dt);
 
             // Cook and swap buffer 0 and 1 such that Phi_t2(0) and Phi_t1(1)
             this->cook(PARALLEL_FOR, 1);
@@ -431,21 +408,21 @@ advect(ValueType time0, ValueType time1)
         case math::TVD_RK3:
             // Perform one explicit Euler step: t1 = t0 + dt
             // Phi_t1(1) = Phi_t0(0) - dt * Speed(3) * |Grad[Phi(0)]|
-            mTask = boost::bind(&Morph::euler01, _1, _2, dt, /*speed*/3);
+            mTask = std::bind(&Morph::euler01, ph::_1, ph::_2, dt, /*speed*/3);
 
             // Cook and swap buffer 0 and 1 such that Phi_t1(0) and Phi_t0(1)
             this->cook(PARALLEL_FOR, 1);
 
             // Convex combine explict Euler step: t2 = t0 + dt/2
             // Phi_t2(2) = 3/4 * Phi_t0(1) + 1/4 * (Phi_t1(0) - dt * Speed(3) * |Grad[Phi(0)]|)
-            mTask = boost::bind(&Morph::euler34, _1, _2, dt);
+            mTask = std::bind(&Morph::euler34, ph::_1, ph::_2, dt);
 
             // Cook and swap buffer 0 and 2 such that Phi_t2(0) and Phi_t1(2)
             this->cook(PARALLEL_FOR, 2);
 
             // Convex combine explict Euler step: t3 = t0 + dt
             // Phi_t3(2) = 1/3 * Phi_t0(1) + 2/3 * (Phi_t2(0) - dt * Speed(3) * |Grad[Phi(0)]|)
-            mTask = boost::bind(&Morph::euler13, _1, _2, dt);
+            mTask = std::bind(&Morph::euler13, ph::_1, ph::_2, dt);
 
             // Cook and swap buffer 0 and 2 such that Phi_t3(0) and Phi_t2(2)
             this->cook(PARALLEL_FOR, 2);
@@ -475,6 +452,8 @@ LevelSetMorphing<GridT, InterruptT>::
 Morph<MapT, SpatialScheme, TemporalScheme>::
 sampleSpeed(ValueType time0, ValueType time1, Index speedBuffer)
 {
+    namespace ph = std::placeholders;
+
     mMaxAbsS = mMinAbsS;
     const size_t leafCount = mParent->mTracker.leafs().leafCount();
     if (leafCount==0 || time0 >= time1) return ValueType(0);
@@ -482,9 +461,9 @@ sampleSpeed(ValueType time0, ValueType time1, Index speedBuffer)
     const math::Transform& xform  = mParent->mTracker.grid().transform();
     if (mParent->mTarget->transform() == xform &&
         (mParent->mMask == nullptr || mParent->mMask->transform() == xform)) {
-        mTask = boost::bind(&Morph::sampleAlignedSpeed, _1, _2, speedBuffer);
+        mTask = std::bind(&Morph::sampleAlignedSpeed, ph::_1, ph::_2, speedBuffer);
     } else {
-        mTask = boost::bind(&Morph::sampleXformedSpeed, _1, _2, speedBuffer);
+        mTask = std::bind(&Morph::sampleXformedSpeed, ph::_1, ph::_2, speedBuffer);
     }
     this->cook(PARALLEL_REDUCE);
     if (math::isApproxEqual(mMinAbsS, mMaxAbsS)) return ValueType(0);//speed is essentially zero
@@ -503,8 +482,9 @@ LevelSetMorphing<GridT, InterruptT>::
 Morph<MapT, SpatialScheme, TemporalScheme>::
 sampleXformedSpeed(const LeafRange& range, Index speedBuffer)
 {
-    typedef typename LeafType::ValueOnCIter VoxelIterT;
-    typedef tools::GridSampler<typename GridT::ConstAccessor, tools::BoxSampler> SamplerT;
+    using VoxelIterT = typename LeafType::ValueOnCIter;
+    using SamplerT = tools::GridSampler<typename GridT::ConstAccessor, tools::BoxSampler>;
+
     const MapT& map = *mMap;
     mParent->mTracker.checkInterrupter();
 
@@ -552,7 +532,8 @@ LevelSetMorphing<GridT, InterruptT>::
 Morph<MapT, SpatialScheme, TemporalScheme>::
 sampleAlignedSpeed(const LeafRange& range, Index speedBuffer)
 {
-    typedef typename LeafType::ValueOnCIter VoxelIterT;
+    using VoxelIterT = typename LeafType::ValueOnCIter;
+
     mParent->mTracker.checkInterrupter();
 
     typename GridT::ConstAccessor target = mParent->mTarget->getAccessor();
@@ -610,7 +591,8 @@ cook(ThreadingMode mode, size_t swapBuffer)
     } else if (mode == PARALLEL_REDUCE) {
         tbb::parallel_reduce(range, *this);
     } else {
-        throw std::runtime_error("Undefined threading mode");
+        OPENVDB_THROW(ValueError, "expected threading mode " << int(PARALLEL_FOR)
+            << " or " << int(PARALLEL_REDUCE) << ", got " << int(mode));
     }
 
     mParent->mTracker.leafs().swapLeafBuffer(swapBuffer, grainSize == 0);
@@ -628,10 +610,10 @@ Morph<MapT, SpatialScheme, TemporalScheme>::
 euler(const LeafRange& range, ValueType dt,
       Index phiBuffer, Index resultBuffer, Index speedBuffer)
 {
-    typedef math::BIAS_SCHEME<SpatialScheme>                             SchemeT;
-    typedef typename SchemeT::template ISStencil<GridType>::StencilType  StencilT;
-    typedef typename LeafType::ValueOnCIter                              VoxelIterT;
-    typedef math::GradientNormSqrd<MapT, SpatialScheme>                  NumGrad;
+    using SchemeT = math::BIAS_SCHEME<SpatialScheme>;
+    using StencilT = typename SchemeT::template ISStencil<GridType>::StencilType;
+    using VoxelIterT = typename LeafType::ValueOnCIter;
+    using NumGrad = math::GradientNormSqrd<MapT, SpatialScheme>;
 
     static const ValueType Alpha = ValueType(Nominator)/ValueType(Denominator);
     static const ValueType Beta  = ValueType(1) - Alpha;
@@ -660,7 +642,3 @@ euler(const LeafRange& range, ValueType dt,
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_LEVEL_SET_MORPH_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

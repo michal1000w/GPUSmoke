@@ -1,44 +1,18 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_MATH_QUAT_H_HAS_BEEN_INCLUDED
 #define OPENVDB_MATH_QUAT_H_HAS_BEEN_INCLUDED
-
-#include <iostream>
-#include <cmath>
 
 #include "Mat.h"
 #include "Mat3.h"
 #include "Math.h"
 #include "Vec3.h"
 #include <openvdb/Exceptions.h>
+#include <cmath>
+#include <iostream>
+#include <sstream>
+#include <string>
 
 
 namespace openvdb {
@@ -104,6 +78,10 @@ template<typename T>
 class Quat
 {
 public:
+    using value_type = T;
+    using ValueType = T;
+    static const int size = 4;
+
     /// Trivial constructor, the quaternion is NOT initialized
     Quat() {}
 
@@ -524,7 +502,7 @@ public:
     }
 
     /// returns inverse of this
-    Quat inverse(T tolerance = T(0))
+    Quat inverse(T tolerance = T(0)) const
     {
         T d = mm[0]*mm[0] + mm[1]*mm[1] + mm[2]*mm[2] + mm[3]*mm[3];
         if( isApproxEqual(d, T(0.0), tolerance) )
@@ -555,8 +533,8 @@ public:
     static Quat identity() { return Quat<T>(0,0,0,1); }
 
      /// @return string representation of Classname
-    std::string
-    str() const {
+    std::string str() const
+    {
         std::ostringstream buffer;
 
         buffer << "[";
@@ -588,7 +566,7 @@ protected:
     T mm[4];
 };
 
-/// Returns V, where \f$V_i = v_i * scalar\f$ for \f$i \in [0, 3]\f$
+/// Multiply each element of the given quaternion by @a scalar and return the result.
 template <typename S, typename T>
 Quat<T> operator*(S scalar, const Quat<T> &q) { return q*scalar; }
 
@@ -599,7 +577,7 @@ Quat<T> operator*(S scalar, const Quat<T> &q) { return q*scalar; }
 template <typename T, typename T0>
 Mat3<T> slerp(const Mat3<T0> &m1, const Mat3<T0> &m2, T t)
 {
-    typedef Mat3<T> MatType;
+    using MatType = Mat3<T>;
 
     Quat<T> q1(m1);
     Quat<T> q2(m2);
@@ -638,8 +616,8 @@ Mat3<T> bezLerp(const Mat3<T0> &m1, const Mat3<T0> &m2,
     return slerp(m10, m11, t);
 }
 
-typedef Quat<float> Quats;
-typedef Quat<double> Quatd;
+using Quats = Quat<float>;
+using Quatd = Quat<double>;
 
 } // namespace math
 
@@ -651,7 +629,3 @@ template<> inline math::Quatd zeroVal<math::Quatd >() { return math::Quatd::zero
 } // namespace openvdb
 
 #endif //OPENVDB_MATH_QUAT_H_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

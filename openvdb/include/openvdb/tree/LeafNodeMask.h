@@ -1,36 +1,10 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_TREE_LEAF_NODE_MASK_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_LEAF_NODE_MASK_HAS_BEEN_INCLUDED
 
+#include <openvdb/version.h>
 #include <openvdb/Types.h>
 #include <openvdb/io/Compression.h> // for io::readData(), etc.
 #include <openvdb/math/Math.h> // for math::isZero()
@@ -38,7 +12,10 @@
 #include "LeafNode.h"
 #include "Iterator.h"
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <type_traits>
+#include <vector>
 
 
 namespace openvdb {
@@ -90,10 +67,8 @@ public:
     /// @param dummy   dummy value
     explicit LeafNode(const Coord& xyz, bool value = false, bool dummy = false);
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// "Partial creation" constructor used during file input
     LeafNode(PartialCreate, const Coord& xyz, bool value = false, bool dummy = false);
-#endif
 
     /// Deep copy constructor
     LeafNode(const LeafNode&);
@@ -137,6 +112,8 @@ public:
     static Index getChildDim() { return 1; }
     /// Return the leaf count for this node, which is one.
     static Index32 leafCount() { return 1; }
+    /// no-op
+    void nodeCount(std::vector<Index32> &) const {}
     /// Return the non-leaf count for this node, which is zero.
     static Index32 nonLeafCount() { return 0; }
 
@@ -153,8 +130,6 @@ public:
     bool isEmpty() const { return mBuffer.mData.isOff(); }
     /// Return @c true if this node only contains active voxels.
     bool isDense() const { return mBuffer.mData.isOn(); }
-
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// @brief Return @c true if memory for this node's buffer has been allocated.
     /// @details Currently, boolean leaf nodes don't support partial creation,
     /// so this always returns @c true.
@@ -163,7 +138,6 @@ public:
     /// @details Currently, boolean leaf nodes don't support partial creation,
     /// so this has no effect.
     bool allocate() { return true; }
-#endif
 
     /// Return the memory in bytes occupied by this node.
     Index64 memUsage() const;
@@ -306,8 +280,10 @@ public:
     /// Set all voxels that lie outside the given axis-aligned box to the background.
     void clip(const CoordBBox&, bool background);
 
-    /// Set all voxels within an axis-aligned box to the specified value and active state.
-    void fill(const CoordBBox& bbox, bool value, bool dummy = false);
+    /// Set all voxels within an axis-aligned box to the specified value.
+    void fill(const CoordBBox& bbox, bool value, bool = false);
+    /// Set all voxels within an axis-aligned box to the specified value.
+    void denseFill(const CoordBBox& bbox, bool value, bool = false) { this->fill(bbox, value); }
 
     /// Set the state of all voxels to the specified active state.
     void fill(const bool& value, bool dummy = false);
@@ -427,6 +403,33 @@ public:
     /// and are equal to within the given tolerance, and return the value in
     /// @a constValue and the active state in @a state.
     bool isConstant(bool& constValue, bool& state, bool tolerance = 0) const;
+
+    /// @brief Computes the median value of all the active and inactive voxels in this node.
+    /// @return The median value.
+    ///
+    /// @details The median for boolean values is defined as the mode
+    /// of the values, i.e. the value that occurs most often.
+    bool medianAll() const;
+
+    /// @brief Computes the median value of all the active voxels in this node.
+    /// @return The number of active voxels.
+    ///
+    /// @param value Updated with the median value of all the active voxels.
+    ///
+    /// @note Since the value and state are shared for this
+    ///       specialization of the LeafNode the @a value will always be true!
+    Index medianOn(ValueType &value) const;
+
+    /// @brief Computes the median value of all the inactive voxels in this node.
+    /// @return The number of inactive voxels.
+    ///
+    /// @param value Updated with the median value of all the inactive
+    /// voxels.
+    ///
+    /// @note Since the value and state are shared for this
+    ///       specialization of the LeafNode the @a value will always be false!
+    Index medianOff(ValueType &value) const;
+
     /// Return @c true if all of this node's values are inactive.
     bool isInactive() const { return mBuffer.mData.isOff(); }
 
@@ -776,7 +779,6 @@ LeafNode<ValueMask, Log2Dim>::LeafNode(const Coord& xyz, bool value, bool active
 }
 
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
 template<Index Log2Dim>
 inline
 LeafNode<ValueMask, Log2Dim>::LeafNode(PartialCreate, const Coord& xyz, bool value, bool active)
@@ -784,7 +786,6 @@ LeafNode<ValueMask, Log2Dim>::LeafNode(PartialCreate, const Coord& xyz, bool val
     , mOrigin(xyz & (~(DIM - 1)))
 {
 }
-#endif
 
 
 template<Index Log2Dim>
@@ -1028,6 +1029,35 @@ LeafNode<ValueMask, Log2Dim>::isConstant(bool& constValue, bool& state, bool) co
 
     constValue = state;
     return true;
+}
+
+
+////////////////////////////////////////
+
+template<Index Log2Dim>
+inline bool
+LeafNode<ValueMask, Log2Dim>::medianAll() const
+{
+    const Index countTrue = mBuffer.mData.countOn();
+    return countTrue > (NUM_VALUES >> 1);
+}
+
+template<Index Log2Dim>
+inline Index
+LeafNode<ValueMask, Log2Dim>::medianOn(bool& state) const
+{
+    const Index countTrueOn = mBuffer.mData.countOn();
+    state = true;//since value and state are the same for this specialization of the leaf node
+    return countTrueOn;
+}
+
+template<Index Log2Dim>
+inline Index
+LeafNode<ValueMask, Log2Dim>::medianOff(bool& state) const
+{
+    const Index countFalseOff = mBuffer.mData.countOff();
+    state = false;//since value and state are the same for this specialization of the leaf node
+    return countFalseOff;
 }
 
 
@@ -1279,11 +1309,15 @@ template<Index Log2Dim>
 inline void
 LeafNode<ValueMask, Log2Dim>::fill(const CoordBBox& bbox, bool value, bool)
 {
-    for (Int32 x = bbox.min().x(); x <= bbox.max().x(); ++x) {
+    auto clippedBBox = this->getNodeBoundingBox();
+    clippedBBox.intersect(bbox);
+    if (!clippedBBox) return;
+
+    for (Int32 x = clippedBBox.min().x(); x <= clippedBBox.max().x(); ++x) {
         const Index offsetX = (x & (DIM-1u))<<2*Log2Dim;
-        for (Int32 y = bbox.min().y(); y <= bbox.max().y(); ++y) {
+        for (Int32 y = clippedBBox.min().y(); y <= clippedBBox.max().y(); ++y) {
             const Index offsetXY = offsetX + ((y & (DIM-1u))<<  Log2Dim);
-            for (Int32 z = bbox.min().z(); z <= bbox.max().z(); ++z) {
+            for (Int32 z = clippedBBox.min().z(); z <= clippedBBox.max().z(); ++z) {
                 const Index offset = offsetXY + (z & (DIM-1u));
                 mBuffer.mData.set(offset, value);
             }
@@ -1465,18 +1499,10 @@ LeafNode<ValueMask, Log2Dim>::visitActiveBBox(BBoxOp& op) const
 {
     if (op.template descent<LEVEL>()) {
         for (ValueOnCIter i=this->cbeginValueOn(); i; ++i) {
-#ifdef _MSC_VER
-            op.operator()<LEVEL>(CoordBBox::createCube(i.getCoord(), 1));
-#else
             op.template operator()<LEVEL>(CoordBBox::createCube(i.getCoord(), 1));
-#endif
         }
     } else {
-#ifdef _MSC_VER
-        op.operator()<LEVEL>(this->getNodeBoundingBox());
-#else
         op.template operator()<LEVEL>(this->getNodeBoundingBox());
-#endif
     }
 }
 
@@ -1607,7 +1633,3 @@ LeafNode<ValueMask, Log2Dim>::doVisit2(NodeT& self, OtherChildAllIterT& otherIte
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_LEAF_NODE_MASK_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

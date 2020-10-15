@@ -1,0 +1,12 @@
+prefix=${pcfiledir}/../..
+
+exec_prefix=${prefix}
+libdir=${prefix}/lib
+toolexeclibdir=${libdir}
+includedir=${prefix}/include
+
+Name: 
+Description: Library supporting Foreign Function Interfaces
+Version: 3.3
+Libs: -L${toolexeclibdir} -lffi
+Cflags: -I${includedir}

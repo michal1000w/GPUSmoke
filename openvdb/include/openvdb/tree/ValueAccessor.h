@@ -1,34 +1,7 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
-/// @file ValueAccessor.h
+/// @file tree/ValueAccessor.h
 ///
 /// When traversing a grid in a spatially coherent pattern (e.g., iterating
 /// over neighboring voxels), request a @c ValueAccessor from the grid
@@ -58,23 +31,13 @@
 #ifndef OPENVDB_TREE_VALUEACCESSOR_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_VALUEACCESSOR_HAS_BEEN_INCLUDED
 
-#include <boost/mpl/front.hpp>
-#include <boost/mpl/pop_front.hpp>
-#include <boost/mpl/push_back.hpp>
-#include <boost/mpl/size.hpp>
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/equal_to.hpp>
-#include <boost/mpl/comparison.hpp>
-#include <boost/mpl/vector.hpp>
-#include <boost/mpl/assert.hpp>
-#include <boost/mpl/erase.hpp>
-#include <boost/mpl/find.hpp>
-#include <boost/static_assert.hpp>
-#include <boost/type_traits/is_const.hpp>
 #include <tbb/null_mutex.h>
 #include <tbb/spin_mutex.h>
 #include <openvdb/version.h>
 #include <openvdb/Types.h>
+#include <cassert>
+#include <limits>
+#include <type_traits>
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -121,7 +84,7 @@ template<typename TreeType, bool IsSafe>
 class ValueAccessorBase
 {
 public:
-    static const bool IsConstTree = boost::is_const<TreeType>::value;
+    static const bool IsConstTree = std::is_const<TreeType>::value;
 
     /// @brief Return true if this accessor is safe, i.e. registered
     /// by the tree from which it is constructed. Un-registered
@@ -219,14 +182,14 @@ template<typename _TreeType,
 class ValueAccessor: public ValueAccessorBase<_TreeType, IsSafe>
 {
 public:
-    BOOST_STATIC_ASSERT(CacheLevels < _TreeType::DEPTH);
+    static_assert(CacheLevels < _TreeType::DEPTH, "cache size exceeds tree depth");
 
-    typedef _TreeType                           TreeType;
-    typedef typename TreeType::RootNodeType     RootNodeT;
-    typedef typename TreeType::LeafNodeType     LeafNodeT;
-    typedef typename RootNodeT::ValueType       ValueType;
-    typedef ValueAccessorBase<TreeType, IsSafe> BaseT;
-    typedef typename MutexType::scoped_lock     LockT;
+    using TreeType = _TreeType;
+    using RootNodeT = typename TreeType::RootNodeType;
+    using LeafNodeT = typename TreeType::LeafNodeType;
+    using ValueType = typename RootNodeT::ValueType;
+    using BaseT = ValueAccessorBase<TreeType, IsSafe>;
+    using LockT = typename MutexType::scoped_lock;
     using BaseT::IsConstTree;
 
     ValueAccessor(TreeType& tree): BaseT(tree), mCache(*this)
@@ -244,7 +207,7 @@ public:
         }
         return *this;
     }
-    virtual ~ValueAccessor() {}
+    ~ValueAccessor() override = default;
 
     /// Return the number of cache levels employed by this accessor.
     static Index numCacheLevels() { return CacheLevels; }
@@ -297,14 +260,6 @@ public:
     {
         LockT lock(mMutex);
         mCache.setValueOnly(xyz, value);
-    }
-
-    /// Set the value of the voxel at the given coordinates and mark the voxel
-    /// as active.  [Experimental]
-    void newSetValue(const Coord& xyz, const ValueType& value)
-    {
-        LockT lock(mMutex);
-        mCache.newSetValue(xyz, value);
     }
 
     /// Set the value of the voxel at the given coordinates and mark the voxel as inactive.
@@ -435,7 +390,7 @@ public:
     //@}
 
     /// Remove all nodes from this cache, then reinsert the root node.
-    virtual void clear()
+    void clear() override
     {
         LockT lock(mMutex);
         mCache.clear();
@@ -452,7 +407,7 @@ private:
 
     /// Prevent this accessor from calling Tree::releaseCache() on a tree that
     /// no longer exists.  (Called by mTree when it is destroyed.)
-    virtual void release()
+    void release() override
     {
         LockT lock(mMutex);
         this->BaseT::release();
@@ -467,13 +422,12 @@ private:
     void insert(const Coord& xyz, NodeType* node) { mCache.insert(xyz, node); }
 
     // Define a list of all tree node types from LeafNode to RootNode
-    typedef typename RootNodeT::NodeChainType InvTreeT;
+    using InvTreeT = typename RootNodeT::NodeChainType;
     // Remove all tree node types that are excluded from the cache
-    typedef typename boost::mpl::begin<InvTreeT>::type BeginT;
-    typedef typename boost::mpl::advance<BeginT,boost::mpl::int_<CacheLevels> >::type FirstT;
-    typedef typename boost::mpl::find<InvTreeT, RootNodeT>::type LastT;
-    typedef typename boost::mpl::erase<InvTreeT,FirstT,LastT>::type SubtreeT;
-    typedef CacheItem<ValueAccessor, SubtreeT, boost::mpl::size<SubtreeT>::value==1> CacheItemT;
+    static constexpr int64_t First = CacheLevels;
+    static constexpr int64_t Last = InvTreeT::template Index<RootNodeT>;
+    using SubtreeT = typename InvTreeT::template RemoveByIndex<First, Last-1>;
+    using CacheItemT = CacheItem<ValueAccessor, SubtreeT, SubtreeT::Size==1>;
 
     // Private member data
     mutable CacheItemT mCache;
@@ -492,7 +446,7 @@ class ValueAccessor<TreeType, IsSafe, 0, tbb::null_mutex>
 public:
     ValueAccessor(TreeType& tree): ValueAccessor0<TreeType, IsSafe>(tree) {}
     ValueAccessor(const ValueAccessor& other): ValueAccessor0<TreeType, IsSafe>(other) {}
-    virtual ~ValueAccessor() {}
+    ~ValueAccessor() override = default;
 };
 
 
@@ -504,7 +458,7 @@ class ValueAccessor<TreeType, IsSafe, 1, tbb::null_mutex>
 public:
     ValueAccessor(TreeType& tree): ValueAccessor1<TreeType, IsSafe>(tree) {}
     ValueAccessor(const ValueAccessor& other): ValueAccessor1<TreeType, IsSafe>(other) {}
-    virtual ~ValueAccessor() {}
+    ~ValueAccessor() override = default;
 };
 
 
@@ -516,7 +470,7 @@ class ValueAccessor<TreeType, IsSafe, 2, tbb::null_mutex>
 public:
     ValueAccessor(TreeType& tree): ValueAccessor2<TreeType, IsSafe>(tree) {}
     ValueAccessor(const ValueAccessor& other): ValueAccessor2<TreeType, IsSafe>(other) {}
-    virtual ~ValueAccessor() {}
+    ~ValueAccessor() override = default;
 };
 
 
@@ -528,7 +482,7 @@ public:
     ValueAccessor(TreeType& tree): ValueAccessor3<TreeType, IsSafe>(tree) {}
     ValueAccessor(const ValueAccessor&) = default;
     ValueAccessor& operator=(const ValueAccessor&) = default;
-    virtual ~ValueAccessor() = default;
+    ~ValueAccessor() override = default;
 };
 
 
@@ -566,10 +520,10 @@ template<typename TreeCacheT, typename NodeVecT, bool AtRoot>
 class CacheItem
 {
 public:
-    typedef typename boost::mpl::front<NodeVecT>::type NodeType;
-    typedef typename NodeType::ValueType               ValueType;
-    typedef typename NodeType::LeafNodeType            LeafNodeType;
-    typedef std::numeric_limits<Int32>                 CoordLimits;
+    using NodeType = typename NodeVecT::Front;
+    using ValueType = typename NodeType::ValueType;
+    using LeafNodeType = typename NodeType::LeafNodeType;
+    using CoordLimits = std::numeric_limits<Int32>;
 
     CacheItem(TreeCacheT& parent):
         mParent(&parent),
@@ -630,7 +584,7 @@ public:
     {
         // This combination of a static assertion and a const_cast might not be elegant,
         // but it is a lot simpler than specializing TreeCache for const Trees.
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         node = const_cast<NodeType*>(mNode);
     }
     /// Forward the request to another level of the cache.
@@ -649,7 +603,7 @@ public:
 
     void addLeaf(LeafNodeType* leaf)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't add a node to a const tree");
         if (NodeType::LEVEL == 0) return;
         if (this->isHashed(leaf->origin())) {
             assert(mNode);
@@ -660,7 +614,7 @@ public:
 
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't add a tile to a const tree");
         if (NodeType::LEVEL < level) return;
         if (this->isHashed(xyz)) {
             assert(mNode);
@@ -672,7 +626,7 @@ public:
 
     LeafNodeType* touchLeaf(const Coord& xyz)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         if (this->isHashed(xyz)) {
             assert(mNode);
             return const_cast<NodeType*>(mNode)->touchLeafAndCache(xyz, *mParent);
@@ -682,7 +636,7 @@ public:
 
     LeafNodeType* probeLeaf(const Coord& xyz)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         if (this->isHashed(xyz)) {
             assert(mNode);
             return const_cast<NodeType*>(mNode)->probeLeafAndCache(xyz, *mParent);
@@ -702,10 +656,10 @@ public:
     template<typename NodeT>
     NodeT* probeNode(const Coord& xyz)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
         if (this->isHashed(xyz)) {
-            if ((boost::is_same<NodeT, NodeType>::value)) {
+            if ((std::is_same<NodeT, NodeType>::value)) {
                 assert(mNode);
                 return reinterpret_cast<NodeT*>(const_cast<NodeType*>(mNode));
             }
@@ -720,7 +674,7 @@ public:
     {
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
         if (this->isHashed(xyz)) {
-            if ((boost::is_same<NodeT, NodeType>::value)) {
+            if ((std::is_same<NodeT, NodeType>::value)) {
                 assert(mNode);
                 return reinterpret_cast<const NodeT*>(mNode);
             }
@@ -776,7 +730,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->setValueAndCache(xyz, value, *mParent);
         } else {
             mNext.setValue(xyz, value);
@@ -786,7 +740,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->setValueOnlyAndCache(xyz, value, *mParent);
         } else {
             mNext.setValueOnly(xyz, value);
@@ -802,7 +756,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->modifyValueAndCache(xyz, op, *mParent);
         } else {
             mNext.modifyValue(xyz, op);
@@ -816,7 +770,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->modifyValueAndActiveStateAndCache(xyz, op, *mParent);
         } else {
             mNext.modifyValueAndActiveState(xyz, op);
@@ -828,7 +782,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->setValueOffAndCache(xyz, value, *mParent);
         } else {
             mNext.setValueOff(xyz, value);
@@ -840,7 +794,7 @@ public:
     {
         if (this->isHashed(xyz)) {
             assert(mNode);
-            BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+            static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
             const_cast<NodeType*>(mNode)->setActiveStateAndCache(xyz, on, *mParent);
         } else {
             mNext.setActiveState(xyz, on);
@@ -861,8 +815,8 @@ private:
     TreeCacheT* mParent;
     Coord mHash;
     const NodeType* mNode;
-    typedef typename boost::mpl::pop_front<NodeVecT>::type RestT; // NodeVecT minus its first item
-    CacheItem<TreeCacheT, RestT, /*AtRoot=*/boost::mpl::size<RestT>::value == 1> mNext;
+    using RestT = typename NodeVecT::PopFront;
+    CacheItem<TreeCacheT, RestT, /*AtRoot=*/RestT::Size == 1> mNext;
 };// end of CacheItem
 
 
@@ -871,9 +825,9 @@ template<typename TreeCacheT, typename NodeVecT>
 class CacheItem<TreeCacheT, NodeVecT, /*AtRoot=*/true>
 {
 public:
-    typedef typename boost::mpl::front<NodeVecT>::type RootNodeType;
-    typedef typename RootNodeType::ValueType           ValueType;
-    typedef typename RootNodeType::LeafNodeType        LeafNodeType;
+    using RootNodeType = typename NodeVecT::Front;
+    using ValueType = typename RootNodeType::ValueType;
+    using LeafNodeType = typename RootNodeType::LeafNodeType;
 
     CacheItem(TreeCacheT& parent): mParent(&parent), mRoot(nullptr) {}
     CacheItem(TreeCacheT& parent, const CacheItem& other): mParent(&parent), mRoot(other.mRoot) {}
@@ -890,7 +844,7 @@ public:
     void insert(const Coord&, const RootNodeType* root) { mRoot = root; }
 
     // Needed for node types that are not cached
-    template <typename OtherNodeType>
+    template<typename OtherNodeType>
     void insert(const Coord&, const OtherNodeType*) {}
 
     void erase(const RootNodeType*) { mRoot = nullptr; }
@@ -899,7 +853,7 @@ public:
 
     void getNode(RootNodeType*& node)
     {
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         node = const_cast<RootNodeType*>(mRoot);
     }
     void getNode(const RootNodeType*& node) const { node = mRoot; }
@@ -907,28 +861,28 @@ public:
     void addLeaf(LeafNodeType* leaf)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't add a node to a const tree");
         const_cast<RootNodeType*>(mRoot)->addLeafAndCache(leaf, *mParent);
     }
 
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't add a tile to a const tree");
         const_cast<RootNodeType*>(mRoot)->addTileAndCache(level, xyz, value, state, *mParent);
     }
 
     LeafNodeType* touchLeaf(const Coord& xyz)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         return const_cast<RootNodeType*>(mRoot)->touchLeafAndCache(xyz, *mParent);
     }
 
     LeafNodeType* probeLeaf(const Coord& xyz)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
         return const_cast<RootNodeType*>(mRoot)->probeLeafAndCache(xyz, *mParent);
     }
 
@@ -942,8 +896,9 @@ public:
     NodeType* probeNode(const Coord& xyz)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
-        return const_cast<RootNodeType*>(mRoot)->template probeNodeAndCache<NodeType>(xyz, *mParent);
+        static_assert(!TreeCacheT::IsConstTree, "can't get a non-const node from a const tree");
+        return const_cast<RootNodeType*>(mRoot)->
+            template probeNodeAndCache<NodeType>(xyz, *mParent);
     }
 
     template<typename NodeType>
@@ -984,13 +939,13 @@ public:
     void setValue(const Coord& xyz, const ValueType& value)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->setValueAndCache(xyz, value, *mParent);
     }
     void setValueOnly(const Coord& xyz, const ValueType& value)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->setValueOnlyAndCache(xyz, value, *mParent);
     }
     void setValueOn(const Coord& xyz, const ValueType& value) { this->setValue(xyz, value); }
@@ -999,7 +954,7 @@ public:
     void modifyValue(const Coord& xyz, const ModifyOp& op)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->modifyValueAndCache(xyz, op, *mParent);
     }
 
@@ -1007,21 +962,21 @@ public:
     void modifyValueAndActiveState(const Coord& xyz, const ModifyOp& op)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->modifyValueAndActiveStateAndCache(xyz, op, *mParent);
     }
 
     void setValueOff(const Coord& xyz, const ValueType& value)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->setValueOffAndCache(xyz, value, *mParent);
     }
 
     void setActiveState(const Coord& xyz, bool on)
     {
         assert(mRoot);
-        BOOST_STATIC_ASSERT(!TreeCacheT::IsConstTree);
+        static_assert(!TreeCacheT::IsConstTree, "can't modify a const tree's values");
         const_cast<RootNodeType*>(mRoot)->setActiveStateAndCache(xyz, on, *mParent);
     }
 
@@ -1046,11 +1001,11 @@ template<typename _TreeType, bool IsSafe>
 class ValueAccessor0: public ValueAccessorBase<_TreeType, IsSafe>
 {
 public:
-    typedef _TreeType                           TreeType;
-    typedef typename TreeType::ValueType        ValueType;
-    typedef typename TreeType::RootNodeType     RootNodeT;
-    typedef typename TreeType::LeafNodeType     LeafNodeT;
-    typedef ValueAccessorBase<TreeType, IsSafe> BaseT;
+    using TreeType = _TreeType;
+    using ValueType = typename TreeType::ValueType;
+    using RootNodeT = typename TreeType::RootNodeType;
+    using LeafNodeT = typename TreeType::LeafNodeType;
+    using BaseT = ValueAccessorBase<TreeType, IsSafe>;
 
     ValueAccessor0(TreeType& tree): BaseT(tree) {}
 
@@ -1065,7 +1020,7 @@ public:
         return *this;
     }
 
-    virtual ~ValueAccessor0() {}
+    ~ValueAccessor0() override = default;
 
     /// Return @c true if nodes along the path to the given voxel have been cached.
     bool isCached(const Coord&) const { return false; }
@@ -1113,7 +1068,7 @@ public:
     void setValue(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->setValue(xyz, value);
     }
     void setValueOn(const Coord& xyz, const ValueType& value) { this->setValue(xyz, value); }
@@ -1123,7 +1078,7 @@ public:
     void setValueOnly(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->setValueOnly(xyz, value);
     }
 
@@ -1131,7 +1086,7 @@ public:
     void setValueOff(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->root().setValueOff(xyz, value);
     }
 
@@ -1142,7 +1097,7 @@ public:
     void modifyValue(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->modifyValue(xyz, op);
     }
 
@@ -1152,7 +1107,7 @@ public:
     void modifyValueAndActiveState(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->modifyValueAndActiveState(xyz, op);
     }
 
@@ -1160,7 +1115,7 @@ public:
     void setActiveState(const Coord& xyz, bool on = true)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         BaseT::mTree->setActiveState(xyz, on);
     }
     /// Mark the voxel at the given coordinates as active but don't change its value.
@@ -1180,7 +1135,7 @@ public:
     void addLeaf(LeafNodeT* leaf)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a node to a const tree");
         BaseT::mTree->root().addLeaf(leaf);
     }
 
@@ -1189,7 +1144,7 @@ public:
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a tile to a const tree");
         BaseT::mTree->root().addTile(level, xyz, value, state);
     }
 
@@ -1201,19 +1156,19 @@ public:
     LeafNodeT* touchLeaf(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         return BaseT::mTree->touchLeaf(xyz);
     }
 
-    template <typename NodeT>
+    template<typename NodeT>
     NodeT* probeNode(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         return BaseT::mTree->template probeNode<NodeT>(xyz);
     }
 
-    template <typename NodeT>
+    template<typename NodeT>
     const NodeT* probeConstNode(const Coord& xyz) const
     {
         assert(BaseT::mTree);
@@ -1236,7 +1191,7 @@ public:
     }
 
     /// Remove all nodes from this cache, then reinsert the root node.
-    virtual void clear() {}
+    void clear() override {}
 
 private:
     // Allow trees to deregister themselves.
@@ -1244,7 +1199,7 @@ private:
 
     /// Prevent this accessor from calling Tree::releaseCache() on a tree that
     /// no longer exists.  (Called by mTree when it is destroyed.)
-    virtual void release() { this->BaseT::release(); }
+    void release() override { this->BaseT::release(); }
 
 }; // ValueAccessor0
 
@@ -1259,15 +1214,15 @@ template<typename _TreeType, bool IsSafe, Index L0>
 class ValueAccessor1 : public ValueAccessorBase<_TreeType, IsSafe>
 {
 public:
-    BOOST_STATIC_ASSERT(_TreeType::DEPTH >= 2);
-    BOOST_STATIC_ASSERT( L0 < _TreeType::RootNodeType::LEVEL );
-    typedef _TreeType                           TreeType;
-    typedef typename TreeType::ValueType        ValueType;
-    typedef typename TreeType::RootNodeType     RootNodeT;
-    typedef typename TreeType::LeafNodeType     LeafNodeT;
-    typedef ValueAccessorBase<TreeType, IsSafe> BaseT;
-    typedef typename RootNodeT::NodeChainType   InvTreeT;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L0> >::type NodeT0;
+    static_assert(_TreeType::DEPTH >= 2, "cache size exceeds tree depth");
+    static_assert(L0 < _TreeType::RootNodeType::LEVEL, "invalid cache level");
+    using TreeType = _TreeType;
+    using ValueType = typename TreeType::ValueType;
+    using RootNodeT = typename TreeType::RootNodeType;
+    using LeafNodeT = typename TreeType::LeafNodeType;
+    using BaseT = ValueAccessorBase<TreeType, IsSafe>;
+    using InvTreeT = typename RootNodeT::NodeChainType;
+    using NodeT0 = typename InvTreeT::template Get<L0>;
 
     /// Constructor from a tree
     ValueAccessor1(TreeType& tree) : BaseT(tree), mKey0(Coord::max()), mNode0(nullptr)
@@ -1291,7 +1246,7 @@ public:
     }
 
     /// Virtual destructor
-    virtual ~ValueAccessor1() {}
+    ~ValueAccessor1() override = default;
 
     /// Return @c true if any of the nodes along the path to the given
     /// voxel have been cached.
@@ -1365,7 +1320,7 @@ public:
     void setValue(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueAndCache(xyz, value, *this);
@@ -1380,7 +1335,7 @@ public:
     void setValueOnly(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOnlyAndCache(xyz, value, *this);
@@ -1393,7 +1348,7 @@ public:
     void setValueOff(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOffAndCache(xyz, value, *this);
@@ -1409,7 +1364,7 @@ public:
     void modifyValue(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndCache(xyz, op, *this);
@@ -1424,7 +1379,7 @@ public:
     void modifyValueAndActiveState(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndActiveStateAndCache(xyz, op, *this);
@@ -1437,7 +1392,7 @@ public:
     void setActiveState(const Coord& xyz, bool on = true)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setActiveStateAndCache(xyz, on, *this);
@@ -1479,7 +1434,7 @@ public:
     void addLeaf(LeafNodeT* leaf)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a node to a const tree");
         BaseT::mTree->root().addLeaf(leaf);
     }
 
@@ -1488,7 +1443,7 @@ public:
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a tile to a const tree");
         BaseT::mTree->root().addTile(level, xyz, value, state);
     }
 
@@ -1501,7 +1456,7 @@ public:
     LeafNodeT* touchLeaf(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         if (this->isHashed(xyz)) {
             assert(mNode0);
             return const_cast<NodeT0*>(mNode0)->touchLeafAndCache(xyz, *this);
@@ -1511,13 +1466,13 @@ public:
 
     /// @brief @return a pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     NodeT* probeNode(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT0*>(mNode0));
@@ -1534,12 +1489,12 @@ public:
 
     /// @brief @return a const pointer to the nodeof the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     const NodeT* probeConstNode(const Coord& xyz) const
     {
         assert(BaseT::mTree);
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<const NodeT*>(mNode0);
@@ -1556,7 +1511,7 @@ public:
     const LeafNodeT* probeLeaf(const Coord& xyz) const { return this->probeConstLeaf(xyz); }
 
     /// Remove all the cached nodes and invalidate the corresponding hash-keys.
-    virtual void clear()
+    void clear() override
     {
         mKey0  = Coord::max();
         mNode0 = nullptr;
@@ -1578,9 +1533,9 @@ private:
     {
         node = (BaseT::mTree ? &BaseT::mTree->root() : nullptr);
     }
-    template <typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
+    template<typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
     void eraseNode(const NodeT0*) { mKey0 = Coord::max(); mNode0 = nullptr; }
-    template <typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
+    template<typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
 
     /// Private copy method
     inline void copy(const ValueAccessor1& other)
@@ -1591,7 +1546,7 @@ private:
 
     /// Prevent this accessor from calling Tree::releaseCache() on a tree that
     /// no longer exists.  (Called by mTree when it is destroyed.)
-    virtual void release()
+    void release() override
     {
         this->BaseT::release();
         this->clear();
@@ -1633,16 +1588,18 @@ template<typename _TreeType, bool IsSafe, Index L0, Index L1>
 class ValueAccessor2 : public ValueAccessorBase<_TreeType, IsSafe>
 {
 public:
-    BOOST_STATIC_ASSERT(_TreeType::DEPTH >= 3);
-    BOOST_STATIC_ASSERT( L0 < L1 && L1 < _TreeType::RootNodeType::LEVEL );
-    typedef _TreeType                           TreeType;
-    typedef typename TreeType::ValueType        ValueType;
-    typedef typename TreeType::RootNodeType     RootNodeT;
-    typedef typename TreeType::LeafNodeType     LeafNodeT;
-    typedef ValueAccessorBase<TreeType, IsSafe> BaseT;
-    typedef typename RootNodeT::NodeChainType   InvTreeT;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L0> >::type NodeT0;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L1> >::type NodeT1;
+    static_assert(_TreeType::DEPTH >= 3, "cache size exceeds tree depth");
+    static_assert(L0 < L1, "invalid cache level");
+    static_assert(L1 < _TreeType::RootNodeType::LEVEL, "invalid cache level");
+
+    using TreeType = _TreeType;
+    using ValueType = typename TreeType::ValueType;
+    using RootNodeT = typename TreeType::RootNodeType;
+    using LeafNodeT = typename TreeType::LeafNodeType;
+    using BaseT = ValueAccessorBase<TreeType, IsSafe>;
+    using InvTreeT = typename RootNodeT::NodeChainType;
+    using NodeT0 = typename InvTreeT::template Get<L0>;
+    using NodeT1 = typename InvTreeT::template Get<L1>;
 
     /// Constructor from a tree
     ValueAccessor2(TreeType& tree) : BaseT(tree),
@@ -1666,7 +1623,7 @@ public:
     }
 
     /// Virtual destructor
-    virtual ~ValueAccessor2() {}
+    ~ValueAccessor2() override = default;
 
     /// Return @c true if any of the nodes along the path to the given
     /// voxel have been cached.
@@ -1755,7 +1712,7 @@ public:
     void setValue(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueAndCache(xyz, value, *this);
@@ -1773,7 +1730,7 @@ public:
     void setValueOnly(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOnlyAndCache(xyz, value, *this);
@@ -1789,7 +1746,7 @@ public:
     void setValueOff(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOffAndCache(xyz, value, *this);
@@ -1808,7 +1765,7 @@ public:
     void modifyValue(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndCache(xyz, op, *this);
@@ -1826,7 +1783,7 @@ public:
     void modifyValueAndActiveState(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndActiveStateAndCache(xyz, op, *this);
@@ -1842,7 +1799,7 @@ public:
     void setActiveState(const Coord& xyz, bool on = true)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setActiveStateAndCache(xyz, on, *this);
@@ -1887,7 +1844,7 @@ public:
     void addLeaf(LeafNodeT* leaf)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a node to a const tree");
         if (this->isHashed1(leaf->origin())) {
             assert(mNode1);
             return const_cast<NodeT1*>(mNode1)->addLeafAndCache(leaf, *this);
@@ -1900,7 +1857,7 @@ public:
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a tile to a const tree");
         if (this->isHashed1(xyz)) {
             assert(mNode1);
             return const_cast<NodeT1*>(mNode1)->addTileAndCache(level, xyz, value, state, *this);
@@ -1917,7 +1874,7 @@ public:
     LeafNodeT* touchLeaf(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             return const_cast<NodeT0*>(mNode0)->touchLeafAndCache(xyz, *this);
@@ -1929,13 +1886,13 @@ public:
     }
     /// @brief @return a pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     NodeT* probeNode(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed0(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT0*>(mNode0));
@@ -1944,7 +1901,7 @@ public:
                 return const_cast<NodeT1*>(mNode1)->template probeNodeAndCache<NodeT>(xyz, *this);
             }
             return BaseT::mTree->root().template probeNodeAndCache<NodeT>(xyz, *this);
-        } else if ((boost::is_same<NodeT, NodeT1>::value)) {
+        } else if ((std::is_same<NodeT, NodeT1>::value)) {
             if (this->isHashed1(xyz)) {
                 assert(mNode1);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT1*>(mNode1));
@@ -1960,11 +1917,11 @@ public:
 
     /// @brief @return a const pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     const NodeT* probeConstLeaf(const Coord& xyz) const
     {
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed0(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<const NodeT*>(mNode0);
@@ -1973,7 +1930,7 @@ public:
                 return mNode1->template probeConstNodeAndCache<NodeT>(xyz, this->self());
             }
             return BaseT::mTree->root().template probeConstNodeAndCache<NodeT>(xyz, this->self());
-        } else if ((boost::is_same<NodeT, NodeT1>::value)) {
+        } else if ((std::is_same<NodeT, NodeT1>::value)) {
             if (this->isHashed1(xyz)) {
                 assert(mNode1);
                 return reinterpret_cast<const NodeT*>(mNode1);
@@ -1993,12 +1950,12 @@ public:
 
     /// @brief @return a const pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     const NodeT* probeConstNode(const Coord& xyz) const
     {
         assert(BaseT::mTree);
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed0(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<const NodeT*>(mNode0);
@@ -2007,7 +1964,7 @@ public:
                 return mNode1->template probeConstNodeAndCache<NodeT>(xyz, this->self());
             }
             return BaseT::mTree->root().template probeConstNodeAndCache<NodeT>(xyz, this->self());
-        } else if ((boost::is_same<NodeT, NodeT1>::value)) {
+        } else if ((std::is_same<NodeT, NodeT1>::value)) {
             if (this->isHashed1(xyz)) {
                 assert(mNode1);
                 return reinterpret_cast<const NodeT*>(mNode1);
@@ -2019,7 +1976,7 @@ public:
     }
 
     /// Remove all the cached nodes and invalidate the corresponding hash-keys.
-    virtual void clear()
+    void clear() override
     {
         mKey0  = Coord::max();
         mNode0 = nullptr;
@@ -2044,11 +2001,11 @@ private:
     {
         node = (BaseT::mTree ? &BaseT::mTree->root() : nullptr);
     }
-    template <typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
+    template<typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
 
     void eraseNode(const NodeT0*) { mKey0 = Coord::max(); mNode0 = nullptr; }
     void eraseNode(const NodeT1*) { mKey1 = Coord::max(); mNode1 = nullptr; }
-    template <typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
+    template<typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
 
     /// Private copy method
     inline void copy(const ValueAccessor2& other)
@@ -2061,7 +2018,7 @@ private:
 
     /// Prevent this accessor from calling Tree::releaseCache() on a tree that
     /// no longer exists.  (Called by mTree when it is destroyed.)
-    virtual void release()
+    void release() override
     {
         this->BaseT::release();
         this->clear();
@@ -2120,17 +2077,20 @@ template<typename _TreeType, bool IsSafe, Index L0, Index L1, Index L2>
 class ValueAccessor3 : public ValueAccessorBase<_TreeType, IsSafe>
 {
 public:
-    BOOST_STATIC_ASSERT(_TreeType::DEPTH >= 4);
-    BOOST_STATIC_ASSERT(L0 < L1 && L1 < L2 && L2 < _TreeType::RootNodeType::LEVEL);
-    typedef _TreeType                           TreeType;
-    typedef typename TreeType::ValueType        ValueType;
-    typedef typename TreeType::RootNodeType     RootNodeT;
-    typedef typename TreeType::LeafNodeType     LeafNodeT;
-    typedef ValueAccessorBase<TreeType, IsSafe> BaseT;
-    typedef typename RootNodeT::NodeChainType   InvTreeT;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L0> >::type NodeT0;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L1> >::type NodeT1;
-    typedef typename boost::mpl::at<InvTreeT, boost::mpl::int_<L2> >::type NodeT2;
+    static_assert(_TreeType::DEPTH >= 4, "cache size exceeds tree depth");
+    static_assert(L0 < L1, "invalid cache level");
+    static_assert(L1 < L2, "invalid cache level");
+    static_assert(L2 < _TreeType::RootNodeType::LEVEL, "invalid cache level");
+
+    using TreeType = _TreeType;
+    using ValueType = typename TreeType::ValueType;
+    using RootNodeT = typename TreeType::RootNodeType;
+    using LeafNodeT = typename TreeType::LeafNodeType;
+    using BaseT = ValueAccessorBase<TreeType, IsSafe>;
+    using InvTreeT = typename RootNodeT::NodeChainType;
+    using NodeT0 = typename InvTreeT::template Get<L0>;
+    using NodeT1 = typename InvTreeT::template Get<L1>;
+    using NodeT2 = typename InvTreeT::template Get<L2>;
 
     /// Constructor from a tree
     ValueAccessor3(TreeType& tree) : BaseT(tree),
@@ -2155,7 +2115,7 @@ public:
     static Index numCacheLevels() { return 3; }
 
     /// Virtual destructor
-    virtual ~ValueAccessor3() {}
+    ~ValueAccessor3() override = default;
 
     /// Return @c true if any of the nodes along the path to the given
     /// voxel have been cached.
@@ -2259,7 +2219,7 @@ public:
     void setValue(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueAndCache(xyz, value, *this);
@@ -2280,7 +2240,7 @@ public:
     void setValueOnly(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOnlyAndCache(xyz, value, *this);
@@ -2299,7 +2259,7 @@ public:
     void setValueOff(const Coord& xyz, const ValueType& value)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setValueOffAndCache(xyz, value, *this);
@@ -2321,7 +2281,7 @@ public:
     void modifyValue(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndCache(xyz, op, *this);
@@ -2342,7 +2302,7 @@ public:
     void modifyValueAndActiveState(const Coord& xyz, const ModifyOp& op)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->modifyValueAndActiveStateAndCache(xyz, op, *this);
@@ -2361,7 +2321,7 @@ public:
     void setActiveState(const Coord& xyz, bool on = true)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't modify a const tree's values");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             const_cast<NodeT0*>(mNode0)->setActiveStateAndCache(xyz, on, *this);
@@ -2409,7 +2369,7 @@ public:
     void addLeaf(LeafNodeT* leaf)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a node to a const tree");
         if (this->isHashed1(leaf->origin())) {
             assert(mNode1);
             return const_cast<NodeT1*>(mNode1)->addLeafAndCache(leaf, *this);
@@ -2425,7 +2385,7 @@ public:
     void addTile(Index level, const Coord& xyz, const ValueType& value, bool state)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't add a tile to a const tree");
         if (this->isHashed1(xyz)) {
             assert(mNode1);
             return const_cast<NodeT1*>(mNode1)->addTileAndCache(level, xyz, value, state, *this);
@@ -2445,7 +2405,7 @@ public:
     LeafNodeT* touchLeaf(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         if (this->isHashed0(xyz)) {
             assert(mNode0);
             return const_cast<NodeT0*>(mNode0);
@@ -2460,13 +2420,13 @@ public:
     }
     /// @brief @return a pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     NodeT* probeNode(const Coord& xyz)
     {
         assert(BaseT::mTree);
-        BOOST_STATIC_ASSERT(!BaseT::IsConstTree);
+        static_assert(!BaseT::IsConstTree, "can't get a non-const node from a const tree");
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed0(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT0*>(mNode0));
@@ -2478,7 +2438,7 @@ public:
                 return const_cast<NodeT2*>(mNode2)->template probeNodeAndCache<NodeT>(xyz, *this);
             }
             return BaseT::mTree->root().template probeNodeAndCache<NodeT>(xyz, *this);
-        } else if ((boost::is_same<NodeT, NodeT1>::value)) {
+        } else if ((std::is_same<NodeT, NodeT1>::value)) {
             if (this->isHashed1(xyz)) {
                 assert(mNode1);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT1*>(mNode1));
@@ -2487,7 +2447,7 @@ public:
                 return const_cast<NodeT2*>(mNode2)->template probeNodeAndCache<NodeT>(xyz, *this);
             }
             return BaseT::mTree->root().template probeNodeAndCache<NodeT>(xyz, *this);
-        } else if ((boost::is_same<NodeT, NodeT2>::value)) {
+        } else if ((std::is_same<NodeT, NodeT2>::value)) {
             if (this->isHashed2(xyz)) {
                 assert(mNode2);
                 return reinterpret_cast<NodeT*>(const_cast<NodeT2*>(mNode2));
@@ -2503,12 +2463,12 @@ public:
 
     /// @brief @return a const pointer to the node of the specified type that contains
     /// voxel (x, y, z) and if it doesn't exist, return @c nullptr.
-    template <typename NodeT>
+    template<typename NodeT>
     const NodeT* probeConstNode(const Coord& xyz) const
     {
         assert(BaseT::mTree);
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if ((boost::is_same<NodeT, NodeT0>::value)) {
+        if ((std::is_same<NodeT, NodeT0>::value)) {
             if (this->isHashed0(xyz)) {
                 assert(mNode0);
                 return reinterpret_cast<const NodeT*>(mNode0);
@@ -2520,7 +2480,7 @@ public:
                 return mNode2->template probeConstNodeAndCache<NodeT>(xyz, this->self());
             }
             return BaseT::mTree->root().template probeConstNodeAndCache<NodeT>(xyz, this->self());
-        } else if ((boost::is_same<NodeT, NodeT1>::value)) {
+        } else if ((std::is_same<NodeT, NodeT1>::value)) {
             if (this->isHashed1(xyz)) {
                 assert(mNode1);
                 return reinterpret_cast<const NodeT*>(mNode1);
@@ -2529,7 +2489,7 @@ public:
                 return mNode2->template probeConstNodeAndCache<NodeT>(xyz, this->self());
             }
             return BaseT::mTree->root().template probeConstNodeAndCache<NodeT>(xyz, this->self());
-        } else if ((boost::is_same<NodeT, NodeT2>::value)) {
+        } else if ((std::is_same<NodeT, NodeT2>::value)) {
             if (this->isHashed2(xyz)) {
                 assert(mNode2);
                 return reinterpret_cast<const NodeT*>(mNode2);
@@ -2548,7 +2508,7 @@ public:
     const LeafNodeT* probeLeaf(const Coord& xyz) const { return this->probeConstLeaf(xyz); }
 
     /// Remove all the cached nodes and invalidate the corresponding hash-keys.
-    virtual void clear()
+    void clear() override
     {
         mKey0  = Coord::max();
         mNode0 = nullptr;
@@ -2582,7 +2542,7 @@ private:
 
     /// Prevent this accessor from calling Tree::releaseCache() on a tree that
     /// no longer exists.  (Called by mTree when it is destroyed.)
-    virtual void release()
+    void release() override
     {
         this->BaseT::release();
         this->clear();
@@ -2594,12 +2554,12 @@ private:
     {
         node = (BaseT::mTree ? &BaseT::mTree->root() : nullptr);
     }
-    template <typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
+    template<typename OtherNodeType> void getNode(const OtherNodeType*& node) { node = nullptr; }
 
     void eraseNode(const NodeT0*) { mKey0 = Coord::max(); mNode0 = nullptr; }
     void eraseNode(const NodeT1*) { mKey1 = Coord::max(); mNode1 = nullptr; }
     void eraseNode(const NodeT2*) { mKey2 = Coord::max(); mNode2 = nullptr; }
-    template <typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
+    template<typename OtherNodeType> void eraseNode(const OtherNodeType*) {}
 
     /// Cache the given node, which should lie along the path from the root node to
     /// the node containing voxel (x, y, z).
@@ -2660,7 +2620,3 @@ private:
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_VALUEACCESSOR_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

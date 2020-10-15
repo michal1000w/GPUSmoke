@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file Stats.h
 ///
@@ -39,6 +12,7 @@
 
 #include <iosfwd> // for ostringstream
 #include <openvdb/version.h>
+#include <openvdb/Exceptions.h>
 #include <iostream>
 #include <iomanip>
 #include <sstream>
@@ -55,12 +29,25 @@ namespace math {
 template <typename ValueType, typename Less = std::less<ValueType> >
 class MinMax
 {
+    using Limits = std::numeric_limits<ValueType>;
 public:
+
+    /// @brief Empty constructor
+    ///
+    /// @warning Only use this constructor with POD types
+    MinMax() : mMin(Limits::max()), mMax(Limits::lowest())
+    {
+        static_assert(std::numeric_limits<ValueType>::is_specialized,
+                      "openvdb::math::MinMax default constructor requires a std::numeric_limits specialization");
+    }
 
     /// @brief Constructor
     MinMax(const ValueType &min, const ValueType &max) : mMin(min), mMax(max)
     {
     }
+
+    /// @brief Default copy constructor
+    MinMax(const MinMax &other) = default;
 
     /// Add a single sample.
     inline void add(const ValueType &val, const Less &less = Less())
@@ -96,10 +83,10 @@ public:
     }
 
 protected:
-    
+
     ValueType mMin, mMax;
 };//end MinMax
-    
+
 /// @brief This class computes the minimum and maximum values of a population
 /// of floating-point values.
 class Extrema
@@ -386,14 +373,10 @@ private:
     uint64_t mSize;
     double mMin, mMax, mDelta;
     std::vector<uint64_t> mBins;
-};
+};// end Histogram
 
 } // namespace math
 } // namespace OPENVDB_VERSION_NAME
 } // namespace openvdb
 
 #endif // OPENVDB_MATH_STATS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

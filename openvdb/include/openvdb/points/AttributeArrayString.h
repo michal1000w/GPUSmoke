@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file points/AttributeArrayString.h
 ///
@@ -39,6 +12,8 @@
 
 #include "AttributeArray.h"
 #include <memory>
+#include <deque>
+#include <unordered_map>
 
 
 namespace openvdb {
@@ -50,12 +25,17 @@ namespace points {
 ////////////////////////////////////////
 
 
-using StringIndexType = uint32_t;
-
+// StringIndexType is now deprecated, use Index directly
+#ifdef _MSC_VER
+// (deprecations on aliases are not supported on Windows)
+using StringIndexType = Index;
+#else
+using StringIndexType OPENVDB_DEPRECATED = Index;
+#endif
 
 namespace attribute_traits
 {
-    template <bool Truncate> struct StringTypeTrait { using Type = StringIndexType; };
+    template <bool Truncate> struct StringTypeTrait { using Type = Index; };
     template<> struct StringTypeTrait</*Truncate=*/true> { using Type = uint16_t; };
 }
 
@@ -63,7 +43,7 @@ namespace attribute_traits
 template <bool Truncate>
 struct StringCodec
 {
-    using ValueType = StringIndexType;
+    using ValueType = Index;
 
     template <typename T>
     struct Storage { using Type = typename attribute_traits::StringTypeTrait<Truncate>::Type; };
@@ -74,27 +54,74 @@ struct StringCodec
 };
 
 
-using StringAttributeArray = TypedAttributeArray<StringIndexType, StringCodec<false>>;
+using StringAttributeArray = TypedAttributeArray<Index, StringCodec<false>>;
 
 
 ////////////////////////////////////////
 
 
+/// Class to compute a string->index map from all string:N metadata
+class OPENVDB_API StringMetaCache
+{
+public:
+    using UniquePtr = std::unique_ptr<StringMetaCache>;
+    using ValueMap = std::unordered_map<Name, Index>;
+
+    StringMetaCache() = default;
+    explicit StringMetaCache(const MetaMap& metadata);
+
+    /// Return @c true if no string elements in metadata
+    bool empty() const { return mCache.empty(); }
+    /// Returns the number of string elements in metadata
+    size_t size() const { return mCache.size(); }
+
+    /// Clears and re-populates the cache
+    void reset(const MetaMap& metadata);
+
+    /// Insert a new element in the cache
+    void insert(const Name& key, Index index);
+
+    /// Retrieve the value map (string -> index)
+    const ValueMap& map() const { return mCache; }
+
+private:
+    ValueMap mCache;
+}; // StringMetaCache
+
+
+////////////////////////////////////////
+
+
+/// Class to help with insertion of keyed string values into metadata
 class OPENVDB_API StringMetaInserter
 {
 public:
-    StringMetaInserter(MetaMap& metadata);
+    using UniquePtr = std::unique_ptr<StringMetaInserter>;
 
-    /// Insert the string into the metadata
-    void insert(const Name& name);
+    explicit StringMetaInserter(MetaMap& metadata);
+
+    /// Returns @c true if key exists
+    bool hasKey(const Name& key) const;
+    /// Returns @c true if index exists
+    bool hasIndex(Index index) const;
+
+    /// @brief Insert the string into the metadata using the hint if non-zero
+    /// @param name the string to insert
+    /// @param hint requested index to use if non-zero and not already in use
+    /// @note the hint can be used to insert non-sequentially so as to avoid an
+    /// expensive re-indexing of string keys
+    /// @return the chosen index which will match hint if the hint was used
+    Index insert(const Name& name, Index hint = Index(0));
 
     /// Reset the cache from the metadata
     void resetCache();
 
 private:
+    using IndexPairArray = std::deque<std::pair<Index, Index>>;
+
     MetaMap& mMetadata;
-    std::vector<Index> mIndices;
-    std::vector<Name> mValues;
+    IndexPairArray mIdBlocks;
+    StringMetaCache mCache;
 }; // StringMetaInserter
 
 
@@ -135,6 +162,7 @@ class OPENVDB_API StringAttributeHandle
 {
 public:
     using Ptr = std::shared_ptr<StringAttributeHandle>;//SharedPtr<StringAttributeHandle>;
+    using UniquePtr = std::unique_ptr<StringAttributeHandle>;
 
     static Ptr create(const AttributeArray& array, const MetaMap& metadata, const bool preserveCompression = true);
 
@@ -142,14 +170,20 @@ public:
                             const MetaMap& metadata,
                             const bool preserveCompression = true);
 
+    Index stride() const { return mHandle.stride(); }
     Index size() const { return mHandle.size(); }
+
     bool isUniform() const { return mHandle.isUniform(); }
+    bool hasConstantStride() const { return mHandle.hasConstantStride(); }
 
     Name get(Index n, Index m = 0) const;
     void get(Name& name, Index n, Index m = 0) const;
 
+    /// @brief Returns a reference to the array held in the Handle.
+    const AttributeArray& array() const;
+
 protected:
-    AttributeHandle<StringIndexType, StringCodec<false>>    mHandle;
+    AttributeHandle<Index, StringCodec<false>>    mHandle;
     const MetaMap&                                          mMetadata;
 }; // class StringAttributeHandle
 
@@ -161,6 +195,7 @@ class OPENVDB_API StringAttributeWriteHandle : public StringAttributeHandle
 {
 public:
     using Ptr = std::shared_ptr<StringAttributeWriteHandle>;//SharedPtr<StringAttributeWriteHandle>;
+    using UniquePtr = std::unique_ptr<StringAttributeWriteHandle>;
 
     static Ptr create(AttributeArray& array, const MetaMap& metadata, const bool expand = true);
 
@@ -192,15 +227,20 @@ public:
     /// Reset the value cache from the metadata
     void resetCache();
 
+    /// @brief Returns a reference to the array held in the Write Handle.
+    AttributeArray& array();
+
+    /// @brief  Returns whether or not the metadata cache contains a given value.
+    /// @param  name Name of the String.
+    bool contains(const Name& name) const;
+
 private:
     /// Retrieve the index of this string value from the cache
     /// @note throws if name does not exist in cache
-    Index getIndex(const Name& name);
+    Index getIndex(const Name& name) const;
 
-    using ValueMap = std::map<std::string, Index>;
-
-    ValueMap                                                    mCache;
-    AttributeWriteHandle<StringIndexType, StringCodec<false>>   mWriteHandle;
+    StringMetaCache                                     mCache;
+    AttributeWriteHandle<Index, StringCodec<false>>     mWriteHandle;
 }; // class StringAttributeWriteHandle
 
 
@@ -212,8 +252,4 @@ private:
 } // namespace openvdb
 
 #endif // OPENVDB_POINTS_ATTRIBUTE_ARRAY_STRING_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
 

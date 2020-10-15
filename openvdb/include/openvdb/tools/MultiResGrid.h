@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file MultiResGrid.h
 ///
@@ -45,6 +18,9 @@
 ///
 /// @note Prolongation means interpolation from coarse -> fine
 /// @note Restriction means interpolation (or remapping) from fine -> coarse
+///
+/// @todo Add option to define the level of the input grid (currenlty
+/// 0) so as to allow for super-sampling.
 
 #ifndef OPENVDB_TOOLS_MULTIRESGRID_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_MULTIRESGRID_HAS_BEEN_INCLUDED
@@ -63,14 +39,15 @@
 #include "SignedFloodFill.h"
 #include "ValueTransformer.h"
 
+#include <tbb/blocked_range.h>
 #include <tbb/enumerable_thread_specific.h>
-#include <tbb/task_scheduler_init.h>
-#include <tbb/tbb_thread.h>
+#include <tbb/parallel_for.h>
 
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -81,17 +58,16 @@ template<typename TreeType>
 class MultiResGrid: public MetaMap
 {
 public:
+    using Ptr = SharedPtr<MultiResGrid>;
+    using ConstPtr = SharedPtr<const MultiResGrid>;
 
-    typedef boost::shared_ptr<MultiResGrid>         Ptr;
-    typedef boost::shared_ptr<const MultiResGrid>   ConstPtr;
-
-    typedef typename TreeType::ValueType            ValueType;
-    typedef typename TreeType::ValueOnCIter         ValueOnCIter;
-    typedef typename TreeType::ValueOnIter          ValueOnIter;
-    typedef typename TreeType::Ptr                  TreePtr;
-    typedef typename TreeType::ConstPtr             ConstTreePtr;
-    typedef typename Grid<TreeType>::Ptr            GridPtr;
-    typedef typename Grid<TreeType>::ConstPtr       ConstGridPtr;
+    using ValueType = typename TreeType::ValueType;
+    using ValueOnCIter = typename TreeType::ValueOnCIter;
+    using ValueOnIter = typename TreeType::ValueOnIter;
+    using TreePtr = typename TreeType::Ptr;
+    using ConstTreePtr = typename TreeType::ConstPtr;
+    using GridPtr = typename Grid<TreeType>::Ptr;
+    using ConstGridPtr = typename Grid<TreeType>::ConstPtr;
 
     //////////////////////////////////////////////////////////////////////
 
@@ -118,9 +94,8 @@ public:
     /// @param grid High-resolution input grid
     /// @param useInjection Use restriction by injection, vs
     /// full-weighting. It defaults to false and should rarely be used.
-    /// @note This constructor will steal the input input
-    /// grid and use it as the highest level grid. On output the grid
-    /// is empty.
+    /// @note This constructor will steal the input grid and use it
+    /// as the highest level grid. On output the grid is empty.
     MultiResGrid(size_t levels, GridPtr grid, bool useInjection = false);
 
     //////////////////////////////////////////////////////////////////////
@@ -348,8 +323,8 @@ private:
     MultiResGrid& operator=(const MultiResGrid& other);//disallow copy assignment
 
     // For optimal performance we disable registration of the ValueAccessor
-    typedef tree::ValueAccessor<TreeType, false>       Accessor;
-    typedef tree::ValueAccessor<const TreeType, false> ConstAccessor;
+    using Accessor = tree::ValueAccessor<TreeType, false>;
+    using ConstAccessor = tree::ValueAccessor<const TreeType, false>;
 
     void topDownRestrict(bool useInjection);
 
@@ -374,7 +349,7 @@ private:
 
     // Array of shared pointer to trees, level 0 has the highest resolution.
     std::vector<TreePtr> mTrees;
-    // Shared point to a transform associated with the finest level grid
+    // Shared pointer to a transform associated with the finest level grid
     typename math::Transform::Ptr mTransform;
 };// MultiResGrid
 
@@ -573,7 +548,9 @@ sampleValue(const Coord& ijk, double level) const
     if ( level0 == level1 ) return v0;
     assert( level1 - level0 == 1 );
     const ValueType v1 = this->template sampleValue<Order>( ijk, 0, level1 );
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
     const ValueType a = ValueType(level1 - level);
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
     return a * v0 + (ValueType(1) - a) * v1;
 }
 
@@ -588,7 +565,9 @@ sampleValue(const Vec3R& xyz, double level) const
     if ( level0 == level1 ) return v0;
     assert( level1 - level0 == 1 );
     const ValueType v1 = this->template sampleValue<Order>( xyz, 0, level1 );
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
     const ValueType a = ValueType(level1 - level);
+    OPENVDB_NO_TYPE_CONVERSION_WARNING_END
     return a * v0 + (ValueType(1) - a) * v1;
 }
 
@@ -699,11 +678,11 @@ topDownRestrict(bool useInjection)
 template<typename TreeType>
 struct MultiResGrid<TreeType>::MaskOp
 {
-    typedef typename TreeType::template ValueConverter<ValueMask>::Type MaskT;
-    typedef tbb::enumerable_thread_specific<TreeType> PoolType;
-    typedef tree::LeafManager<const MaskT>  ManagerT;
-    typedef typename ManagerT::LeafRange RangeT;
-    typedef typename ManagerT::LeafNodeType::ValueOnCIter VoxelIterT;
+    using MaskT = typename TreeType::template ValueConverter<ValueMask>::Type;
+    using PoolType = tbb::enumerable_thread_specific<TreeType>;
+    using ManagerT = tree::LeafManager<const MaskT>;
+    using RangeT = typename ManagerT::LeafRange;
+    using VoxelIterT = typename ManagerT::LeafNodeType::ValueOnCIter;
 
     MaskOp(const TreeType& fineTree, TreeType& coarseTree, size_t grainSize = 1)
         : mPool(new PoolType( coarseTree ) )// empty coarse tree acts as examplar
@@ -721,7 +700,7 @@ struct MultiResGrid<TreeType>::MaskOp
         tbb::parallel_for(leafs.leafRange( grainSize ), *this);
 
         // multithreaded union of thread-local coarse tree masks with the coarse tree
-        typedef typename PoolType::const_iterator IterT;
+        using IterT = typename PoolType::const_iterator;
         for (IterT it=mPool->begin(); it!=mPool->end(); ++it) coarseTree.topologyUnion( *it );
         delete mPool;
     }
@@ -743,20 +722,20 @@ template<typename TreeType>
 template<Index Order>
 struct MultiResGrid<TreeType>::FractionOp
 {
-    typedef typename TreeType::template ValueConverter<ValueMask>::Type MaskT;
-    typedef tbb::enumerable_thread_specific<MaskT>        PoolType;
-    typedef typename PoolType::iterator                   PoolIterT;
-    typedef tree::LeafManager<const TreeType>             Manager1;
-    typedef tree::LeafManager<TreeType>                   Manager2;
-    typedef typename Manager1::LeafRange                  Range1;
-    typedef typename Manager2::LeafRange                  Range2;
+    using MaskT = typename TreeType::template ValueConverter<ValueMask>::Type;
+    using PoolType = tbb::enumerable_thread_specific<MaskT>;
+    using PoolIterT = typename PoolType::iterator;
+    using Manager1 = tree::LeafManager<const TreeType>;
+    using Manager2 = tree::LeafManager<TreeType>;
+    using Range1 = typename Manager1::LeafRange;
+    using Range2 = typename Manager2::LeafRange;
 
     FractionOp(const MultiResGrid& parent,
                TreeType& midTree,
                float level,
                size_t grainSize = 1)
         : mLevel( level )
-        , mPool( NULL )
+        , mPool(nullptr)
         , mTree0( &*(parent.mTrees[size_t(floorf(level))]) )//high-resolution
         , mTree1( &*(parent.mTrees[size_t(ceilf(level))]) ) //low-resolution
     {
@@ -786,7 +765,7 @@ struct MultiResGrid<TreeType>::FractionOp
     }
     void operator()(const Range1& range) const
     {
-        typedef typename Manager1::LeafNodeType::ValueOnCIter VoxelIter;
+        using VoxelIter = typename Manager1::LeafNodeType::ValueOnCIter;
         // Let mLevel = level + frac, where
         // level is integer part of mLevel and frac is the fractional part
         // low-res voxel size in world units = dx1 = 2^(level + 1)
@@ -800,9 +779,15 @@ struct MultiResGrid<TreeType>::FractionOp
         for (typename Range1::Iterator leafIter = range.begin(); leafIter; ++leafIter) {
             for (VoxelIter voxelIter = leafIter->cbeginValueOn(); voxelIter; ++voxelIter) {
                 Coord ijk = voxelIter.getCoord();
-                ijk[0] = int(math::Round(ijk[0] * scale));
-                ijk[1] = int(math::Round(ijk[1] * scale));
-                ijk[2] = int(math::Round(ijk[2] * scale));
+                OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+                const auto value0 = ijk[0] * scale;
+                const auto value1 = ijk[1] * scale;
+                const auto value2 = ijk[2] * scale;
+                OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+                ijk[0] = int(math::Round(value0));
+                ijk[1] = int(math::Round(value1));
+                ijk[2] = int(math::Round(value2));
+
                 acc.setValueOn( ijk );
             }//loop over active voxels in the fine tree
         }// loop over leaf nodes in the fine tree
@@ -815,7 +800,7 @@ struct MultiResGrid<TreeType>::FractionOp
     }
     void operator()(const Range2 &r) const
     {
-        typedef typename TreeType::LeafNodeType::ValueOnIter VoxelIter;
+        using VoxelIter = typename TreeType::LeafNodeType::ValueOnIter;
         // Let mLevel = level + frac, where
         // level is integer part of mLevel and frac is the fractional part
         // high-res voxel size in world units = dx0 = 2^(level)
@@ -837,7 +822,11 @@ struct MultiResGrid<TreeType>::FractionOp
                 const Vec3R xyz =  Vec3R( voxelIter.getCoord().data() );// mid level coord
                 const ValueType v0 = tools::Sampler<Order>::sample( acc0, xyz * scale0 );
                 const ValueType v1 = tools::Sampler<Order>::sample( acc1, xyz * scale1 );
-                voxelIter.setValue( ValueType(a*v0 + b*v1) );
+                OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+                const auto value0 = a*v0;
+                const auto value1 = b*v1;
+                OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+                voxelIter.setValue( ValueType(value0 + value1) );
             }
         }
     }
@@ -851,8 +840,8 @@ template<typename TreeType>
 template<typename OperatorType>
 struct MultiResGrid<TreeType>::CookOp
 {
-    typedef tree::LeafManager<TreeType>  ManagerT;
-    typedef typename ManagerT::LeafRange RangeT;
+    using ManagerT = tree::LeafManager<TreeType>;
+    using RangeT = typename ManagerT::LeafRange;
 
     CookOp(const TreeType& srcTree, TreeType& dstTree, size_t grainSize): acc(srcTree)
     {
@@ -960,7 +949,3 @@ struct MultiResGrid<TreeType>::ProlongateOp
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_MULTIRESGRID_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

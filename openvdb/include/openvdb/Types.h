@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_TYPES_HAS_BEEN_INCLUDED
 #define OPENVDB_TYPES_HAS_BEEN_INCLUDED
@@ -43,6 +16,7 @@
 #include <openvdb/math/Mat3.h>
 #include <openvdb/math/Mat4.h>
 #include <openvdb/math/Coord.h>
+#include <cstdint>
 #include <memory>
 #include <type_traits>
 
@@ -97,37 +71,25 @@ using math::Vec4d;
 
 // Three-dimensional matrix types
 using Mat3R = math::Mat3<Real>;
+using math::Mat3s;
+using math::Mat3d;
 
 // Four-dimensional matrix types
 using Mat4R = math::Mat4<Real>;
-using Mat4d = math::Mat4<double>;
-using Mat4s = math::Mat4<float>;
+using math::Mat4s;
+using math::Mat4d;
 
 // Quaternions
 using QuatR = math::Quat<Real>;
+using math::Quats;
+using math::Quatd;
 
 // Dummy type for a voxel with a binary mask value, e.g. the active state
 class ValueMask {};
 
-
-#ifdef OPENVDB_3_ABI_COMPATIBLE
-
-// Use Boost shared pointers in OpenVDB 3 ABI compatibility mode.
-template<typename T> using SharedPtr = boost::shared_ptr<T>;
-
-template<typename T, typename U> inline SharedPtr<T>
-ConstPtrCast(const SharedPtr<U>& ptr) { return boost::const_pointer_cast<T, U>(ptr); }
-
-template<typename T, typename U> inline SharedPtr<T>
-DynamicPtrCast(const SharedPtr<U>& ptr) { return boost::dynamic_pointer_cast<T, U>(ptr); }
-
-template<typename T, typename U> inline SharedPtr<T>
-StaticPtrCast(const SharedPtr<U>& ptr) { return boost::static_pointer_cast<T, U>(ptr); }
-
-#else // if !defined(OPENVDB_3_ABI_COMPATIBLE)
-
 // Use STL shared pointers from OpenVDB 4 on.
 template<typename T> using SharedPtr = std::shared_ptr<T>;
+template<typename T> using WeakPtr = std::weak_ptr<T>;
 
 /// @brief Return a new shared pointer that points to the same object
 /// as the given pointer but with possibly different <TT>const</TT>-ness.
@@ -160,8 +122,6 @@ DynamicPtrCast(const SharedPtr<U>& ptr) { return std::dynamic_pointer_cast<T, U>
 template<typename T, typename U> inline SharedPtr<T>
 StaticPtrCast(const SharedPtr<U>& ptr) { return std::static_pointer_cast<T, U>(ptr); }
 
-#endif // OPENVDB_3_ABI_COMPATIBLE
-
 
 ////////////////////////////////////////
 
@@ -177,6 +137,9 @@ struct PointIndex
     using IntType = IntType_;
 
     PointIndex(IntType i = IntType(0)): mIndex(i) {}
+
+    /// Explicit type conversion constructor
+    template<typename T> explicit PointIndex(T i): mIndex(static_cast<IntType>(i)) {}
 
     operator IntType() const { return mIndex; }
 
@@ -199,27 +162,93 @@ using PointDataIndex64 = PointIndex<Index64, 1>;
 ////////////////////////////////////////
 
 
-template<typename T> struct VecTraits {
+/// @brief Helper metafunction used to determine if the first template
+/// parameter is a specialization of the class template given in the second
+/// template parameter
+template <typename T, template <typename...> class Template>
+struct IsSpecializationOf: public std::false_type {};
+
+template <typename... Args, template <typename...> class Template>
+struct IsSpecializationOf<Template<Args...>, Template>: public std::true_type {};
+
+
+////////////////////////////////////////
+
+
+template<typename T, bool = IsSpecializationOf<T, math::Vec2>::value ||
+                            IsSpecializationOf<T, math::Vec3>::value ||
+                            IsSpecializationOf<T, math::Vec4>::value>
+struct VecTraits
+{
+    static const bool IsVec = true;
+    static const int Size = T::size;
+    using ElementType = typename T::ValueType;
+};
+
+template<typename T>
+struct VecTraits<T, false>
+{
     static const bool IsVec = false;
     static const int Size = 1;
     using ElementType = T;
 };
 
-template<typename T> struct VecTraits<math::Vec2<T> > {
-    static const bool IsVec = true;
-    static const int Size = 2;
+template<typename T, bool = IsSpecializationOf<T, math::Quat>::value>
+struct QuatTraits
+{
+    static const bool IsQuat = true;
+    static const int Size = T::size;
+    using ElementType = typename T::ValueType;
+};
+
+template<typename T>
+struct QuatTraits<T, false>
+{
+    static const bool IsQuat = false;
+    static const int Size = 1;
     using ElementType = T;
 };
 
-template<typename T> struct VecTraits<math::Vec3<T> > {
-    static const bool IsVec = true;
-    static const int Size = 3;
+template<typename T, bool = IsSpecializationOf<T, math::Mat3>::value ||
+                            IsSpecializationOf<T, math::Mat4>::value>
+struct MatTraits
+{
+    static const bool IsMat = true;
+    static const int Size = T::size;
+    using ElementType = typename T::ValueType;
+};
+
+template<typename T>
+struct MatTraits<T, false>
+{
+    static const bool IsMat = false;
+    static const int Size = 1;
     using ElementType = T;
 };
 
-template<typename T> struct VecTraits<math::Vec4<T> > {
-    static const bool IsVec = true;
-    static const int Size = 4;
+template<typename T, bool = VecTraits<T>::IsVec ||
+                            QuatTraits<T>::IsQuat ||
+                            MatTraits<T>::IsMat>
+struct ValueTraits
+{
+    static const bool IsVec = VecTraits<T>::IsVec;
+    static const bool IsQuat = QuatTraits<T>::IsQuat;
+    static const bool IsMat = MatTraits<T>::IsMat;
+    static const bool IsScalar = false;
+    static const int Size = T::size;
+    static const int Elements = IsMat ? Size*Size : Size;
+    using ElementType = typename T::ValueType;
+};
+
+template<typename T>
+struct ValueTraits<T, false>
+{
+    static const bool IsVec = false;
+    static const bool IsQuat = false;
+    static const bool IsMat = false;
+    static const bool IsScalar = true;
+    static const int Size = 1;
+    static const int Elements = 1;
     using ElementType = T;
 };
 
@@ -253,6 +282,533 @@ template<typename T>
 struct CanConvertType<T, ValueMask> { enum {value = CanConvertType<T, bool>::value}; };
 template<typename T>
 struct CanConvertType<ValueMask, T> { enum {value = CanConvertType<bool, T>::value}; };
+
+
+////////////////////////////////////////
+
+
+/// @brief CopyConstness<T1, T2>::Type is either <tt>const T2</tt>
+/// or @c T2 with no @c const qualifier, depending on whether @c T1 is @c const.
+/// @details For example,
+/// - CopyConstness<int, int>::Type is @c int
+/// - CopyConstness<int, const int>::Type is @c int
+/// - CopyConstness<const int, int>::Type is <tt>const int</tt>
+/// - CopyConstness<const int, const int>::Type is <tt>const int</tt>
+template<typename FromType, typename ToType> struct CopyConstness {
+    using Type = typename std::remove_const<ToType>::type;
+};
+
+/// @cond OPENVDB_TYPES_INTERNAL
+template<typename FromType, typename ToType> struct CopyConstness<const FromType, ToType> {
+    using Type = const ToType;
+};
+/// @endcond
+
+
+////////////////////////////////////////
+
+
+/// @cond OPENVDB_TYPES_INTERNAL
+
+template<typename... Ts> struct TypeList; // forward declaration
+
+namespace internal {
+
+// Implementation details of @c TypeList
+
+/// @brief Dummy struct, used as the return type from invalid or out-of-range
+///        @c TypeList queries.
+struct NullType {};
+
+
+/// @brief   Type resolver for index queries
+/// @details Defines a type at a given location within a @c TypeList or the
+///          @c NullType if the index is out-of-range. The last template
+///          parameter is used to determine if the index is in range.
+/// @tparam ListT The @c TypeList
+/// @tparam Idx The index of the type to get
+template<typename ListT, size_t Idx, typename = void> struct TSGetElementImpl;
+
+/// @brief Partial specialization for valid (in range) index queries.
+/// @tparam Ts  Unpacked types from a @c TypeList
+/// @tparam Idx The index of the type to get
+template<typename... Ts, size_t Idx>
+struct TSGetElementImpl<TypeList<Ts...>, Idx,
+    typename std::enable_if<(Idx < sizeof...(Ts) && sizeof...(Ts))>::type> {
+    using type = typename std::tuple_element<Idx, std::tuple<Ts...>>::type;
+};
+
+/// @brief Partial specialization for invalid index queries (i.e. out-of-range
+///        indices such as @c TypeList<Int32>::Get<1>). Defines the NullType.
+/// @tparam Ts  Unpacked types from a @c TypeList
+/// @tparam Idx The index of the type to get
+template<typename... Ts, size_t Idx>
+struct TSGetElementImpl<TypeList<Ts...>, Idx,
+    typename std::enable_if<!(Idx < sizeof...(Ts) && sizeof...(Ts))>::type> {
+    using type = NullType;
+};
+
+
+/// @brief   Search for a given type within a @c TypeList.
+/// @details If the type is found, a @c bool constant @c Value is set to true
+///          and an @c int64_t @c Index points to the location of the type. If
+///          multiple versions of the types exist, the value of @c Index is
+///          always the location of the first matching type. If the type is not
+///          found, @c Value is set to false and @c Index is set to -1.
+/// @note    This implementation is recursively defined until the type is found
+///          or until the end of the list is reached. The last template argument
+///          is used as an internal counter to track the current index being
+///          evaluated.
+/// @tparam ListT The @c TypeList
+/// @tparam T     The type to find
+template <typename ListT, typename T, size_t=0>
+struct TSHasTypeImpl;
+
+/// @brief  Partial specialization on an empty @c TypeList, instantiated when
+///         @c TSHasTypeImpl has been invoked with an empty @c TypeList or when
+///         a recursive search reaches the end of a @c TypeList.
+/// @tparam T The type to find
+/// @tparam Idx Current index
+template <typename T, size_t Idx>
+struct TSHasTypeImpl<TypeList<>, T, Idx> {
+    static constexpr bool Value = false;
+    static constexpr int64_t Index = -1;
+};
+
+/// @brief Partial specialization on a @c TypeList which still contains types,
+///        but the current type being evaluated @c U does not match the given
+///        type @C T.
+/// @tparam U The current type being evaluated within the @c TypeList
+/// @tparam T The type to find
+/// @tparam Ts Remaining types
+/// @tparam Idx Current index
+template <typename U, typename T, typename... Ts, size_t Idx>
+struct TSHasTypeImpl<TypeList<U, Ts...>, T, Idx> :
+    TSHasTypeImpl<TypeList<Ts...>, T, Idx+1> {};
+
+/// @brief  Partial specialization on a @c TypeList where @c T matches the
+///         current type (i.e. the type has been found).
+/// @tparam T The type to find
+/// @tparam Ts Remaining types
+/// @tparam Idx Current index
+template <typename T, typename... Ts, size_t Idx>
+struct TSHasTypeImpl<TypeList<T, Ts...>, T, Idx>
+{
+    static constexpr bool Value = true;
+    static constexpr int64_t Index = static_cast<int64_t>(Idx);
+};
+
+
+/// @brief    Remove any duplicate types from a @c TypeList.
+/// @details  This implementation effectively rebuilds a @c TypeList by starting
+///           with an empty @c TypeList and recursively defining an expanded
+///           @c TypeList for every type (first to last), only if the type does
+///           not already exist in the new @c TypeList. This has the effect of
+///           dropping all but the first of duplicate types.
+/// @note     Each type must define a new instantiation of this object.
+/// @tparam ListT The starting @c TypeList, usually (but not limited to) an
+///               empty @c TypeList
+/// @tparam Ts    The list of types to make unique
+template <typename ListT, typename... Ts>
+struct TSMakeUniqueImpl {
+    using type = ListT;
+};
+
+/// @brief  Partial specialization for type packs, where by the next type @c U
+///         is checked in the existing type set @c Ts for duplication. If the
+///         type does not exist, it is added to the new @c TypeList definition,
+///         otherwise it is dropped. In either case, this class is recursively
+///         defined with the remaining types @c Us.
+/// @tparam Ts  Current types in the @c TypeList
+/// @tparam U   Type to check for duplication in @c Ts
+/// @tparam Us  Remaining types
+template <typename... Ts, typename U, typename... Us>
+struct TSMakeUniqueImpl<TypeList<Ts...>, U, Us...>
+{
+    using type = typename std::conditional<
+        TSHasTypeImpl<TypeList<Ts...>, U>::Value,
+        typename TSMakeUniqueImpl<TypeList<Ts...>, Us...>::type,
+        typename TSMakeUniqueImpl<TypeList<Ts..., U>, Us...>::type  >::type;
+};
+
+
+/// @brief   Append any number of types to a @c TypeList
+/// @details Defines a new @c TypeList with the provided types appended
+/// @tparam ListT  The @c TypeList to append to
+/// @tparam Ts     Types to append
+template<typename ListT, typename... Ts> struct TSAppendImpl;
+
+/// @brief  Partial specialization for a @c TypeList with a list of zero or more
+///         types to append
+/// @tparam Ts Current types within the @c TypeList
+/// @tparam OtherTs Other types to append
+template<typename... Ts, typename... OtherTs>
+struct TSAppendImpl<TypeList<Ts...>, OtherTs...> {
+    using type = TypeList<Ts..., OtherTs...>;
+};
+
+/// @brief  Partial specialization for a @c TypeList with another @c TypeList.
+///         Appends the other TypeList's members.
+/// @tparam Ts Types within the first @c TypeList
+/// @tparam OtherTs Types within the second @c TypeList
+template<typename... Ts, typename... OtherTs>
+struct TSAppendImpl<TypeList<Ts...>, TypeList<OtherTs...>> {
+    using type = TypeList<Ts..., OtherTs...>;
+};
+
+
+/// @brief   Remove all occurrences of type T from a @c TypeList
+/// @details Defines a new @c TypeList with the provided types removed
+/// @tparam ListT  The @c TypeList
+/// @tparam T      Type to remove
+template<typename ListT, typename T> struct TSEraseImpl;
+
+/// @brief  Partial specialization for an empty @c TypeList
+/// @tparam T Type to remove, has no effect
+template<typename T>
+struct TSEraseImpl<TypeList<>, T> { using type = TypeList<>; };
+
+/// @brief  Partial specialization where the currently evaluating type in a
+///         @c TypeList matches the type to remove. Recursively defines this
+///         implementation with the remaining types.
+/// @tparam Ts Unpacked types within the @c TypeList
+/// @tparam T Type to remove
+template<typename... Ts, typename T>
+struct TSEraseImpl<TypeList<T, Ts...>, T> {
+    using type = typename TSEraseImpl<TypeList<Ts...>, T>::type;
+};
+
+/// @brief  Partial specialization where the currently evaluating type @c T2 in
+///         a @c TypeList does not match the type to remove @c T. Recursively
+///         defines this implementation with the remaining types.
+/// @tparam T2 Current type within the @c TypeList, which does not match @c T
+/// @tparam Ts Other types within the @c TypeList
+/// @tparam T  Type to remove
+template<typename T2, typename... Ts, typename T>
+struct TSEraseImpl<TypeList<T2, Ts...>, T> {
+    using type = typename TSAppendImpl<TypeList<T2>,
+        typename TSEraseImpl<TypeList<Ts...>, T>::type>::type;
+};
+
+/// @brief  Front end implementation to call TSEraseImpl which removes all
+///         occurrences of a type from a @c TypeList. This struct handles the
+///         case where the type to remove is another @c TypeList, in which case
+///         all types in the second @c TypeList are removed from the first.
+/// @tparam ListT  The @c TypeList
+/// @tparam Ts     Types in the @c TypeList
+template<typename ListT, typename... Ts> struct TSRemoveImpl;
+
+/// @brief  Partial specialization when there are no types in the @c TypeList.
+/// @tparam ListT  The @c TypeList
+template<typename ListT>
+struct TSRemoveImpl<ListT> { using type = ListT; };
+
+/// @brief  Partial specialization when the type to remove @c T is not another
+///         @c TypeList. @c T is removed from the @c TypeList.
+/// @tparam ListT  The @c TypeList
+/// @tparam T      Type to remove
+/// @tparam Ts     Types in the @c TypeList
+template<typename ListT, typename T, typename... Ts>
+struct TSRemoveImpl<ListT, T, Ts...> {
+    using type = typename TSRemoveImpl<typename TSEraseImpl<ListT, T>::type, Ts...>::type;
+};
+
+/// @brief  Partial specialization when the type to remove is another
+///         @c TypeList. All types within the other type list are removed from
+///         the first list.
+/// @tparam ListT  The @c TypeList
+/// @tparam Ts     Types from the second @c TypeList to remove from the first
+template<typename ListT, typename... Ts>
+struct TSRemoveImpl<ListT, TypeList<Ts...>> {
+    using type = typename TSRemoveImpl<ListT, Ts...>::type;
+};
+
+/// @brief  Remove the first element of a type list. If the list is empty,
+///         nothing is done. This base configuration handles the empty list.
+/// @note   Much cheaper to instantiate than TSRemoveIndicesImpl
+/// @tparam T  The @c TypeList
+template<typename T>
+struct TSRemoveFirstImpl {
+    using type = TypeList<>;
+};
+
+/// @brief  Partial specialization for removing the first type of a @c TypeList
+///         when the list is not empty i.e. does that actual work.
+/// @tparam T   The first type in the @c TypeList.
+/// @tparam Ts  Remaining types in the @c TypeList
+template<typename T, typename... Ts>
+struct TSRemoveFirstImpl<TypeList<T, Ts...>> {
+    using type = TypeList<Ts...>;
+};
+
+
+/// @brief  Remove the last element of a type list. If the list is empty,
+///         nothing is done. This base configuration handles the empty list.
+/// @note   Cheaper to instantiate than TSRemoveIndicesImpl
+/// @tparam T  The @c TypeList
+template<typename T>
+struct TSRemoveLastImpl { using type = TypeList<>; };
+
+/// @brief  Partial specialization for removing the last type of a @c TypeList.
+///         This instance is instantiated when the @c TypeList contains a
+///         single type, or the primary struct which recursively removes types
+///         (see below) hits the last type. Evaluates the last type to the empty
+///         list (see above).
+/// @tparam T   The last type in the @c TypeList
+template<typename T>
+struct TSRemoveLastImpl<TypeList<T>> : TSRemoveLastImpl<T> {};
+
+/// @brief  Partial specialization for removing the last type of a @c TypeList
+///         with a type list size of two or more. Recursively defines this
+///         implementation with the remaining types, effectively rebuilding the
+///         @c TypeList until the last type is hit, which is dropped.
+/// @tparam T   The current type in the @c TypeList
+/// @tparam Ts  Remaining types in the @c TypeList
+template<typename T, typename... Ts>
+struct TSRemoveLastImpl<TypeList<T, Ts...>>
+{
+    using type =
+        typename TypeList<T>::template
+            Append<typename TSRemoveLastImpl<TypeList<Ts...>>::type>;
+};
+
+
+/// @brief  Remove a number of types from a @c TypeList based on a @c First and
+///         @c Last index.
+/// @details Both indices are inclusive, such that when <tt>First == Last</tt>
+///          a single type is removed (assuming the index exists). If
+///          <tt>Last < First</tt>, nothing is done. Any indices which do not
+///          exist are ignored. If @c Last is greater than the number of types
+///          in the @c TypeList, all types from @c First to the end of the list
+///          are dropped.
+/// @tparam  ListT  The @c TypeList
+/// @tparam  First  The first index
+/// @tparam  Last   The last index
+/// @tparam  Idx    Internal counter for the current index
+template<typename ListT, size_t First, size_t Last, size_t Idx=0>
+struct TSRemoveIndicesImpl;
+
+/// @brief  Partial specialization for an empty @c TypeList
+/// @tparam  First  The first index
+/// @tparam  Last   The last index
+/// @tparam  Idx    Internal counter for the current index
+template<size_t First, size_t Last, size_t Idx>
+struct TSRemoveIndicesImpl<TypeList<>, First, Last, Idx> {
+     using type = TypeList<>;
+};
+
+/// @brief  Partial specialization for a @c TypeList containing a single element.
+/// @tparam  T      The last or only type in a @c TypeList
+/// @tparam  First  The first index
+/// @tparam  Last   The last index
+/// @tparam  Idx    Internal counter for the current index
+template<typename T, size_t First, size_t Last, size_t Idx>
+struct TSRemoveIndicesImpl<TypeList<T>, First, Last, Idx>
+{
+private:
+    static constexpr bool Remove = Idx >= First && Idx <= Last;
+public:
+    using type = typename std::conditional<Remove, TypeList<>, TypeList<T>>::type;
+};
+
+/// @brief Partial specialization for a @c TypeList containing two or more types.
+/// @details  This implementation effectively rebuilds a @c TypeList by starting
+///           with an empty @c TypeList and recursively defining an expanded
+///           @c TypeList for every type (first to last), only if the type's
+///           index does not fall within the range of indices defines by
+///           @c First and @c Last. Recursively defines this implementation with
+///           all but the last type.
+/// @tparam  T      The currently evaluating type within a @c TypeList
+/// @tparam  Ts     Remaining types in the @c TypeList
+/// @tparam  First  The first index
+/// @tparam  Last   The last index
+/// @tparam  Idx    Internal counter for the current index
+template<typename T, typename... Ts, size_t First, size_t Last, size_t Idx>
+struct TSRemoveIndicesImpl<TypeList<T, Ts...>, First, Last, Idx>
+{
+private:
+    using ThisList = typename TSRemoveIndicesImpl<TypeList<T>, First, Last, Idx>::type;
+    using NextList = typename TSRemoveIndicesImpl<TypeList<Ts...>, First, Last, Idx+1>::type;
+public:
+    using type = typename ThisList::template Append<NextList>;
+};
+
+
+template<typename OpT> inline void TSForEachImpl(OpT) {}
+template<typename OpT, typename T, typename... Ts>
+inline void TSForEachImpl(OpT op) { op(T()); TSForEachImpl<OpT, Ts...>(op); }
+
+} // namespace internal
+
+/// @endcond
+
+
+/// @brief A list of types (not necessarily unique)
+/// @details Example:
+/// @code
+/// using MyTypes = openvdb::TypeList<int, float, int, double, float>;
+/// @endcode
+template<typename... Ts>
+struct TypeList
+{
+    /// The type of this list
+    using Self = TypeList;
+
+    /// @brief The number of types in the type list
+    static constexpr size_t Size = sizeof...(Ts);
+
+    /// @brief Access a particular element of this type list. If the index
+    ///        is out of range, internal::NullType is returned.
+    template<size_t N>
+    using Get = typename internal::TSGetElementImpl<Self, N>::type;
+    using Front = Get<0>;
+    using Back = Get<Size-1>;
+
+    /// @brief True if this list contains the given type, false otherwise
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using RealTypes = openvdb::TypeList<float, double>;
+    /// }
+    /// {
+    ///     openvdb::TypeList<IntTypes>::Contains<Int32>; // true
+    ///     openvdb::TypeList<RealTypes>::Contains<Int32>; // false
+    /// }
+    /// @endcode
+    template<typename T>
+    static constexpr bool Contains = internal::TSHasTypeImpl<Self, T>::Value;
+
+    /// @brief Returns the index of the first found element of the given type, -1 if
+    /// no matching element exists.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using RealTypes = openvdb::TypeList<float, double>;
+    /// }
+    /// {
+    ///     const int64_t L1 = openvdb::TypeList<IntTypes>::Index<Int32>;  // 1
+    ///     const int64_t L2 = openvdb::TypeList<RealTypes>::Index<Int32>; // -1
+    /// }
+    /// @endcode
+    template<typename T>
+    static constexpr int64_t Index = internal::TSHasTypeImpl<Self, T>::Index;
+
+    /// @brief Remove any duplicate types from this TypeList by rotating the
+    /// next valid type left (maintains the order of other types). Optionally
+    /// combine the result with another TypeList.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using Types = openvdb::TypeList<Int16, Int32, Int16, float, float, Int64>;
+    /// }
+    /// {
+    ///     using UniqueTypes = Types::Unique<>; // <Int16, Int32, float, Int64>
+    /// }
+    /// @endcode
+    template<typename ListT = TypeList<>>
+    using Unique = typename internal::TSMakeUniqueImpl<ListT, Ts...>::type;
+
+    /// @brief Append types, or the members of another TypeList, to this list.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using RealTypes = openvdb::TypeList<float, double>;
+    ///     using NumericTypes = IntTypes::Append<RealTypes>;
+    /// }
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16>::Append<Int32, Int64>;
+    ///     using NumericTypes = IntTypes::Append<float>::Append<double>;
+    /// }
+    /// @endcode
+    template<typename... TypesToAppend>
+    using Append = typename internal::TSAppendImpl<Self, TypesToAppend...>::type;
+
+    /// @brief Remove all occurrences of one or more types, or the members of
+    /// another TypeList, from this list.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using NumericTypes = openvdb::TypeList<float, double, Int16, Int32, Int64>;
+    ///     using LongTypes = openvdb::TypeList<Int64, double>;
+    ///     using ShortTypes = NumericTypes::Remove<LongTypes>; // float, Int16, Int32
+    /// }
+    /// @endcode
+    template<typename... TypesToRemove>
+    using Remove = typename internal::TSRemoveImpl<Self, TypesToRemove...>::type;
+
+    /// @brief Remove the first element of this type list. Has no effect if the
+    ///        type list is already empty.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using EmptyTypes = openvdb::TypeList<>;
+    /// }
+    /// {
+    ///     IntTypes::PopFront; // openvdb::TypeList<Int32, Int64>;
+    ///     EmptyTypes::PopFront; // openvdb::TypeList<>;
+    /// }
+    /// @endcode
+    using PopFront = typename internal::TSRemoveFirstImpl<Self>::type;
+
+    /// @brief Remove the last element of this type list. Has no effect if the
+    ///        type list is already empty.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using IntTypes = openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using EmptyTypes = openvdb::TypeList<>;
+    /// }
+    /// {
+    ///     IntTypes::PopBack; // openvdb::TypeList<Int16, Int32>;
+    ///     EmptyTypes::PopBack; // openvdb::TypeList<>;
+    /// }
+    /// @endcode
+    using PopBack = typename internal::TSRemoveLastImpl<Self>::type;
+
+    /// @brief Return a new list with types removed by their location within the list.
+    ///        If First is equal to Last, a single element is removed (if it exists).
+    ///        If First is greater than Last, the list remains unmodified.
+    /// @details Example:
+    /// @code
+    /// {
+    ///     using NumericTypes = openvdb::TypeList<float, double, Int16, Int32, Int64>;
+    /// }
+    /// {
+    ///     using IntTypes = NumericTypes::RemoveByIndex<0,1>; // openvdb::TypeList<Int16, Int32, Int64>;
+    ///     using RealTypes = NumericTypes::RemoveByIndex<2,4>; // openvdb::TypeList<float, double>;
+    ///     using RemoveFloat = NumericTypes::RemoveByIndex<0,0>; // openvdb::TypeList<double, Int16, Int32, Int64>;
+    /// }
+    /// @endcode
+    template <size_t First, size_t Last>
+    using RemoveByIndex = typename internal::TSRemoveIndicesImpl<Self, First, Last>::type;
+
+    /// @brief Invoke a templated, unary functor on a value of each type in this list.
+    /// @details Example:
+    /// @code
+    /// #include <typeinfo>
+    ///
+    /// template<typename ListT>
+    /// void printTypeList()
+    /// {
+    ///     std::string sep;
+    ///     auto op = [&](auto x) {  // C++14
+    ///         std::cout << sep << typeid(decltype(x)).name(); sep = ", "; };
+    ///     ListT::foreach(op);
+    /// }
+    ///
+    /// using MyTypes = openvdb::TypeList<int, float, double>;
+    /// printTypeList<MyTypes>(); // "i, f, d" (exact output is compiler-dependent)
+    /// @endcode
+    ///
+    /// @note The functor object is passed by value.  Wrap it with @c std::ref
+    /// to use the same object for each type.
+    template<typename OpT>
+    static void foreach(OpT op) { internal::TSForEachImpl<OpT, Ts...>(op); }
+};
 
 
 ////////////////////////////////////////
@@ -328,6 +884,7 @@ template<> inline const char* typeNameAsString<ValueMask>()         { return "ma
 template<> inline const char* typeNameAsString<half>()              { return "half"; }
 template<> inline const char* typeNameAsString<float>()             { return "float"; }
 template<> inline const char* typeNameAsString<double>()            { return "double"; }
+template<> inline const char* typeNameAsString<int8_t>()            { return "int8"; }
 template<> inline const char* typeNameAsString<uint8_t>()           { return "uint8"; }
 template<> inline const char* typeNameAsString<int16_t>()           { return "int16"; }
 template<> inline const char* typeNameAsString<uint16_t>()          { return "uint16"; }
@@ -342,7 +899,12 @@ template<> inline const char* typeNameAsString<Vec3U16>()           { return "ve
 template<> inline const char* typeNameAsString<Vec3i>()             { return "vec3i"; }
 template<> inline const char* typeNameAsString<Vec3f>()             { return "vec3s"; }
 template<> inline const char* typeNameAsString<Vec3d>()             { return "vec3d"; }
+template<> inline const char* typeNameAsString<Vec4i>()             { return "vec4i"; }
+template<> inline const char* typeNameAsString<Vec4f>()             { return "vec4s"; }
+template<> inline const char* typeNameAsString<Vec4d>()             { return "vec4d"; }
 template<> inline const char* typeNameAsString<std::string>()       { return "string"; }
+template<> inline const char* typeNameAsString<Mat3s>()             { return "mat3s"; }
+template<> inline const char* typeNameAsString<Mat3d>()             { return "mat3d"; }
 template<> inline const char* typeNameAsString<Mat4s>()             { return "mat4s"; }
 template<> inline const char* typeNameAsString<Mat4d>()             { return "mat4d"; }
 template<> inline const char* typeNameAsString<math::Quats>()       { return "quats"; }
@@ -375,8 +937,8 @@ public:
     using BValueT = BValueType;
 
     CombineArgs()
-        : mAValPtr(NULL)
-        , mBValPtr(NULL)
+        : mAValPtr(nullptr)
+        , mBValPtr(nullptr)
         , mResultValPtr(&mResultVal)
         , mAIsActive(false)
         , mBIsActive(false)
@@ -477,24 +1039,6 @@ struct SwappedCombineOp
 ////////////////////////////////////////
 
 
-#ifdef OPENVDB_3_ABI_COMPATIBLE
-/// In copy constructors, members stored as shared pointers can be handled
-/// in several ways:
-/// <dl>
-/// <dt><b>CP_NEW</b>
-/// <dd>Don't copy the member; default construct a new member object instead.
-///
-/// <dt><b>CP_SHARE</b>
-/// <dd>Copy the shared pointer, so that the original and new objects share
-///     the same member.
-///
-/// <dt><b>CP_COPY</b>
-/// <dd>Create a deep copy of the member.
-/// </dl>
-enum CopyPolicy { CP_NEW, CP_SHARE, CP_COPY };
-#endif
-
-
 /// @brief Tag dispatch class that distinguishes shallow copy constructors
 /// from deep copy constructors
 class ShallowCopy {};
@@ -559,7 +1103,3 @@ class PartialCreate {};
 #endif // defined(__ICC)
 
 #endif // OPENVDB_TYPES_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

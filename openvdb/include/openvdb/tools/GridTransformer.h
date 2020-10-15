@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file GridTransformer.h
 /// @author Peter Cucka
@@ -191,6 +164,9 @@ public:
     GridResampler(): mThreaded(true), mTransformTiles(true) {}
     virtual ~GridResampler() {}
 
+    GridResampler(const GridResampler&) = default;
+    GridResampler& operator=(const GridResampler&) = default;
+
     /// Enable or disable threading.  (Threading is enabled by default.)
     void setThreaded(bool b) { mThreaded = b; }
     /// Return @c true if threading is enabled.
@@ -265,6 +241,9 @@ public:
         const std::string& rotationOrder = "zyx");
     ~GridTransformer() override = default;
 
+    GridTransformer(const GridTransformer&) = default;
+    GridTransformer& operator=(const GridTransformer&) = default;
+
     const Mat4R& getTransform() const { return mTransform; }
 
     template<class Sampler, class GridT>
@@ -288,14 +267,19 @@ private:
 
 namespace local_util {
 
-/// @brief Decompose an affine transform into scale, rotation and translation components.
-/// @return @c false if the given matrix is not affine or cannot otherwise be decomposed.
+enum { DECOMP_INVALID = 0, DECOMP_VALID = 1, DECOMP_UNIQUE = 2 };
+
+/// @brief Decompose an affine transform into scale, rotation (XYZ order),
+/// and translation components.
+/// @return DECOMP_INVALID if the given matrix is not affine or cannot
+/// be decomposed, DECOMP_UNIQUE if the matrix has a unique decomposition,
+/// DECOMP_VALID otherwise
 template<typename T>
-inline bool
+inline int
 decompose(const math::Mat4<T>& m, math::Vec3<T>& scale,
     math::Vec3<T>& rotate, math::Vec3<T>& translate)
 {
-    if (!math::isAffine(m)) return false;
+    if (!math::isAffine(m)) return DECOMP_INVALID;
 
     // This is the translation in world space
     translate = m.getTranslation();
@@ -314,11 +298,9 @@ decompose(const math::Mat4<T>& m, math::Vec3<T>& scale,
 
     T minAngle = std::numeric_limits<T>::max();
 
-    // If the transformation matrix contains a reflection,
-    // test different negative scales to find a decomposition
-    // that favors the optimal resampling algorithm.
+    // If the transformation matrix contains a reflection, test different negative scales
+    // to find a decomposition that favors the optimal resampling algorithm.
     for (size_t n = 0; n < 8; ++n) {
-
         const math::Vec3<T> signedScale(
             n & 0x1 ? -unsignedScale.x() : unsignedScale.x(),
             n & 0x2 ? -unsignedScale.y() : unsignedScale.y(),
@@ -331,9 +313,9 @@ decompose(const math::Mat4<T>& m, math::Vec3<T>& scale,
         const math::Vec3<T> tmpAngle = math::eulerAngles(mat, math::XYZ_ROTATION);
 
         const math::Mat3<T> rebuild =
-            math::rotation<math::Mat3<T> >(math::Vec3<T>(1, 0, 0), tmpAngle.x()) *
-            math::rotation<math::Mat3<T> >(math::Vec3<T>(0, 1, 0), tmpAngle.y()) *
             math::rotation<math::Mat3<T> >(math::Vec3<T>(0, 0, 1), tmpAngle.z()) *
+            math::rotation<math::Mat3<T> >(math::Vec3<T>(0, 1, 0), tmpAngle.y()) *
+            math::rotation<math::Mat3<T> >(math::Vec3<T>(1, 0, 0), tmpAngle.x()) *
             math::scale<math::Mat3<T> >(signedScale);
 
         if (xform.eq(rebuild)) {
@@ -358,13 +340,15 @@ decompose(const math::Mat4<T>& m, math::Vec3<T>& scale,
         }
     }
 
-    if (!validDecomposition || (hasRotation && !hasUniformScale)) {
+    if (!validDecomposition) {
         // The decomposition is invalid if the transformation matrix contains shear.
-        // No unique decomposition if scale is nonuniform and rotation is nonzero.
-        return false;
+        return DECOMP_INVALID;
     }
-
-    return true;
+    if (hasRotation && !hasUniformScale) {
+        // No unique decomposition if scale is nonuniform and rotation is nonzero.
+        return DECOMP_VALID;
+    }
+    return DECOMP_UNIQUE;
 }
 
 } // namespace local_util
@@ -473,6 +457,26 @@ doResampleToMatch(const GridType& inGrid, GridType& outGrid, Interrupter& interr
 }
 
 
+template<typename ValueType>
+struct HalfWidthOp {
+    static ValueType eval(const ValueType& background, const Vec3d& voxelSize)
+    {
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        ValueType result(background * (1.0 / voxelSize[0]));
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return result;
+    }
+}; // struct HalfWidthOp
+
+template<>
+struct HalfWidthOp<bool> {
+    static bool eval(const bool& background, const Vec3d& /*voxelSize*/)
+    {
+        return background;
+    }
+}; // struct HalfWidthOp<bool>
+
+
 template<typename Sampler, typename Interrupter, typename GridType>
 inline void
 resampleToMatch(const GridType& inGrid, GridType& outGrid, Interrupter& interrupter)
@@ -490,9 +494,11 @@ resampleToMatch(const GridType& inGrid, GridType& outGrid, Interrupter& interrup
         // If the output grid is a level set, resample the input grid to have the output grid's
         // background value.  Otherwise, preserve the input grid's background value.
         using ValueT = typename GridType::ValueType;
-        const ValueT halfWidth = ((outGrid.getGridClass() == openvdb::GRID_LEVEL_SET)
-            ? ValueT(outGrid.background() * (1.0 / outGrid.voxelSize()[0]))
-            : ValueT(inGrid.background() * (1.0 / inGrid.voxelSize()[0])));
+        const bool outIsLevelSet = outGrid.getGridClass() == openvdb::GRID_LEVEL_SET;
+
+        const ValueT halfWidth = outIsLevelSet
+            ? HalfWidthOp<ValueT>::eval(outGrid.background(), outGrid.voxelSize())
+            : HalfWidthOp<ValueT>::eval(inGrid.background(),  inGrid.voxelSize());
 
         typename GridType::Ptr tempGrid;
         try {
@@ -941,7 +947,7 @@ GridResampler::transformBBox(
     // and compute the enclosing bounding box in the output tree.
     Vec3R
         inRMin(bbox.min().x(), bbox.min().y(), bbox.min().z()),
-        inRMax(bbox.max().x(), bbox.max().y(), bbox.max().z()),
+        inRMax(bbox.max().x()+1, bbox.max().y()+1, bbox.max().z()+1),
         outRMin = math::minComponent(xform.transform(inRMin), xform.transform(inRMax)),
         outRMax = math::maxComponent(xform.transform(inRMin), xform.transform(inRMax));
     for (int i = 0; i < 8; ++i) {
@@ -1031,7 +1037,3 @@ GridResampler::transformBBox(
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_GRIDTRANSFORMER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

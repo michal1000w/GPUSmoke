@@ -50,7 +50,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
 
     cudaThreadExit();
 }
-
+/*
 void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS) {
     fluid_state_huge state(vol_d);
 
@@ -96,7 +96,7 @@ void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<
 
     cudaThreadExit();
 }
-
+*/
 int main(int argc, char* args[])
 {
     srand(0);

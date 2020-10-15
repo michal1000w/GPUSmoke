@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file VectorTransformer.h
 
@@ -37,7 +10,8 @@
 #include <openvdb/math/Mat4.h>
 #include <openvdb/math/Vec3.h>
 #include "ValueTransformer.h" // for tools::foreach()
-#include <boost/utility/enable_if.hpp>
+#include <type_traits>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -95,9 +69,12 @@ struct MatMulNormalize
 };
 
 
+//{
+/// @cond OPENVDB_VECTOR_TRANSFORMER_INTERNAL
+
 /// @internal This overload is enabled only for scalar-valued grids.
 template<typename GridType> inline
-typename boost::disable_if_c<VecTraits<typename GridType::ValueType>::IsVec, void>::type
+typename std::enable_if<!VecTraits<typename GridType::ValueType>::IsVec, void>::type
 doTransformVectors(GridType&, const Mat4d&)
 {
     OPENVDB_THROW(TypeError, "tools::transformVectors() requires a vector-valued grid");
@@ -105,7 +82,7 @@ doTransformVectors(GridType&, const Mat4d&)
 
 /// @internal This overload is enabled only for vector-valued grids.
 template<typename GridType> inline
-typename boost::enable_if_c<VecTraits<typename GridType::ValueType>::IsVec, void>::type
+typename std::enable_if<VecTraits<typename GridType::ValueType>::IsVec, void>::type
 doTransformVectors(GridType& grid, const Mat4d& mat)
 {
     if (!grid.isInWorldSpace()) return;
@@ -139,6 +116,9 @@ doTransformVectors(GridType& grid, const Mat4d& mat)
     }
 }
 
+/// @endcond
+//}
+
 
 template<typename GridType>
 inline void
@@ -152,7 +132,3 @@ transformVectors(GridType& grid, const Mat4d& mat)
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_VECTORTRANSFORMER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

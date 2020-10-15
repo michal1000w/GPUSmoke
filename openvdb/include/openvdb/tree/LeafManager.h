@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file LeafManager.h
 ///
@@ -42,19 +15,13 @@
 #ifndef OPENVDB_TREE_LEAFMANAGER_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_LEAFMANAGER_HAS_BEEN_INCLUDED
 
-#include <boost/shared_ptr.hpp>
-#include <boost/bind.hpp>
-#include <boost/function.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/type_traits/is_pointer.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/remove_pointer.hpp>
+#include <openvdb/Types.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
 #include <tbb/parallel_reduce.h>
-#include <openvdb/Types.h>
-#include "TreeIterator.h" // for CopyConstness
+#include <functional>
+#include <type_traits>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -67,11 +34,11 @@ namespace leafmgr {
 /// Useful traits for Tree types
 template<typename TreeT> struct TreeTraits {
     static const bool IsConstTree = false;
-    typedef typename TreeT::LeafIter LeafIterType;
+    using LeafIterType = typename TreeT::LeafIter;
 };
 template<typename TreeT> struct TreeTraits<const TreeT> {
     static const bool IsConstTree = true;
-    typedef typename TreeT::LeafCIter LeafIterType;
+    using LeafIterType = typename TreeT::LeafCIter;
 };
 //@}
 
@@ -83,9 +50,9 @@ template<typename TreeT> struct TreeTraits<const TreeT> {
 template<typename ManagerT>
 struct LeafManagerImpl
 {
-    typedef typename ManagerT::RangeType  RangeT;
-    typedef typename ManagerT::LeafType   LeafT;
-    typedef typename ManagerT::BufferType BufT;
+    using RangeT = typename ManagerT::RangeType;
+    using LeafT = typename ManagerT::LeafType;
+    using BufT = typename ManagerT::BufferType;
 
     static inline void doSwapLeafBuffer(const RangeT& r, size_t auxBufferIdx,
                                         LeafT** leafs, BufT* bufs, size_t bufsPerLeaf)
@@ -115,17 +82,17 @@ template<typename TreeT>
 class LeafManager
 {
 public:
-    typedef TreeT                                                      TreeType;
-    typedef typename TreeT::ValueType                                  ValueType;
-    typedef typename TreeT::RootNodeType                               RootNodeType;
-    typedef typename TreeType::LeafNodeType                            NonConstLeafType;
-    typedef typename CopyConstness<TreeType, NonConstLeafType>::Type   LeafType;
-    typedef LeafType                                                   LeafNodeType;
-    typedef typename leafmgr::TreeTraits<TreeT>::LeafIterType          LeafIterType;
-    typedef typename LeafType::Buffer                                  NonConstBufferType;
-    typedef typename CopyConstness<TreeType, NonConstBufferType>::Type BufferType;
-    typedef tbb::blocked_range<size_t>                                 RangeType;//leaf index range
-    static const Index DEPTH = 2;//root + leafs
+    using TreeType = TreeT;
+    using ValueType = typename TreeT::ValueType;
+    using RootNodeType = typename TreeT::RootNodeType;
+    using NonConstLeafType = typename TreeType::LeafNodeType;
+    using LeafType = typename CopyConstness<TreeType, NonConstLeafType>::Type;
+    using LeafNodeType = LeafType;
+    using LeafIterType = typename leafmgr::TreeTraits<TreeT>::LeafIterType;
+    using NonConstBufferType = typename LeafType::Buffer;
+    using BufferType = typename CopyConstness<TreeType, NonConstBufferType>::Type;
+    using RangeType = tbb::blocked_range<size_t>; // leaf index range
+    static const Index DEPTH = 2; // root + leaf nodes
 
     static const bool IsConstTree = leafmgr::TreeTraits<TreeT>::IsConstTree;
 
@@ -227,7 +194,7 @@ public:
         , mAuxBuffersPerLeaf(auxBuffersPerLeaf)
         , mLeafs(nullptr)
         , mAuxBuffers(nullptr)
-        , mTask(0)
+        , mTask(nullptr)
         , mIsMaster(true)
     {
         this->rebuild(serial);
@@ -244,7 +211,7 @@ public:
         , mAuxBuffersPerLeaf(auxBuffersPerLeaf)
         , mLeafs(new LeafType*[mLeafCount])
         , mAuxBuffers(nullptr)
-        , mTask(0)
+        , mTask(nullptr)
         , mIsMaster(true)
     {
         size_t n = mLeafCount;
@@ -324,13 +291,25 @@ public:
         this->initLeafArray();
     }
 
-    /// Return the total number of allocated auxiliary buffers.
+    /// @brief Return the total number of allocated auxiliary buffers.
     size_t auxBufferCount() const { return mAuxBufferCount; }
-    /// Return the number of auxiliary buffers per leaf node.
+    /// @brief Return the number of auxiliary buffers per leaf node.
     size_t auxBuffersPerLeaf() const { return mAuxBuffersPerLeaf; }
 
-    /// Return the number of leaf nodes.
+    /// @brief Return the number of leaf nodes.
     size_t leafCount() const { return mLeafCount; }
+
+    /// @brief Return the number of active voxels in the leaf nodes.
+    /// @note Multi-threaded for better performance than Tree::activeLeafVoxelCount
+    Index64 activeLeafVoxelCount() const
+    {
+        return tbb::parallel_reduce(this->leafRange(), Index64(0),
+            [] (const LeafRange& range, Index64 sum) -> Index64 {
+                for (const auto& leaf: range) { sum += leaf.onVoxelCount(); }
+                return sum;
+            },
+            [] (Index64 n, Index64 m) -> Index64 { return n + m; });
+    }
 
     /// Return a const reference to tree associated with this manager.
     const TreeType& tree() const { return *mTree; }
@@ -392,8 +371,9 @@ public:
     /// the first auxiliary buffer.
     bool swapLeafBuffer(size_t bufferIdx, bool serial = false)
     {
+        namespace ph = std::placeholders;
         if (bufferIdx == 0 || bufferIdx > mAuxBuffersPerLeaf || this->isConstTree()) return false;
-        mTask = boost::bind(&LeafManager::doSwapLeafBuffer, _1, _2, bufferIdx - 1);
+        mTask = std::bind(&LeafManager::doSwapLeafBuffer, ph::_1, ph::_2, bufferIdx - 1);
         this->cook(serial ? 0 : 512);
         return true;//success
     }
@@ -403,14 +383,15 @@ public:
     /// the first auxiliary buffer.
     bool swapBuffer(size_t bufferIdx1, size_t bufferIdx2, bool serial = false)
     {
+        namespace ph = std::placeholders;
         const size_t b1 = std::min(bufferIdx1, bufferIdx2);
         const size_t b2 = std::max(bufferIdx1, bufferIdx2);
         if (b1 == b2 || b2 > mAuxBuffersPerLeaf) return false;
         if (b1 == 0) {
             if (this->isConstTree()) return false;
-            mTask = boost::bind(&LeafManager::doSwapLeafBuffer, _1, _2, b2-1);
+            mTask = std::bind(&LeafManager::doSwapLeafBuffer, ph::_1, ph::_2, b2-1);
         } else {
-            mTask = boost::bind(&LeafManager::doSwapAuxBuffer, _1, _2, b1-1, b2-1);
+            mTask = std::bind(&LeafManager::doSwapAuxBuffer, ph::_1, ph::_2, b1-1, b2-1);
         }
         this->cook(serial ? 0 : 512);
         return true;//success
@@ -426,8 +407,9 @@ public:
     /// the first auxiliary buffer.
     bool syncAuxBuffer(size_t bufferIdx, bool serial = false)
     {
+        namespace ph = std::placeholders;
         if (bufferIdx == 0 || bufferIdx > mAuxBuffersPerLeaf) return false;
-        mTask = boost::bind(&LeafManager::doSyncAuxBuffer, _1, _2, bufferIdx - 1);
+        mTask = std::bind(&LeafManager::doSyncAuxBuffer, ph::_1, ph::_2, bufferIdx - 1);
         this->cook(serial ? 0 : 64);
         return true;//success
     }
@@ -437,11 +419,12 @@ public:
     /// @param serial  if false, sync buffers in parallel using multiple threads.
     bool syncAllBuffers(bool serial = false)
     {
+        namespace ph = std::placeholders;
         switch (mAuxBuffersPerLeaf) {
             case 0: return false;//nothing to do
-            case 1: mTask = boost::bind(&LeafManager::doSyncAllBuffers1, _1, _2); break;
-            case 2: mTask = boost::bind(&LeafManager::doSyncAllBuffers2, _1, _2); break;
-            default: mTask = boost::bind(&LeafManager::doSyncAllBuffersN, _1, _2); break;
+            case 1: mTask = std::bind(&LeafManager::doSyncAllBuffers1, ph::_1, ph::_2); break;
+            case 2: mTask = std::bind(&LeafManager::doSyncAllBuffers2, ph::_1, ph::_2); break;
+            default: mTask = std::bind(&LeafManager::doSyncAllBuffersN, ph::_1, ph::_2); break;
         }
         this->cook(serial ? 0 : 64);
         return true;//success
@@ -468,7 +451,7 @@ public:
     /// template<typename TreeType>
     /// struct OffsetOp
     /// {
-    ///     typedef tree::ValueAccessor<const TreeType> Accessor;
+    ///     using Accessor = tree::ValueAccessor<const TreeType>;
     ///
     ///     OffsetOp(const TreeType& tree): mRhsTreeAcc(tree) {}
     ///
@@ -494,7 +477,7 @@ public:
     /// template<typename LeafManagerType>
     /// struct MinOp
     /// {
-    ///     typedef typename LeafManagerType::BufferType BufferType;
+    ///     using BufferType = typename LeafManagerType::BufferType;
     ///
     ///     MinOp(LeafManagerType& leafNodes): mLeafs(leafNodes) {}
     ///
@@ -573,13 +556,13 @@ public:
     template<typename ArrayT>
     void getNodes(ArrayT& array)
     {
-        typedef typename ArrayT::value_type T;
-        BOOST_STATIC_ASSERT(boost::is_pointer<T>::value);
-        typedef typename boost::mpl::if_<boost::is_const<typename boost::remove_pointer<T>::type>,
-            const LeafType, LeafType>::type LeafT;
+        using T = typename ArrayT::value_type;
+        static_assert(std::is_pointer<T>::value, "argument to getNodes() must be a pointer array");
+        using LeafT = typename std::conditional<std::is_const<
+            typename std::remove_pointer<T>::type>::value, const LeafType, LeafType>::type;
 
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if (boost::is_same<T, LeafT*>::value) {
+        if (std::is_same<T, LeafT*>::value) {
             array.resize(mLeafCount);
             for (size_t i=0; i<mLeafCount; ++i) array[i] = reinterpret_cast<T>(mLeafs[i]);
         } else {
@@ -595,12 +578,13 @@ public:
     template<typename ArrayT>
     void getNodes(ArrayT& array) const
     {
-        typedef typename ArrayT::value_type T;
-        BOOST_STATIC_ASSERT(boost::is_pointer<T>::value);
-        BOOST_STATIC_ASSERT(boost::is_const<typename boost::remove_pointer<T>::type>::value);
+        using T = typename ArrayT::value_type;
+        static_assert(std::is_pointer<T>::value, "argument to getNodes() must be a pointer array");
+        static_assert(std::is_const<typename std::remove_pointer<T>::type>::value,
+            "argument to getNodes() must be an array of const node pointers");
 
         OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-        if (boost::is_same<T, const LeafType*>::value) {
+        if (std::is_same<T, const LeafType*>::value) {
             array.resize(mLeafCount);
             for (size_t i=0; i<mLeafCount; ++i) array[i] = reinterpret_cast<T>(mLeafs[i]);
         } else {
@@ -649,13 +633,13 @@ public:
         else OPENVDB_THROW(ValueError, "task is undefined");
     }
 
-  private:
+private:
 
     // This a simple wrapper for a c-style array so it mimics the api
     // of a std container, e.g. std::vector or std::deque, and can be
     // passed to Tree::getNodes().
     struct MyArray {
-        typedef LeafType* value_type;//required by Tree::getNodes
+        using value_type = LeafType*;//required by Tree::getNodes
         value_type* ptr;
         MyArray(value_type* array) : ptr(array) {}
         void push_back(value_type leaf) { *ptr++ = leaf; }//required by Tree::getNodes
@@ -804,7 +788,7 @@ public:
         size_t* mOffsets;
     };// PrefixSum
 
-    typedef typename boost::function<void (LeafManager*, const RangeType&)> FuncType;
+    using FuncType = typename std::function<void (LeafManager*, const RangeType&)>;
 
     TreeType*            mTree;
     size_t               mLeafCount, mAuxBufferCount, mAuxBuffersPerLeaf;
@@ -819,10 +803,10 @@ public:
 template<typename TreeT>
 struct LeafManagerImpl<LeafManager<const TreeT> >
 {
-    typedef LeafManager<const TreeT> ManagerT;
-    typedef typename ManagerT::RangeType      RangeT;
-    typedef typename ManagerT::LeafType       LeafT;
-    typedef typename ManagerT::BufferType     BufT;
+    using ManagerT = LeafManager<const TreeT>;
+    using RangeT = typename ManagerT::RangeType;
+    using LeafT = typename ManagerT::LeafType;
+    using BufT = typename ManagerT::BufferType;
 
     static inline void doSwapLeafBuffer(const RangeT&, size_t /*auxBufferIdx*/,
                                         LeafT**, BufT*, size_t /*bufsPerLeaf*/)
@@ -836,7 +820,3 @@ struct LeafManagerImpl<LeafManager<const TreeT> >
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_LEAFMANAGER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

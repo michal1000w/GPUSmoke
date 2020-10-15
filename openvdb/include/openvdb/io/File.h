@@ -1,42 +1,18 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file File.h
 
 #ifndef OPENVDB_IO_FILE_HAS_BEEN_INCLUDED
 #define OPENVDB_IO_FILE_HAS_BEEN_INCLUDED
 
+#include <openvdb/version.h>
 #include "io.h" // for MappedFile::Notifier
 #include "Archive.h"
 #include "GridDescriptor.h"
+#include <algorithm> // for std::copy()
 #include <iosfwd>
+#include <iterator> // for std::back_inserter()
 #include <map>
 #include <memory>
 #include <string>
@@ -135,22 +111,12 @@ public:
     /// @throw KeyError if no grid with the given name exists in this file.
     GridBase::Ptr readGridMetadata(const Name&);
 
-    /// @brief Read a grid's metadata, topology, transform, etc., but not
-    /// any of its leaf node data blocks.
-    /// @return the grid pointer to the partially loaded grid.
-    /// @deprecated Partially-loaded grids might not be compatible with all tools.
-    /// Use them with caution, and preferably use delayed loading instead.
-    OPENVDB_DEPRECATED GridBase::ConstPtr readGridPartial(const Name&);
-
     /// Read an entire grid, including all of its data blocks.
     GridBase::Ptr readGrid(const Name&);
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// @brief Read a grid, including its data blocks, but only where it
     /// intersects the given world-space bounding box.
     GridBase::Ptr readGrid(const Name&, const BBoxd&);
-#endif
 
-    /// @todo GridPtrVec readAllGridsPartial(const Name&)
     /// @todo GridPtrVec readAllGrids(const Name&)
 
     /// @brief Write the grids in the given container to the file whose name
@@ -210,14 +176,12 @@ private:
 
     /// Read in and return the grid specified by the given grid descriptor.
     GridBase::Ptr readGrid(const GridDescriptor&) const;
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// Read in and return the region of the grid specified by the given grid descriptor
     /// that intersects the given world-space bounding box.
     GridBase::Ptr readGrid(const GridDescriptor&, const BBoxd&) const;
     /// Read in and return the region of the grid specified by the given grid descriptor
     /// that intersects the given index-space bounding box.
     GridBase::Ptr readGrid(const GridDescriptor&, const CoordBBox&) const;
-#endif
 
     /// @brief Partially populate the given grid by reading its metadata and transform and,
     /// if the grid is not an instance, its tree structure, but not the tree's leaf nodes.
@@ -270,7 +234,3 @@ File::write(const GridPtrContainerT& container, const MetaMap& meta) const
 } // namespace openvdb
 
 #endif // OPENVDB_IO_FILE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

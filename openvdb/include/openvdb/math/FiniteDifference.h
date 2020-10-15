@@ -1,34 +1,7 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
-/// @file FiniteDifference.h
+/// @file math/FiniteDifference.h
 
 #ifndef OPENVDB_MATH_FINITEDIFFERENCE_HAS_BEEN_INCLUDED
 #define OPENVDB_MATH_FINITEDIFFERENCE_HAS_BEEN_INCLUDED
@@ -37,7 +10,7 @@
 #include "Math.h"
 #include "Coord.h"
 #include "Vec3.h"
-
+#include <string>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -373,13 +346,6 @@ inline Real GodunovsNormSqrd(bool isOutside,
     return dPLen2; // |\nabla\phi|^2
 }
 
-    
-template <typename Real>
-OPENVDB_DEPRECATED inline Real GudonovsNormSqrd(bool isOutside,
-                                                Real dP_xm, Real dP_xp,
-                                                Real dP_ym, Real dP_yp,
-                                                Real dP_zm, Real dP_zp)
-{ return GodunovsNormSqrd(isOutside, dP_xm, dP_xp, dP_ym, dP_yp, dP_zm, dP_zp); }    
 
 template<typename Real>
 inline Real
@@ -390,14 +356,6 @@ GodunovsNormSqrd(bool isOutside, const Vec3<Real>& gradient_m, const Vec3<Real>&
                                   gradient_m[1], gradient_p[1],
                                   gradient_m[2], gradient_p[2]);
 }
-
-template<typename Real>
-OPENVDB_DEPRECATED inline Real GudonovsNormSqrd(bool isOutside,
-                                                const Vec3<Real>& gradient_m,
-                                                const Vec3<Real>& gradient_p)
-{
-    return GodunovsNormSqrd<Real>(isOutside, gradient_m, gradient_p);
-}    
 
 
 #ifdef DWA_OPENVDB
@@ -418,7 +376,7 @@ WENO5<simd::Float4>(const simd::Float4& v1, const simd::Float4& v2, const simd::
                     const simd::Float4& v4, const simd::Float4& v5, float scale2)
 {
     using math::Pow2;
-    typedef simd::Float4 F4;
+    using F4 = simd::Float4;
     const F4
         C(13.f / 12.f),
         eps(1.0e-6f * scale2),
@@ -451,14 +409,8 @@ GodunovsNormSqrd(bool isOutside, const simd::Float4& dP_m, const simd::Float4& d
         : simdMax(math::Pow2(simdMin(dP_m, zero)), math::Pow2(simdMax(dP_p, zero)));
     return simdSum(v);//should be v[0]+v[1]+v[2]
 }
-
-OPENVDB_DEPRECATED inline float GudonovsNormSqrd(bool isOutside,
-                                                 const simd::Float4& dP_m,
-                                                 const simd::Float4& dP_p)
-{
-    return GodunovsNormSqrd(isOutside, dP_m, dP_p);
-}    
 #endif
+
 
 template<DScheme DiffScheme>
 struct D1
@@ -546,6 +498,9 @@ struct D1<CD_2ND>
     template <typename ValueType>
     static ValueType difference(const ValueType& xp1, const ValueType& xm1) {
         return (xp1 - xm1)*ValueType(0.5);
+    }
+    static bool difference(const bool& xp1, const bool& /*xm1*/) {
+        return xp1;
     }
 
 
@@ -1138,7 +1093,7 @@ struct D1<FD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inX(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType  ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(3,0,0));
         V[1] = grid.getValue(ijk.offsetBy(2,0,0));
@@ -1153,7 +1108,7 @@ struct D1<FD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,3,0));
         V[1] = grid.getValue(ijk.offsetBy(0,2,0));
@@ -1168,7 +1123,7 @@ struct D1<FD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,0,3));
         V[1] = grid.getValue(ijk.offsetBy(0,0,2));
@@ -1236,7 +1191,7 @@ struct D1<FD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inX(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(3,0,0));
         V[1] = grid.getValue(ijk.offsetBy(2,0,0));
@@ -1252,7 +1207,7 @@ struct D1<FD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,3,0));
         V[1] = grid.getValue(ijk.offsetBy(0,2,0));
@@ -1267,7 +1222,7 @@ struct D1<FD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,0,3));
         V[1] = grid.getValue(ijk.offsetBy(0,0,2));
@@ -1334,7 +1289,7 @@ struct D1<BD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inX(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(-3,0,0));
         V[1] = grid.getValue(ijk.offsetBy(-2,0,0));
@@ -1349,7 +1304,7 @@ struct D1<BD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,-3,0));
         V[1] = grid.getValue(ijk.offsetBy(0,-2,0));
@@ -1364,7 +1319,7 @@ struct D1<BD_WENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,0,-3));
         V[1] = grid.getValue(ijk.offsetBy(0,0,-2));
@@ -1380,7 +1335,7 @@ struct D1<BD_WENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inX(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue<-3, 0, 0>();
         V[1] = S.template getValue<-2, 0, 0>();
@@ -1395,7 +1350,7 @@ struct D1<BD_WENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inY(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue< 0,-3, 0>();
         V[1] = S.template getValue< 0,-2, 0>();
@@ -1410,7 +1365,7 @@ struct D1<BD_WENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inZ(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue< 0, 0,-3>();
         V[1] = S.template getValue< 0, 0,-2>();
@@ -1438,7 +1393,7 @@ struct D1<BD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inX(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(-3,0,0));
         V[1] = grid.getValue(ijk.offsetBy(-2,0,0));
@@ -1453,7 +1408,7 @@ struct D1<BD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,-3,0));
         V[1] = grid.getValue(ijk.offsetBy(0,-2,0));
@@ -1468,7 +1423,7 @@ struct D1<BD_HJWENO5>
     template<typename Accessor>
     static typename Accessor::ValueType inZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueType;
+        using ValueType = typename Accessor::ValueType;
         ValueType V[6];
         V[0] = grid.getValue(ijk.offsetBy(0,0,-3));
         V[1] = grid.getValue(ijk.offsetBy(0,0,-2));
@@ -1484,7 +1439,7 @@ struct D1<BD_HJWENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inX(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue<-3, 0, 0>();
         V[1] = S.template getValue<-2, 0, 0>();
@@ -1499,7 +1454,7 @@ struct D1<BD_HJWENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inY(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue< 0,-3, 0>();
         V[1] = S.template getValue< 0,-2, 0>();
@@ -1514,7 +1469,7 @@ struct D1<BD_HJWENO5>
     template<typename Stencil>
     static typename Stencil::ValueType inZ(const Stencil& S)
     {
-        typedef typename Stencil::ValueType ValueType;
+        using ValueType = typename Stencil::ValueType;
         ValueType V[6];
         V[0] = S.template getValue< 0, 0,-3>();
         V[1] = S.template getValue< 0, 0,-2>();
@@ -1682,7 +1637,7 @@ struct D1Vec<CD_2ND>
 
 template<>
 struct D1Vec<CD_4TH> {
-    // typedef typename Accessor::ValueType::value_type  value_type;
+    // using value_type = typename Accessor::ValueType::value_type;
 
 
     // random access version
@@ -1743,7 +1698,7 @@ struct D1Vec<CD_4TH> {
 template<>
 struct D1Vec<CD_6TH>
 {
-    //typedef typename Accessor::ValueType::value_type::value_type  ValueType;
+    //using ValueType = typename Accessor::ValueType::value_type::value_type;
 
     // random access version
     template<typename Accessor>
@@ -2025,7 +1980,7 @@ struct D2<CD_FOURTH>
     template<typename Accessor>
     static typename Accessor::ValueType inXandY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType  ValueType;
+        using ValueType = typename Accessor::ValueType;
         typename Accessor::ValueType tmp1 =
             D1<CD_4TH>::inX(grid, ijk.offsetBy(0, 1, 0)) -
             D1<CD_4TH>::inX(grid, ijk.offsetBy(0,-1, 0));
@@ -2038,7 +1993,7 @@ struct D2<CD_FOURTH>
     template<typename Accessor>
     static typename Accessor::ValueType inXandZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType  ValueType;
+        using ValueType = typename Accessor::ValueType;
         typename Accessor::ValueType tmp1 =
             D1<CD_4TH>::inX(grid, ijk.offsetBy(0, 0, 1)) -
             D1<CD_4TH>::inX(grid, ijk.offsetBy(0, 0,-1));
@@ -2051,7 +2006,7 @@ struct D2<CD_FOURTH>
     template<typename Accessor>
     static typename Accessor::ValueType inYandZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType  ValueType;
+        using ValueType = typename Accessor::ValueType;
         typename Accessor::ValueType tmp1 =
             D1<CD_4TH>::inY(grid, ijk.offsetBy(0, 0, 1)) -
             D1<CD_4TH>::inY(grid, ijk.offsetBy(0, 0,-1));
@@ -2219,7 +2174,7 @@ struct D2<CD_SIXTH>
     template<typename Accessor>
     static typename Accessor::ValueType inXandY(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueT;
+        using ValueT = typename Accessor::ValueType;
         ValueT tmp1 =
             D1<CD_6TH>::inX(grid, ijk.offsetBy(0, 1, 0)) -
             D1<CD_6TH>::inX(grid, ijk.offsetBy(0,-1, 0));
@@ -2235,7 +2190,7 @@ struct D2<CD_SIXTH>
     template<typename Accessor>
     static typename Accessor::ValueType inXandZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueT;
+        using ValueT = typename Accessor::ValueType;
         ValueT tmp1 =
             D1<CD_6TH>::inX(grid, ijk.offsetBy(0, 0, 1)) -
             D1<CD_6TH>::inX(grid, ijk.offsetBy(0, 0,-1));
@@ -2251,7 +2206,7 @@ struct D2<CD_SIXTH>
     template<typename Accessor>
     static typename Accessor::ValueType inYandZ(const Accessor& grid, const Coord& ijk)
     {
-        typedef typename Accessor::ValueType ValueT;
+        using ValueT = typename Accessor::ValueType;
         ValueT tmp1 =
             D1<CD_6TH>::inY(grid, ijk.offsetBy(0, 0, 1)) -
             D1<CD_6TH>::inY(grid, ijk.offsetBy(0, 0,-1));
@@ -2370,7 +2325,3 @@ struct D2<CD_SIXTH>
 } // end openvdb namespace
 
 #endif // OPENVDB_MATH_FINITEDIFFERENCE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_MATH_TRANSFORM_HAS_BEEN_INCLUDED
 #define OPENVDB_MATH_TRANSFORM_HAS_BEEN_INCLUDED
@@ -53,10 +26,10 @@ OPENVDB_API void
 calculateBounds(const Transform& t, const Vec3d& minWS, const Vec3d& maxWS,
     Vec3d& minIS, Vec3d& maxIS);
 
-/// @brief Calculate an axis-aligned bounding box in index space from a
+/// @todo Calculate an axis-aligned bounding box in index space from a
 /// bounding sphere in world space.
-/// @todo void calculateBounds(const Transform& t, const Vec3d& center, const Real radius,
-///     Vec3d& minIS, Vec3d& maxIS);
+//void calculateBounds(const Transform& t, const Vec3d& center, const Real radius,
+//    Vec3d& minIS, Vec3d& maxIS);
 
 
 ////////////////////////////////////////
@@ -228,11 +201,7 @@ inline void
 doProcessTypedMap(Transform& transform, OpType& op)
 {
     ResolvedMapType& resolvedMap = *transform.map<ResolvedMapType>();
-#ifdef _MSC_VER
-    op.operator()<ResolvedMapType>(resolvedMap);
-#else
     op.template operator()<ResolvedMapType>(resolvedMap);
-#endif
 }
 
 /// Helper function used internally by processTypedMap()
@@ -241,11 +210,7 @@ inline void
 doProcessTypedMap(const Transform& transform, OpType& op)
 {
     const ResolvedMapType& resolvedMap = *transform.map<ResolvedMapType>();
-#ifdef _MSC_VER
-    op.operator()<ResolvedMapType>(resolvedMap);
-#else
     op.template operator()<ResolvedMapType>(resolvedMap);
-#endif
 }
 
 
@@ -304,7 +269,3 @@ processTypedMap(TransformType& transform, OpType& op)
 } // namespace openvdb
 
 #endif // OPENVDB_MATH_TRANSFORM_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

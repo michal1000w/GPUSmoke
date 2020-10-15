@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file Tuple.h
 /// @author Ben Kwa
@@ -34,8 +7,10 @@
 #ifndef OPENVDB_MATH_TUPLE_HAS_BEEN_INCLUDED
 #define OPENVDB_MATH_TUPLE_HAS_BEEN_INCLUDED
 
-#include <sstream>
 #include "Math.h"
+#include <cmath>
+#include <sstream>
+#include <string>
 
 
 namespace openvdb {
@@ -52,8 +27,8 @@ struct Conversion {};
 template<int SIZE, typename T>
 class Tuple {
 public:
-    typedef T value_type;
-    typedef T ValueType;
+    using value_type = T;
+    using ValueType = T;
 
     static const int size = SIZE;
 
@@ -136,8 +111,7 @@ public:
     //@}  Compatibility
 
     /// @return string representation of Classname
-    std::string
-    str() const {
+    std::string str() const {
         std::ostringstream buffer;
 
         buffer << "[";
@@ -145,7 +119,7 @@ public:
         // For each column
         for (unsigned j(0); j < SIZE; j++) {
             if (j) buffer << ", ";
-            buffer << mm[j];
+            buffer << PrintCast(mm[j]);
         }
 
         buffer << "]";
@@ -158,6 +132,38 @@ public:
     }
     void read(std::istream& is) {
         is.read(reinterpret_cast<char*>(&mm), sizeof(T)*SIZE);
+    }
+
+    /// True if a Nan is present in this tuple
+    bool isNan() const {
+        for (int i = 0; i < SIZE; ++i) {
+            if (math::isNan(mm[i])) return true;
+        }
+        return false;
+    }
+
+    /// True if an Inf is present in this tuple
+    bool isInfinite() const {
+        for (int i = 0; i < SIZE; ++i) {
+            if (math::isInfinite(mm[i])) return true;
+        }
+        return false;
+    }
+
+    /// True if no Nan or Inf values are present
+    bool isFinite() const {
+        for (int i = 0; i < SIZE; ++i) {
+            if (!math::isFinite(mm[i])) return false;
+        }
+        return true;
+    }
+
+    /// True if all elements are exactly zero
+    bool isZero() const {
+        for (int i = 0; i < SIZE; ++i) {
+            if (!math::isZero(mm[i])) return false;
+        }
+        return true;
     }
 
 protected:
@@ -205,6 +211,21 @@ Abs(const Tuple<SIZE, T>& t)
     return result;
 }
 
+/// Return @c true if a Nan is present in the tuple.
+template<int SIZE, typename T>
+inline bool isNan(const Tuple<SIZE, T>& t) { return t.isNan(); }
+
+/// Return @c true if an Inf is present in the tuple.
+template<int SIZE, typename T>
+inline bool isInfinite(const Tuple<SIZE, T>& t) { return t.isInfinite(); }
+
+/// Return @c true if no Nan or Inf values are present.
+template<int SIZE, typename T>
+inline bool isFinite(const Tuple<SIZE, T>& t) { return t.isFinite(); }
+
+/// Return @c true if all elements are exactly equal to zero.
+template<int SIZE, typename T>
+inline bool isZero(const Tuple<SIZE, T>& t) { return t.isZero(); }
 
 ////////////////////////////////////////
 
@@ -222,7 +243,3 @@ std::ostream& operator<<(std::ostream& ostr, const Tuple<SIZE, T>& classname)
 } // namespace openvdb
 
 #endif // OPENVDB_MATH_TUPLE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

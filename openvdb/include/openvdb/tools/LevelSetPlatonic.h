@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @author Ken Museth
 ///
@@ -41,15 +14,15 @@
 #ifndef OPENVDB_TOOLS_LEVELSETPLATONIC_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_LEVELSETPLATONIC_HAS_BEEN_INCLUDED
 
-#include <vector>
 #include <openvdb/Grid.h>
 #include <openvdb/Types.h>
 #include <openvdb/math/Math.h>
 #include <openvdb/math/Transform.h>
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/util/NullInterrupter.h>
-#include <boost/utility.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
+#include <type_traits>
+#include <vector>
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -338,7 +311,8 @@ createLevelSetPlatonic(int faceCount,float scale, const Vec3f& center,
     float voxelSize, float halfWidth, InterruptT *interrupt)
 {
     // GridType::ValueType is required to be a floating-point scalar.
-    BOOST_STATIC_ASSERT(boost::is_floating_point<typename GridType::ValueType>::value);
+    static_assert(std::is_floating_point<typename GridType::ValueType>::value,
+        "level set grids must have scalar, floating-point value types");
 
     const math::Transform::Ptr xform = math::Transform::createLinearTransform( voxelSize );
 
@@ -502,7 +476,3 @@ createLevelSetPlatonic(int faceCount,float scale, const Vec3f& center,
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_LEVELSETPLATONIC_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

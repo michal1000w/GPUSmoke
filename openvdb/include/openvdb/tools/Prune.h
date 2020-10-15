@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file Prune.h
 ///
@@ -37,16 +10,11 @@
 #ifndef OPENVDB_TOOLS_PRUNE_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_PRUNE_HAS_BEEN_INCLUDED
 
-#include <algorithm> // for std::nth_element
-
-#include <boost/utility/enable_if.hpp>
-#include <boost/static_assert.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-
 #include <openvdb/math/Math.h> // for isNegative and negative
-#include <openvdb/Types.h> // for Index typedef
 #include <openvdb/Types.h>
 #include <openvdb/tree/NodeManager.h>
+#include <algorithm> // for std::nth_element()
+#include <type_traits>
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -167,10 +135,10 @@ template<typename TreeT, Index TerminationLevel = 0>
 class InactivePruneOp
 {
 public:
-    typedef typename TreeT::ValueType    ValueT;
-    typedef typename TreeT::RootNodeType RootT;
-    typedef typename TreeT::LeafNodeType LeafT;
-    BOOST_STATIC_ASSERT(RootT::LEVEL > TerminationLevel);
+    using ValueT = typename TreeT::ValueType;
+    using RootT = typename TreeT::RootNodeType;
+    using LeafT = typename TreeT::LeafNodeType;
+    static_assert(RootT::LEVEL > TerminationLevel, "TerminationLevel out of range");
 
     InactivePruneOp(TreeT& tree) : mValue(tree.background())
     {
@@ -184,6 +152,7 @@ public:
 
     // Nothing to do at the leaf node level
     void operator()(LeafT&) const {}
+
     // Prune the child nodes of the internal nodes
     template<typename NodeT>
     void operator()(NodeT& node) const
@@ -194,6 +163,7 @@ public:
             }
         }
     }
+
     // Prune the child nodes of the root node
     void operator()(RootT& root) const
     {
@@ -202,8 +172,8 @@ public:
         }
         root.eraseBackgroundTiles();
     }
-private:
 
+private:
     const ValueT mValue;
 };// InactivePruneOp
 
@@ -212,12 +182,12 @@ template<typename TreeT, Index TerminationLevel = 0>
 class TolerancePruneOp
 {
 public:
-    typedef typename TreeT::ValueType    ValueT;
-    typedef typename TreeT::RootNodeType RootT;
-    typedef typename TreeT::LeafNodeType LeafT;
-    BOOST_STATIC_ASSERT(RootT::LEVEL > TerminationLevel);
+    using ValueT = typename TreeT::ValueType;
+    using RootT = typename TreeT::RootNodeType;
+    using LeafT = typename TreeT::LeafNodeType;
+    static_assert(RootT::LEVEL > TerminationLevel, "TerminationLevel out of range");
 
-    TolerancePruneOp(TreeT& tree, const ValueT& t) : mTolerance(t)
+    TolerancePruneOp(TreeT& tree, const ValueT& tol) : mTolerance(tol)
     {
         tree.clearAllAccessors();//clear cache of nodes that could be pruned
     }
@@ -250,39 +220,25 @@ public:
     inline void operator()(LeafT&) const {}
 
 private:
-
-    template<typename NodeT>
-    struct CompareOp {
-        CompareOp() {}        
-        typedef typename NodeT::UnionType T;
-        inline bool operator()(const T& a, const T& b) const {return a.getValue() < b.getValue();}
-    };// CompareOp
-
     // Private method specialized for leaf nodes
-    inline ValueT median(LeafT& leaf) const
-    {
-        ValueT* data = leaf.buffer().data();
-        static const size_t midpoint = (LeafT::NUM_VALUES - 1) >> 1;
-        std::nth_element(data, data + midpoint, data + LeafT::NUM_VALUES);
-        return data[midpoint];
-    }
+    inline ValueT median(LeafT& leaf) const {return leaf.medianAll(leaf.buffer().data());}
 
     // Private method for internal nodes
     template<typename NodeT>
     inline typename NodeT::ValueType median(NodeT& node) const
     {
-        typedef typename NodeT::UnionType UnionT;
+        using UnionT = typename NodeT::UnionType;
         UnionT* data = const_cast<UnionT*>(node.getTable());//never do this at home kids :)
         static const size_t midpoint = (NodeT::NUM_VALUES - 1) >> 1;
-        CompareOp<NodeT> op;
+        auto op = [](const UnionT& a, const UnionT& b){return a.getValue() < b.getValue();};
         std::nth_element(data, data + midpoint, data + NodeT::NUM_VALUES, op);
         return data[midpoint].getValue();
     }
-    
+
     // Specialization to nodes templated on booleans values
     template<typename NodeT>
     inline
-    typename boost::enable_if<boost::is_same<bool, typename NodeT::ValueType>, bool>::type
+    typename std::enable_if<std::is_same<bool, typename NodeT::ValueType>::value, bool>::type
     isConstant(NodeT& node, bool& value, bool& state) const
     {
         return node.isConstant(value, state, mTolerance);
@@ -291,7 +247,7 @@ private:
     // Nodes templated on non-boolean values
     template<typename NodeT>
     inline
-    typename boost::disable_if<boost::is_same<bool, typename NodeT::ValueType>, bool>::type
+    typename std::enable_if<!std::is_same<bool, typename NodeT::ValueType>::value, bool>::type
     isConstant(NodeT& node, ValueT& value, bool& state) const
     {
         ValueT tmp;
@@ -299,7 +255,7 @@ private:
         if (test) value = this->median(node);
         return test;
     }
-   
+
     const ValueT mTolerance;
 };// TolerancePruneOp
 
@@ -308,10 +264,10 @@ template<typename TreeT, Index TerminationLevel = 0>
 class LevelSetPruneOp
 {
 public:
-    typedef typename TreeT::ValueType    ValueT;
-    typedef typename TreeT::RootNodeType RootT;
-    typedef typename TreeT::LeafNodeType LeafT;
-    BOOST_STATIC_ASSERT(RootT::LEVEL > TerminationLevel);
+    using ValueT = typename TreeT::ValueType;
+    using RootT = typename TreeT::RootNodeType;
+    using LeafT = typename TreeT::LeafNodeType;
+    static_assert(RootT::LEVEL > TerminationLevel, "TerminationLevel out of range");
 
     LevelSetPruneOp(TreeT& tree)
         : mOutside(tree.background())
@@ -323,6 +279,7 @@ public:
         }
         tree.clearAllAccessors();//clear cache of nodes that could be pruned
     }
+
     LevelSetPruneOp(TreeT& tree, const ValueT& outside, const ValueT& inside)
         : mOutside(outside)
         , mInside(inside)
@@ -337,8 +294,10 @@ public:
         }
         tree.clearAllAccessors();//clear cache of nodes that could be pruned
     }
+
     // Nothing to do at the leaf node level
     void operator()(LeafT&) const {}
+
     // Prune the child nodes of the internal nodes
     template<typename NodeT>
     void operator()(NodeT& node) const
@@ -349,6 +308,7 @@ public:
             }
         }
     }
+
     // Prune the child nodes of the root node
     void operator()(RootT& root) const
     {
@@ -438,7 +398,3 @@ pruneLevelSet(TreeT& tree, bool threaded, size_t grainSize)
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_PRUNE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

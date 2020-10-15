@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @author Ken Museth
 ///
@@ -35,13 +8,14 @@
 #ifndef OPENVDB_UTIL_NODEMASKS_HAS_BEEN_INCLUDED
 #define OPENVDB_UTIL_NODEMASKS_HAS_BEEN_INCLUDED
 
+#include <algorithm> // for std::min()
 #include <cassert>
 #include <cstring>
 #include <iostream>// for cout
 #include <openvdb/Platform.h>
 #include <openvdb/Types.h>
-//#include <boost/mpl/if.hpp>
 //#include <strings.h> // for ffs
+
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -52,26 +26,25 @@ namespace util {
 inline Index32
 CountOn(Byte v)
 {
-    // Simple LUT:
-#ifndef _MSC_VER // Visual C++ doesn't guarantee thread-safe initialization of local statics
-    static
-#endif
-    const Byte numBits[256] = {
-#   define B2(n)  n,     n+1,     n+1,     n+2
-#   define B4(n)  B2(n), B2(n+1), B2(n+1), B2(n+2)
-#   define B6(n)  B4(n), B4(n+1), B4(n+1), B4(n+2)
-           B6(0), B6(1), B6(1),   B6(2)
+#if defined(OPENVDB_USE_SSE42) && defined(_MSC_VER)
+    return __popcnt16(v);
+#elif defined(OPENVDB_USE_SSE42) && (defined(__GNUC__) || defined(__clang__))
+    return __builtin_popcount(v);
+#else
+    // Software Implementation - Simple LUT
+    static const Byte numBits[256] = {
+#define COUNTONB2(n)  n,            n+1,            n+1,            n+2
+#define COUNTONB4(n)  COUNTONB2(n), COUNTONB2(n+1), COUNTONB2(n+1), COUNTONB2(n+2)
+#define COUNTONB6(n)  COUNTONB4(n), COUNTONB4(n+1), COUNTONB4(n+1), COUNTONB4(n+2)
+        COUNTONB6(0), COUNTONB6(1), COUNTONB6(1),   COUNTONB6(2)
     };
     return numBits[v];
-
-    // Sequentially clear least significant bits
-    //Index32 c;
-    //for (c = 0; v; c++)  v &= v - 0x01U;
-    //return c;
-
-    // This version is only fast on CPUs with fast "%" and "*" operations
-    //return (v * UINT64_C(0x200040008001) & UINT64_C(0x111111111111111)) % 0xF;
+#undef COUNTONB6
+#undef COUNTONB4
+#undef COUNTONB2
+#endif
 }
+
 /// Return the number of off bits in the given 8-bit value.
 inline Index32 CountOff(Byte v) { return CountOn(static_cast<Byte>(~v)); }
 
@@ -91,10 +64,17 @@ inline Index32 CountOff(Index32 v) { return CountOn(~v); }
 inline Index32
 CountOn(Index64 v)
 {
+#if defined(OPENVDB_USE_SSE42) && defined(_MSC_VER) && defined(_M_X64)
+    v = __popcnt64(v);
+#elif defined(OPENVDB_USE_SSE42) && (defined(__GNUC__) || defined(__clang__))
+    v = __builtin_popcountll(v);
+#else
+    // Software Implementation
     v = v - ((v >> 1) & UINT64_C(0x5555555555555555));
     v = (v & UINT64_C(0x3333333333333333)) + ((v >> 2) & UINT64_C(0x3333333333333333));
-    return static_cast<Index32>(
-        (((v + (v >> 4)) & UINT64_C(0xF0F0F0F0F0F0F0F)) * UINT64_C(0x101010101010101)) >> 56);
+    v = (((v + (v >> 4)) & UINT64_C(0xF0F0F0F0F0F0F0F)) * UINT64_C(0x101010101010101)) >> 56;
+#endif
+    return static_cast<Index32>(v);
 }
 
 /// Return the number of off bits in the given 64-bit value.
@@ -105,11 +85,17 @@ inline Index32
 FindLowestOn(Byte v)
 {
     assert(v);
-#ifndef _MSC_VER // Visual C++ doesn't guarantee thread-safe initialization of local statics
-    static
-#endif
-    const Byte DeBruijn[8] = {0, 1, 6, 2, 7, 5, 4, 3};
+#if defined(OPENVDB_USE_SSE42) && defined(_MSC_VER)
+    unsigned long index;
+    _BitScanForward(&index, static_cast<Index32>(v));
+    return static_cast<Index32>(index);
+#elif defined(OPENVDB_USE_SSE42) && (defined(__GNUC__) || defined(__clang__))
+    return __builtin_ctz(v);
+#else
+    // Software Implementation
+    static const Byte DeBruijn[8] = {0, 1, 6, 2, 7, 5, 4, 3};
     return DeBruijn[Byte((v & -v) * 0x1DU) >> 5];
+#endif
 }
 
 /// Return the least significant on bit of the given 32-bit value.
@@ -118,14 +104,20 @@ FindLowestOn(Index32 v)
 {
     assert(v);
     //return ffs(v);
-#ifndef _MSC_VER // Visual C++ doesn't guarantee thread-safe initialization of local statics
-    static
-#endif
-    const Byte DeBruijn[32] = {
+    static const Byte DeBruijn[32] = {
         0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8,
         31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9
     };
+
+// disable unary minus on unsigned warning
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4146)
+#endif
     return DeBruijn[Index32((v & -v) * 0x077CB531U) >> 27];
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 }
 
 /// Return the least significant on bit of the given 64-bit value.
@@ -133,27 +125,40 @@ inline Index32
 FindLowestOn(Index64 v)
 {
     assert(v);
-    //return ffsll(v);
-#ifndef _MSC_VER // Visual C++ doesn't guarantee thread-safe initialization of local statics
-    static
-#endif
-    const Byte DeBruijn[64] = {
+#if defined(OPENVDB_USE_SSE42) && defined(_MSC_VER)
+    unsigned long index;
+    _BitScanForward64(&index, v);
+    return static_cast<Index32>(index);
+#elif defined(OPENVDB_USE_SSE42) && (defined(__GNUC__) || defined(__clang__))
+    return static_cast<Index32>(__builtin_ctzll(v));
+#else
+    // Software Implementation
+    static const Byte DeBruijn[64] = {
         0,   1,  2, 53,  3,  7, 54, 27, 4,  38, 41,  8, 34, 55, 48, 28,
         62,  5, 39, 46, 44, 42, 22,  9, 24, 35, 59, 56, 49, 18, 29, 11,
         63, 52,  6, 26, 37, 40, 33, 47, 61, 45, 43, 21, 23, 58, 17, 10,
         51, 25, 36, 32, 60, 20, 57, 16, 50, 31, 19, 15, 30, 14, 13, 12,
     };
+
+
+// disable unary minus on unsigned warning
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable:4146)
+#endif
     return DeBruijn[Index64((v & -v) * UINT64_C(0x022FDD63CC95386D)) >> 58];
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
+
+#endif
 }
 
 /// Return the most significant on bit of the given 32-bit value.
 inline Index32
 FindHighestOn(Index32 v)
 {
-#ifndef _MSC_VER // Visual C++ doesn't guarantee thread-safe initialization of local statics
-    static
-#endif
-    const Byte DeBruijn[32] = {
+    static const Byte DeBruijn[32] = {
         0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
         8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
     };
@@ -203,7 +208,7 @@ template <typename NodeMask>
 class OnMaskIterator: public BaseMaskIterator<NodeMask>
 {
 private:
-    typedef BaseMaskIterator<NodeMask> BaseType;
+    using BaseType = BaseMaskIterator<NodeMask>;
     using BaseType::mPos;//bit position;
     using BaseType::mParent;//this iterator can't change the parent_mask!
 public:
@@ -234,7 +239,7 @@ template <typename NodeMask>
 class OffMaskIterator: public BaseMaskIterator<NodeMask>
 {
 private:
-    typedef BaseMaskIterator<NodeMask> BaseType;
+    using BaseType = BaseMaskIterator<NodeMask>;
     using BaseType::mPos;//bit position;
     using BaseType::mParent;//this iterator can't change the parent_mask!
 public:
@@ -265,7 +270,7 @@ template <typename NodeMask>
 class DenseMaskIterator: public BaseMaskIterator<NodeMask>
 {
 private:
-    typedef BaseMaskIterator<NodeMask> BaseType;
+    using BaseType = BaseMaskIterator<NodeMask>;
     using BaseType::mPos;//bit position;
     using BaseType::mParent;//this iterator can't change the parent_mask!
 
@@ -302,13 +307,13 @@ template<Index Log2Dim>
 class NodeMask
 {
 public:
-    BOOST_STATIC_ASSERT( Log2Dim>2 );
+    static_assert(Log2Dim > 2, "expected NodeMask template specialization, got base template");
 
     static const Index32 LOG2DIM    = Log2Dim;
     static const Index32 DIM        = 1<<Log2Dim;
     static const Index32 SIZE       = 1<<3*Log2Dim;
     static const Index32 WORD_COUNT = SIZE >> 6;// 2^6=64
-    typedef Index64 Word;
+    using Word = Index64;
 
 private:
 
@@ -318,7 +323,7 @@ private:
     //static const Index32 BIT_MASK   = sizeof(void*) == 8 ? 63 : 31;
     //static const Index32 LOG2WORD   = BIT_MASK == 63 ? 6 : 5;
     //static const Index32 WORD_COUNT = SIZE >> LOG2WORD;
-    //typedef boost::mpl::if_c<BIT_MASK == 63, Index64, Index32>::type Word;
+    //using Word = boost::mpl::if_c<BIT_MASK == 63, Index64, Index32>::type;
 
     Word mWords[WORD_COUNT];//only member data!
 
@@ -340,9 +345,9 @@ public:
         return *this;
     }
 
-    typedef OnMaskIterator<NodeMask>    OnIterator;
-    typedef OffMaskIterator<NodeMask>   OffIterator;
-    typedef DenseMaskIterator<NodeMask> DenseIterator;
+    using OnIterator = OnMaskIterator<NodeMask>;
+    using OffIterator = OffMaskIterator<NodeMask>;
+    using DenseIterator = DenseMaskIterator<NodeMask>;
 
     OnIterator beginOn() const       { return OnIterator(this->findFirstOn(),this); }
     OnIterator endOn() const         { return OnIterator(SIZE,this); }
@@ -561,12 +566,8 @@ public:
     {
         os.write(reinterpret_cast<const char*>(mWords), this->memUsage());
     }
-    void load(std::istream& is) {
-        is.read(reinterpret_cast<char*>(mWords), this->memUsage());
-    }
-    void seek(std::istream& is) const {
-        is.seekg(this->memUsage(), std::ios_base::cur);
-    }
+    void load(std::istream& is) { is.read(reinterpret_cast<char*>(mWords), this->memUsage()); }
+    void seek(std::istream& is) const { is.seekg(this->memUsage(), std::ios_base::cur); }
     /// @brief simple print method for debugging
     void printInfo(std::ostream& os=std::cout) const
     {
@@ -627,7 +628,7 @@ public:
     static const Index32 DIM        = 2;
     static const Index32 SIZE       = 8;
     static const Index32 WORD_COUNT = 1;
-    typedef Byte Word;
+    using Word = Byte;
 
 private:
 
@@ -645,9 +646,9 @@ public:
     /// Assignment operator
     void operator = (const NodeMask &other) { mByte = other.mByte; }
 
-    typedef OnMaskIterator<NodeMask>    OnIterator;
-    typedef OffMaskIterator<NodeMask>   OffIterator;
-    typedef DenseMaskIterator<NodeMask> DenseIterator;
+    using OnIterator = OnMaskIterator<NodeMask>;
+    using OffIterator = OffMaskIterator<NodeMask>;
+    using DenseIterator = DenseMaskIterator<NodeMask>;
 
     OnIterator beginOn() const       { return OnIterator(this->findFirstOn(),this); }
     OnIterator endOn() const         { return OnIterator(SIZE,this); }
@@ -726,12 +727,12 @@ public:
     /// Set the <i>n</i>th  bit on
     void setOn(Index32 n) {
         assert( n  < 8 );
-        mByte = mByte | static_cast<Byte>(0x01U << (n & 7));
+        mByte = static_cast<Byte>(mByte | 0x01U << (n & 7));
     }
     /// Set the <i>n</i>th bit off
     void setOff(Index32 n) {
         assert( n  < 8 );
-        mByte = mByte & static_cast<Byte>(~(0x01U << (n & 7)));
+        mByte = static_cast<Byte>(mByte & ~(0x01U << (n & 7)));
     }
     /// Set the <i>n</i>th bit to the specified state
     void set(Index32 n, bool On) { On ? this->setOn(n) : this->setOff(n); }
@@ -744,7 +745,7 @@ public:
     /// Toggle the state of the <i>n</i>th bit
     void toggle(Index32 n) {
         assert( n  < 8 );
-        mByte = mByte ^ static_cast<Byte>(0x01U << (n & 7));
+        mByte = static_cast<Byte>(mByte ^ 0x01U << (n & 7));
     }
     /// Toggle the state of all bits in the mask
     void toggle() { mByte = static_cast<Byte>(~mByte); }
@@ -789,23 +790,20 @@ public:
     template<typename WordT>
     WordT getWord(Index n) const
     {
-        BOOST_STATIC_ASSERT(sizeof(WordT) == sizeof(Byte));
+        static_assert(sizeof(WordT) == sizeof(Byte), "expected word size to be one byte");
         assert(n == 0);
         return reinterpret_cast<WordT>(mByte);
     }
     template<typename WordT>
     WordT& getWord(Index n)
     {
-        BOOST_STATIC_ASSERT(sizeof(WordT) == sizeof(Byte));
+        static_assert(sizeof(WordT) == sizeof(Byte), "expected word size to be one byte");
         assert(n == 0);
         return reinterpret_cast<WordT&>(mByte);
     }
     //@}
     */
-    void save(std::ostream& os) const
-    {
-        os.write(reinterpret_cast<const char*>(&mByte), 1);
-    }
+    void save(std::ostream& os) const { os.write(reinterpret_cast<const char*>(&mByte), 1); }
     void load(std::istream& is) { is.read(reinterpret_cast<char*>(&mByte), 1); }
     void seek(std::istream& is) const { is.seekg(1, std::ios_base::cur); }
     /// @brief simple print method for debugging
@@ -852,7 +850,7 @@ public:
     static const Index32 DIM        =  4;
     static const Index32 SIZE       = 64;
     static const Index32 WORD_COUNT = 1;
-    typedef Index64 Word;
+    using Word = Index64;
 
 private:
 
@@ -870,9 +868,9 @@ public:
     /// Assignment operator
     void operator = (const NodeMask &other) { mWord = other.mWord; }
 
-    typedef OnMaskIterator<NodeMask>    OnIterator;
-    typedef OffMaskIterator<NodeMask>   OffIterator;
-    typedef DenseMaskIterator<NodeMask> DenseIterator;
+    using OnIterator = OnMaskIterator<NodeMask>;
+    using OffIterator = OffMaskIterator<NodeMask>;
+    using DenseIterator = DenseMaskIterator<NodeMask>;
 
     OnIterator beginOn() const       { return OnIterator(this->findFirstOn(),this); }
     OnIterator endOn() const         { return OnIterator(SIZE,this); }
@@ -1021,10 +1019,7 @@ public:
         return reinterpret_cast<WordT*>(mWord)[n];
     }
     //@}
-    void save(std::ostream& os) const
-    {
-        os.write(reinterpret_cast<const char*>(&mWord), 8);
-    }
+    void save(std::ostream& os) const { os.write(reinterpret_cast<const char*>(&mWord), 8); }
     void load(std::istream& is) { is.read(reinterpret_cast<char*>(&mWord), 8); }
     void seek(std::istream& is) const { is.seekg(8, std::ios_base::cur); }
     /// @brief simple print method for debugging
@@ -1437,7 +1432,3 @@ public:
 } // namespace openvdb
 
 #endif // OPENVDB_UTIL_NODEMASKS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

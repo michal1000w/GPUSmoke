@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 ///
 /// @file RayIntersector.h
 ///
@@ -66,8 +39,8 @@
 #include <openvdb/Grid.h>
 #include <openvdb/Types.h>
 #include "Morphology.h"
-#include <boost/utility.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
+#include <iostream>
+#include <type_traits>
 
 
 namespace openvdb {
@@ -109,15 +82,16 @@ template<typename GridT,
 class LevelSetRayIntersector
 {
 public:
-    typedef GridT                         GridType;
-    typedef RayT                          RayType;
-    typedef typename RayT::RealType       RealType;
-    typedef typename RayT::Vec3T          Vec3Type;
-    typedef typename GridT::ValueType     ValueT;
-    typedef typename GridT::TreeType      TreeT;
+    using GridType = GridT;
+    using RayType = RayT;
+    using RealType = typename RayT::RealType;
+    using Vec3Type = typename RayT::Vec3T;
+    using ValueT = typename GridT::ValueType;
+    using TreeT = typename GridT::TreeType;
 
-    BOOST_STATIC_ASSERT( NodeLevel >= -1 && NodeLevel < int(TreeT::DEPTH)-1);
-    BOOST_STATIC_ASSERT(boost::is_floating_point<ValueT>::value);
+    static_assert(NodeLevel >= -1 && NodeLevel < int(TreeT::DEPTH)-1, "NodeLevel out of range");
+    static_assert(std::is_floating_point<ValueT>::value,
+        "level set grids must have scalar, floating-point value types");
 
     /// @brief Constructor
     /// @param grid level set grid to intersect rays against.
@@ -303,13 +277,13 @@ template<typename GridT,
 class VolumeRayIntersector
 {
 public:
-    typedef GridT                         GridType;
-    typedef RayT                          RayType;
-    typedef typename RayT::RealType       RealType;
-    typedef typename GridT::TreeType::RootNodeType RootType;
-    typedef tree::Tree<typename RootType::template ValueConverter<bool>::Type> TreeT;
+    using GridType = GridT;
+    using RayType = RayT;
+    using RealType = typename RayT::RealType;
+    using RootType = typename GridT::TreeType::RootNodeType;
+    using TreeT = tree::Tree<typename RootType::template ValueConverter<bool>::Type>;
 
-    BOOST_STATIC_ASSERT( NodeLevel >= 0 && NodeLevel < int(TreeT::DEPTH)-1);
+    static_assert(NodeLevel >= 0 && NodeLevel < int(TreeT::DEPTH)-1, "NodeLevel out of range");
 
     /// @brief Grid constructor
     /// @param grid Generic grid to intersect rays against.
@@ -494,8 +468,7 @@ public:
     }
 
 private:
-
-    typedef typename tree::ValueAccessor<const TreeT,/*IsSafe=*/false> AccessorT;
+    using AccessorT = typename tree::ValueAccessor<const TreeT,/*IsSafe=*/false>;
 
     const bool      mIsMaster;
     TreeT*          mTree;
@@ -539,11 +512,11 @@ template<typename GridT, int Iterations, typename RealT>
 class LinearSearchImpl
 {
 public:
-    typedef math::Ray<RealT>              RayT;
-    typedef math::Vec3<RealT>             VecT;
-    typedef typename GridT::ValueType     ValueT;
-    typedef typename GridT::ConstAccessor AccessorT;
-    typedef math::BoxStencil<GridT>       StencilT;
+    using RayT = math::Ray<RealT>;
+    using VecT = math::Vec3<RealT>;
+    using ValueT = typename GridT::ValueType;
+    using AccessorT = typename GridT::ConstAccessor;
+    using StencilT = math::BoxStencil<GridT>;
 
     /// @brief Constructor from a grid.
     /// @throw RunTimeError if the grid is empty.
@@ -633,7 +606,7 @@ private:
     template <typename NodeT>
     inline bool hasNode(const Coord& ijk)
     {
-        return mStencil.accessor().template probeConstNode<NodeT>(ijk) != NULL;
+        return mStencil.accessor().template probeConstNode<NodeT>(ijk) != nullptr;
     }
 
     /// @brief Return @c true if an intersection is detected.
@@ -696,7 +669,3 @@ private:
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_RAYINTERSECTOR_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

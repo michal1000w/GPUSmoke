@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file ValueTransformer.h
 ///
@@ -280,6 +253,15 @@ struct SumOp {
     inline void operator()(ValueType& v) const { v += val; }
 };
 
+
+template<>
+struct SumOp<bool> {
+    using ValueType = bool;
+    const ValueType val;
+    SumOp(const ValueType& v): val(v) {}
+    inline void operator()(ValueType& v) const { v = v || val; }
+};
+
 template<typename ValueType>
 struct MultOp {
     const ValueType val;
@@ -331,7 +313,7 @@ template<typename IterT, typename OpT>
 class SharedOpApplier
 {
 public:
-    typedef typename tree::IteratorRange<IterT> IterRange;
+    using IterRange = typename tree::IteratorRange<IterT>;
 
     SharedOpApplier(const IterT& iter, OpT& op): mIter(iter), mOp(op) {}
 
@@ -357,7 +339,7 @@ template<typename IterT, typename OpT>
 class CopyableOpApplier
 {
 public:
-    typedef typename tree::IteratorRange<IterT> IterRange;
+    using IterRange = typename tree::IteratorRange<IterT>;
 
     CopyableOpApplier(const IterT& iter, const OpT& op): mIter(iter), mOp(op), mOrigOp(&op) {}
 
@@ -395,7 +377,7 @@ foreach(const IterT& iter, XformOp& op, bool threaded, bool shared)
         typename valxform::SharedOpApplier<IterT, XformOp> proc(iter, op);
         proc.process(threaded);
     } else {
-        typedef typename valxform::CopyableOpApplier<IterT, XformOp> Processor;
+        using Processor = typename valxform::CopyableOpApplier<IterT, XformOp>;
         Processor proc(iter, op);
         proc.process(threaded);
     }
@@ -420,9 +402,9 @@ template<typename InIterT, typename OutTreeT, typename OpT>
 class SharedOpTransformer
 {
 public:
-    typedef typename InIterT::TreeT InTreeT;
-    typedef typename tree::IteratorRange<InIterT> IterRange;
-    typedef typename OutTreeT::ValueType OutValueT;
+    using InTreeT = typename InIterT::TreeT;
+    using IterRange = typename tree::IteratorRange<InIterT>;
+    using OutValueT = typename OutTreeT::ValueType;
 
     SharedOpTransformer(const InIterT& inIter, OutTreeT& outTree, OpT& op, MergePolicy merge):
         mIsRoot(true),
@@ -454,7 +436,7 @@ public:
         // (the top-level output tree was supplied by the caller).
         if (!mIsRoot) {
             delete mOutputTree;
-            mOutputTree = NULL;
+            mOutputTree = nullptr;
         }
     }
 
@@ -504,9 +486,9 @@ template<typename InIterT, typename OutTreeT, typename OpT>
 class CopyableOpTransformer
 {
 public:
-    typedef typename InIterT::TreeT InTreeT;
-    typedef typename tree::IteratorRange<InIterT> IterRange;
-    typedef typename OutTreeT::ValueType OutValueT;
+    using InTreeT = typename InIterT::TreeT;
+    using IterRange = typename tree::IteratorRange<InIterT>;
+    using OutValueT = typename OutTreeT::ValueType;
 
     CopyableOpTransformer(const InIterT& inIter, OutTreeT& outTree,
         const OpT& op, MergePolicy merge):
@@ -542,7 +524,7 @@ public:
         // (the top-level output tree was supplied by the caller).
         if (!mIsRoot) {
             delete mOutputTree;
-            mOutputTree = NULL;
+            mOutputTree = nullptr;
         }
     }
 
@@ -599,14 +581,14 @@ inline void
 transformValues(const InIterT& inIter, OutGridT& outGrid, XformOp& op,
     bool threaded, bool shared, MergePolicy merge)
 {
-    typedef TreeAdapter<OutGridT> Adapter;
-    typedef typename Adapter::TreeType OutTreeT;
+    using Adapter = TreeAdapter<OutGridT>;
+    using OutTreeT = typename Adapter::TreeType;
     if (shared) {
-        typedef typename valxform::SharedOpTransformer<InIterT, OutTreeT, XformOp> Processor;
+        using Processor = typename valxform::SharedOpTransformer<InIterT, OutTreeT, XformOp>;
         Processor proc(inIter, Adapter::tree(outGrid), op, merge);
         proc.process(threaded);
     } else {
-        typedef typename valxform::CopyableOpTransformer<InIterT, OutTreeT, XformOp> Processor;
+        using Processor = typename valxform::CopyableOpTransformer<InIterT, OutTreeT, XformOp>;
         Processor proc(inIter, Adapter::tree(outGrid), op, merge);
         proc.process(threaded);
     }
@@ -618,10 +600,10 @@ inline void
 transformValues(const InIterT& inIter, OutGridT& outGrid, const XformOp& op,
     bool threaded, bool /*share*/, MergePolicy merge)
 {
-    typedef TreeAdapter<OutGridT> Adapter;
-    typedef typename Adapter::TreeType OutTreeT;
+    using Adapter = TreeAdapter<OutGridT>;
+    using OutTreeT = typename Adapter::TreeType;
     // Const ops are shared across threads, not copied.
-    typedef typename valxform::SharedOpTransformer<InIterT, OutTreeT, const XformOp> Processor;
+    using Processor = typename valxform::SharedOpTransformer<InIterT, OutTreeT, const XformOp>;
     Processor proc(inIter, Adapter::tree(outGrid), op, merge);
     proc.process(threaded);
 }
@@ -637,7 +619,7 @@ template<typename IterT, typename OpT>
 class OpAccumulator
 {
 public:
-    typedef typename tree::IteratorRange<IterT> IterRange;
+    using IterRange = typename tree::IteratorRange<IterT>;
 
     // The root task makes a const copy of the original functor (mOrigOp)
     // and keeps a pointer to the original functor (mOp), which it then modifies.
@@ -646,17 +628,9 @@ public:
     OpAccumulator(const IterT& iter, OpT& op):
         mIsRoot(true),
         mIter(iter),
-////
-        //mOp(&op),
-        //mOrigOp(new OpT(op))
-mOp(NULL),
-mOrigOp(NULL)
-{
-    mOp = &op;
-    mOrigOp = new OpT(op);
-}
-    //{}
-////
+        mOp(&op),
+        mOrigOp(new OpT(op))
+    {}
 
     // When splitting this task, give the subtask a copy of the original functor,
     // not of this task's functor, which might have been modified arbitrarily.
@@ -687,10 +661,7 @@ private:
     const bool mIsRoot;
     const IterT mIter;
     OpT* mOp; // pointer to original functor, which might get modified
-////
-    //OpT const * const mOrigOp; // const copy of original functor
-OpT const * mOrigOp; // const copy of original functor
-////
+    OpT const * const mOrigOp; // const copy of original functor
 }; // class OpAccumulator
 
 } // namespace valxform
@@ -712,7 +683,3 @@ accumulate(const IterT& iter, XformOp& op, bool threaded)
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_VALUETRANSFORMER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

@@ -5,7 +5,7 @@
 #include <sstream>
 #include <iomanip>
 #include <vector>
-#include <cuda_fp16.h>
+//#include <cuda_fp16.h>
 #include "cutil_math.h"
 
 #include "Fluid_State.cuh"

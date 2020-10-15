@@ -1,35 +1,9 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @author Ken Museth, D.J. Hill (openvdb port, added staggered grid support)
-/// @file PointAdvect.h
+///
+/// @file tools/PointAdvect.h
 ///
 /// @brief Class PointAdvect advects points (with position) in a static velocity field
 
@@ -43,11 +17,10 @@
 #include <openvdb/util/NullInterrupter.h>
 #include "Interpolation.h"                 // sampling
 #include "VelocityFields.h"                // VelocityIntegrator
-
-#include <boost/static_assert.hpp>
 #include <tbb/blocked_range.h>             // threading
 #include <tbb/parallel_for.h>              // threading
 #include <tbb/task.h>                      // for cancel
+#include <vector>
 
 
 namespace openvdb {
@@ -62,9 +35,9 @@ template<typename CptGridT = Vec3fGrid>
 class ClosestPointProjector
 {
 public:
-    typedef CptGridT                            CptGridType;
-    typedef typename CptGridType::ConstAccessor CptAccessor;
-    typedef typename CptGridType::ValueType     CptValueType;
+    using CptGridType = CptGridT;
+    using CptAccessor = typename CptGridType::ConstAccessor;
+    using CptValueType = typename CptGridType::ValueType;
 
     ClosestPointProjector():
         mCptIterations(0)
@@ -124,7 +97,7 @@ private:
 /// class PointList {
 ///     ...
 /// public:
-///     typedef internal_vector3_type value_type; // must support [] component access
+///     using value_type = internal_vector3_type; // must support [] component access
 ///     openvdb::Index size() const;              // number of points in list
 ///     value_type& operator[](int n);            // world space position of nth point
 /// };
@@ -140,14 +113,14 @@ template<typename GridT = Vec3fGrid,
 class PointAdvect
 {
 public:
-    typedef GridT                                        GridType;
-    typedef PointListT                                   PointListType;
-    typedef typename PointListT::value_type              LocationType;
-    typedef VelocityIntegrator<GridT, StaggeredVelocity> VelocityFieldIntegrator;
+    using GridType = GridT;
+    using PointListType = PointListT;
+    using LocationType = typename PointListT::value_type;
+    using VelocityFieldIntegrator = VelocityIntegrator<GridT, StaggeredVelocity>;
 
-    PointAdvect(const GridT& velGrid, InterrupterType* interrupter=NULL) :
+    PointAdvect(const GridT& velGrid, InterrupterType* interrupter = nullptr):
         mVelGrid(&velGrid),
-        mPoints(NULL),
+        mPoints(nullptr),
         mIntegrationOrder(1),
         mThreaded(true),
         mInterrupter(interrupter)
@@ -273,14 +246,14 @@ template<typename GridT = Vec3fGrid,
 class ConstrainedPointAdvect
 {
 public:
-    typedef GridT                                        GridType;
-    typedef typename PointListT::value_type              LocationType;
-    typedef VelocityIntegrator<GridT, StaggeredVelocity> VelocityIntegratorType;
-    typedef ClosestPointProjector<CptGridType>           ClosestPointProjectorType;
-    typedef PointListT PointListType;
+    using GridType = GridT;
+    using LocationType = typename PointListT::value_type;
+    using VelocityIntegratorType = VelocityIntegrator<GridT, StaggeredVelocity>;
+    using ClosestPointProjectorType = ClosestPointProjector<CptGridType>;
+    using PointListType = PointListT;
 
     ConstrainedPointAdvect(const GridType& velGrid,
-        const GridType& cptGrid, int cptn, InterrupterType* interrupter = NULL):
+        const GridType& cptGrid, int cptn, InterrupterType* interrupter = nullptr):
         mVelGrid(&velGrid),
         mCptGrid(&cptGrid),
         mCptIter(cptn),
@@ -418,7 +391,3 @@ private:
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_POINT_ADVECT_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

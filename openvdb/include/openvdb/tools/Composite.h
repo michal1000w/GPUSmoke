@@ -1,38 +1,11 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file Composite.h
 ///
 /// @brief Functions to efficiently perform various compositing operations on grids
 ///
-/// @authors Peter Cucka, Mihai Alden
+/// @authors Peter Cucka, Mihai Alden, Ken Museth
 
 #ifndef OPENVDB_TOOLS_COMPOSITE_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_COMPOSITE_HAS_BEEN_INCLUDED
@@ -45,7 +18,6 @@
 #include "ValueTransformer.h" // for transformValues()
 #include "Prune.h"// for prune
 #include "SignedFloodFill.h" // for signedFloodFill()
-#include <boost/utility/enable_if.hpp>
 
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
@@ -53,6 +25,8 @@
 #include <tbb/task_group.h>
 #include <tbb/task_scheduler_init.h>
 
+#include <type_traits>
+#include <functional>
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -62,58 +36,58 @@ namespace tools {
 /// @brief Given two level set grids, replace the A grid with the union of A and B.
 /// @throw ValueError if the background value of either grid is not greater than zero.
 /// @note This operation always leaves the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void csgUnion(GridOrTreeT& a, GridOrTreeT& b, bool prune = true);
 /// @brief Given two level set grids, replace the A grid with the intersection of A and B.
 /// @throw ValueError if the background value of either grid is not greater than zero.
 /// @note This operation always leaves the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void csgIntersection(GridOrTreeT& a, GridOrTreeT& b, bool prune = true);
 /// @brief Given two level set grids, replace the A grid with the difference A / B.
 /// @throw ValueError if the background value of either grid is not greater than zero.
 /// @note This operation always leaves the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void csgDifference(GridOrTreeT& a, GridOrTreeT& b, bool prune = true);
 
 /// @brief  Threaded CSG union operation that produces a new grid or tree from
 ///         immutable inputs.
 /// @return The CSG union of the @a and @b level set inputs.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline typename GridOrTreeT::Ptr csgUnionCopy(const GridOrTreeT& a, const GridOrTreeT& b);
 /// @brief  Threaded CSG intersection operation that produces a new grid or tree from
 ///         immutable inputs.
 /// @return The CSG intersection of the @a and @b level set inputs.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline typename GridOrTreeT::Ptr csgIntersectionCopy(const GridOrTreeT& a, const GridOrTreeT& b);
 /// @brief  Threaded CSG difference operation that produces a new grid or tree from
 ///         immutable inputs.
 /// @return The CSG difference of the @a and @b level set inputs.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline typename GridOrTreeT::Ptr csgDifferenceCopy(const GridOrTreeT& a, const GridOrTreeT& b);
 
 /// @brief Given grids A and B, compute max(a, b) per voxel (using sparse traversal).
 /// Store the result in the A grid and leave the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compMax(GridOrTreeT& a, GridOrTreeT& b);
 /// @brief Given grids A and B, compute min(a, b) per voxel (using sparse traversal).
 /// Store the result in the A grid and leave the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compMin(GridOrTreeT& a, GridOrTreeT& b);
 /// @brief Given grids A and B, compute a + b per voxel (using sparse traversal).
 /// Store the result in the A grid and leave the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compSum(GridOrTreeT& a, GridOrTreeT& b);
 /// @brief Given grids A and B, compute a * b per voxel (using sparse traversal).
 /// Store the result in the A grid and leave the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compMul(GridOrTreeT& a, GridOrTreeT& b);
 /// @brief Given grids A and B, compute a / b per voxel (using sparse traversal).
 /// Store the result in the A grid and leave the B grid empty.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compDiv(GridOrTreeT& a, GridOrTreeT& b);
 
 /// Copy the active voxels of B into A.
-template<typename GridOrTreeT> OPENVDB_STATIC_SPECIALIZATION
+template<typename GridOrTreeT>
 inline void compReplace(GridOrTreeT& a, const GridOrTreeT& b);
 
 
@@ -124,17 +98,17 @@ namespace composite {
 
 // composite::min() and composite::max() for non-vector types compare with operator<().
 template<typename T> inline
-const typename boost::disable_if_c<VecTraits<T>::IsVec, T>::type& // = T if T is not a vector type
+const typename std::enable_if<!VecTraits<T>::IsVec, T>::type& // = T if T is not a vector type
 min(const T& a, const T& b) { return std::min(a, b); }
 
 template<typename T> inline
-const typename boost::disable_if_c<VecTraits<T>::IsVec, T>::type&
+const typename std::enable_if<!VecTraits<T>::IsVec, T>::type&
 max(const T& a, const T& b) { return std::max(a, b); }
 
 
 // composite::min() and composite::max() for OpenVDB vector types compare by magnitude.
 template<typename T> inline
-const typename boost::enable_if_c<VecTraits<T>::IsVec, T>::type& // = T if T is a vector type
+const typename std::enable_if<VecTraits<T>::IsVec, T>::type& // = T if T is a vector type
 min(const T& a, const T& b)
 {
     const typename T::ValueType aMag = a.lengthSqr(), bMag = b.lengthSqr();
@@ -142,7 +116,7 @@ min(const T& a, const T& b)
 }
 
 template<typename T> inline
-const typename boost::enable_if_c<VecTraits<T>::IsVec, T>::type&
+const typename std::enable_if<VecTraits<T>::IsVec, T>::type&
 max(const T& a, const T& b)
 {
     const typename T::ValueType aMag = a.lengthSqr(), bMag = b.lengthSqr();
@@ -151,11 +125,11 @@ max(const T& a, const T& b)
 
 
 template<typename T> inline
-typename boost::disable_if<boost::is_integral<T>, T>::type // = T if T is not an integer type
+typename std::enable_if<!std::is_integral<T>::value, T>::type // = T if T is not an integer type
 divide(const T& a, const T& b) { return a / b; }
 
 template<typename T> inline
-typename boost::enable_if<boost::is_integral<T>, T>::type // = T if T is an integer type
+typename std::enable_if<std::is_integral<T>::value, T>::type // = T if T is an integer type
 divide(const T& a, const T& b)
 {
     const T zero(0);
@@ -175,13 +149,13 @@ enum CSGOperation { CSG_UNION, CSG_INTERSECTION, CSG_DIFFERENCE };
 template<typename TreeType, CSGOperation Operation>
 struct BuildPrimarySegment
 {
-    typedef typename TreeType::ValueType                                            ValueType;
-    typedef typename TreeType::Ptr                                                  TreePtrType;
-    typedef typename TreeType::LeafNodeType                                         LeafNodeType;
-    typedef typename LeafNodeType::NodeMaskType                                     NodeMaskType;
-    typedef typename TreeType::RootNodeType                                         RootNodeType;
-    typedef typename RootNodeType::NodeChainType                                    NodeChainType;
-    typedef typename boost::mpl::at<NodeChainType, boost::mpl::int_<1> >::type      InternalNodeType;
+    using ValueType = typename TreeType::ValueType;
+    using TreePtrType = typename TreeType::Ptr;
+    using LeafNodeType = typename TreeType::LeafNodeType;
+    using NodeMaskType = typename LeafNodeType::NodeMaskType;
+    using RootNodeType = typename TreeType::RootNodeType;
+    using NodeChainType = typename RootNodeType::NodeChainType;
+    using InternalNodeType = typename NodeChainType::template Get<1>;
 
     BuildPrimarySegment(const TreeType& lhs, const TreeType& rhs)
         : mSegment(new TreeType(lhs.background()))
@@ -212,9 +186,10 @@ private:
 
     struct ProcessInternalNodes {
 
-        ProcessInternalNodes(std::vector<const InternalNodeType*>& lhsNodes, const TreeType& rhsTree,
-            TreeType& outputTree, std::vector<const LeafNodeType*>& outputLeafNodes)
-            : mLhsNodes(lhsNodes.empty() ? NULL : &lhsNodes.front())
+        ProcessInternalNodes(std::vector<const InternalNodeType*>& lhsNodes,
+            const TreeType& rhsTree, TreeType& outputTree,
+            std::vector<const LeafNodeType*>& outputLeafNodes)
+            : mLhsNodes(lhsNodes.empty() ? nullptr : &lhsNodes.front())
             , mRhsTree(&rhsTree)
             , mLocalTree(mRhsTree->background())
             , mOutputTree(&outputTree)
@@ -251,7 +226,8 @@ private:
 
                 const InternalNodeType& lhsNode = *mLhsNodes[n];
                 const Coord& ijk = lhsNode.origin();
-                const InternalNodeType * rhsNode = rhsAcc.template probeConstNode<InternalNodeType>(ijk);
+                const InternalNodeType * rhsNode =
+                    rhsAcc.template probeConstNode<InternalNodeType>(ijk);
 
                 if (rhsNode) {
                     lhsNode.getNodes(*mOutputLeafNodes);
@@ -288,8 +264,9 @@ private:
 
     struct ProcessLeafNodes {
 
-        ProcessLeafNodes(std::vector<const LeafNodeType*>& lhsNodes, const TreeType& rhsTree, TreeType& output)
-            : mLhsNodes(lhsNodes.empty() ? NULL : &lhsNodes.front())
+        ProcessLeafNodes(std::vector<const LeafNodeType*>& lhsNodes,
+            const TreeType& rhsTree, TreeType& output)
+            : mLhsNodes(lhsNodes.empty() ? nullptr : &lhsNodes.front())
             , mRhsTree(&rhsTree)
             , mLocalTree(mRhsTree->background())
             , mOutputTree(&output)
@@ -380,13 +357,13 @@ private:
 template<typename TreeType, CSGOperation Operation>
 struct BuildSecondarySegment
 {
-    typedef typename TreeType::ValueType                                            ValueType;
-    typedef typename TreeType::Ptr                                                  TreePtrType;
-    typedef typename TreeType::LeafNodeType                                         LeafNodeType;
-    typedef typename LeafNodeType::NodeMaskType                                     NodeMaskType;
-    typedef typename TreeType::RootNodeType                                         RootNodeType;
-    typedef typename RootNodeType::NodeChainType                                    NodeChainType;
-    typedef typename boost::mpl::at<NodeChainType, boost::mpl::int_<1> >::type      InternalNodeType;
+    using ValueType = typename TreeType::ValueType;
+    using TreePtrType = typename TreeType::Ptr;
+    using LeafNodeType = typename TreeType::LeafNodeType;
+    using NodeMaskType = typename LeafNodeType::NodeMaskType;
+    using RootNodeType = typename TreeType::RootNodeType;
+    using NodeChainType = typename RootNodeType::NodeChainType;
+    using InternalNodeType = typename NodeChainType::template Get<1>;
 
     BuildSecondarySegment(const TreeType& lhs, const TreeType& rhs)
         : mSegment(new TreeType(lhs.background()))
@@ -417,9 +394,10 @@ private:
 
     struct ProcessInternalNodes {
 
-        ProcessInternalNodes(std::vector<const InternalNodeType*>& rhsNodes, const TreeType& lhsTree,
-            TreeType& outputTree, std::vector<const LeafNodeType*>& outputLeafNodes)
-            : mRhsNodes(rhsNodes.empty() ? NULL : &rhsNodes.front())
+        ProcessInternalNodes(std::vector<const InternalNodeType*>& rhsNodes,
+            const TreeType& lhsTree, TreeType& outputTree,
+            std::vector<const LeafNodeType*>& outputLeafNodes)
+            : mRhsNodes(rhsNodes.empty() ? nullptr : &rhsNodes.front())
             , mLhsTree(&lhsTree)
             , mLocalTree(mLhsTree->background())
             , mOutputTree(&outputTree)
@@ -456,7 +434,8 @@ private:
 
                 const InternalNodeType& rhsNode = *mRhsNodes[n];
                 const Coord& ijk = rhsNode.origin();
-                const InternalNodeType * lhsNode = lhsAcc.template probeConstNode<InternalNodeType>(ijk);
+                const InternalNodeType * lhsNode =
+                    lhsAcc.template probeConstNode<InternalNodeType>(ijk);
 
                 if (lhsNode) {
                    rhsNode.getNodes(*mOutputLeafNodes);
@@ -503,8 +482,9 @@ private:
 
     struct ProcessLeafNodes {
 
-        ProcessLeafNodes(std::vector<const LeafNodeType*>& rhsNodes, const TreeType& lhsTree, TreeType& output)
-            : mRhsNodes(rhsNodes.empty() ? NULL : &rhsNodes.front())
+        ProcessLeafNodes(std::vector<const LeafNodeType*>& rhsNodes,
+            const TreeType& lhsTree, TreeType& output)
+            : mRhsNodes(rhsNodes.empty() ? nullptr : &rhsNodes.front())
             , mLhsTree(&lhsTree)
             , mLocalTree(mLhsTree->background())
             , mOutputTree(&output)
@@ -593,7 +573,7 @@ doCSGCopy(const TreeType& lhs, const TreeType& rhs)
 template<typename TreeType>
 struct GridOrTreeConstructor
 {
-    typedef typename TreeType::Ptr TreeTypePtr;
+    using TreeTypePtr = typename TreeType::Ptr;
     static TreeTypePtr construct(const TreeType&, TreeTypePtr& tree) { return tree; }
 };
 
@@ -601,9 +581,9 @@ struct GridOrTreeConstructor
 template<typename TreeType>
 struct GridOrTreeConstructor<Grid<TreeType> >
 {
-    typedef Grid<TreeType>                  GridType;
-    typedef typename Grid<TreeType>::Ptr    GridTypePtr;
-    typedef typename TreeType::Ptr          TreeTypePtr;
+    using GridType = Grid<TreeType>;
+    using GridTypePtr = typename Grid<TreeType>::Ptr;
+    using TreeTypePtr = typename TreeType::Ptr;
 
     static GridTypePtr construct(const GridType& grid, TreeTypePtr& tree) {
         GridTypePtr maskGrid(GridType::create(tree));
@@ -616,17 +596,142 @@ struct GridOrTreeConstructor<Grid<TreeType> >
 
 ////////////////////////////////////////
 
+/// @cond COMPOSITE_INTERNAL
+/// List of pairs of leaf node pointers
+template <typename LeafT>
+using LeafPairList = std::vector<std::pair<LeafT*, LeafT*>>;
+/// @endcond
+
+/// @cond COMPOSITE_INTERNAL
+/// Transfers leaf nodes from a source tree into a
+/// desitnation tree, unless it already exists in the destination tree
+/// in which case pointers to both leaf nodes are added to a list for
+/// subsequent compositing operations.
+template <typename TreeT>
+inline void transferLeafNodes(TreeT &srcTree, TreeT &dstTree,
+                              LeafPairList<typename TreeT::LeafNodeType> &overlapping)
+{
+    using LeafT = typename TreeT::LeafNodeType;
+    tree::ValueAccessor<TreeT> acc(dstTree);//destination
+    std::vector<LeafT*> srcLeafNodes;
+    srcLeafNodes.reserve(srcTree.leafCount());
+    srcTree.stealNodes(srcLeafNodes);
+    srcTree.clear();
+    for (LeafT *srcLeaf : srcLeafNodes) {
+        LeafT *dstLeaf = acc.probeLeaf(srcLeaf->origin());
+        if (dstLeaf) {
+            overlapping.emplace_back(dstLeaf, srcLeaf);//dst, src
+        } else {
+            acc.addLeaf(srcLeaf);
+        }
+    }
+}
+/// @endcond
+
+/// @cond COMPOSITE_INTERNAL
+/// Template specailization of compActiveLeafVoxels
+template <typename TreeT, typename OpT>
+inline
+typename std::enable_if<
+    !std::is_same<typename TreeT::ValueType, bool>::value &&
+    !std::is_same<typename TreeT::BuildType, ValueMask>::value &&
+    std::is_same<typename TreeT::LeafNodeType::Buffer::ValueType,
+    typename TreeT::LeafNodeType::Buffer::StorageType>::value>::type
+doCompActiveLeafVoxels(TreeT &srcTree, TreeT &dstTree, OpT op)
+{
+    using LeafT  = typename TreeT::LeafNodeType;
+    LeafPairList<LeafT> overlapping;//dst, src
+    transferLeafNodes(srcTree, dstTree, overlapping);
+
+    using RangeT = tbb::blocked_range<size_t>;
+    tbb::parallel_for(RangeT(0, overlapping.size()), [op, &overlapping](const RangeT& r) {
+        for (auto i = r.begin(); i != r.end(); ++i) {
+            LeafT *dstLeaf = overlapping[i].first, *srcLeaf = overlapping[i].second;
+            dstLeaf->getValueMask() |= srcLeaf->getValueMask();
+            auto *ptr = dstLeaf->buffer().data();
+            for (auto v = srcLeaf->cbeginValueOn(); v; ++v) op(ptr[v.pos()], *v);
+            delete srcLeaf;
+        }
+   });
+}
+/// @endcond
+
+/// @cond COMPOSITE_INTERNAL
+/// Template specailization of compActiveLeafVoxels
+template <typename TreeT, typename OpT>
+inline
+typename std::enable_if<
+    std::is_same<typename TreeT::BuildType, ValueMask>::value &&
+    std::is_same<typename TreeT::ValueType, bool>::value>::type
+doCompActiveLeafVoxels(TreeT &srcTree, TreeT &dstTree, OpT)
+{
+    using LeafT  = typename TreeT::LeafNodeType;
+    LeafPairList<LeafT> overlapping;//dst, src
+    transferLeafNodes(srcTree, dstTree, overlapping);
+
+    using RangeT = tbb::blocked_range<size_t>;
+    tbb::parallel_for(RangeT(0, overlapping.size()), [&overlapping](const RangeT& r) {
+        for (auto i = r.begin(); i != r.end(); ++i) {
+            overlapping[i].first->getValueMask() |= overlapping[i].second->getValueMask();
+            delete overlapping[i].second;
+        }
+    });
+}
+
+/// @cond COMPOSITE_INTERNAL
+/// Template specailization of compActiveLeafVoxels
+template <typename TreeT, typename OpT>
+inline
+typename std::enable_if<
+    std::is_same<typename TreeT::ValueType, bool>::value &&
+    !std::is_same<typename TreeT::BuildType, ValueMask>::value>::type
+doCompActiveLeafVoxels(TreeT &srcTree, TreeT &dstTree, OpT op)
+{
+    using LeafT = typename TreeT::LeafNodeType;
+    LeafPairList<LeafT> overlapping;//dst, src
+    transferLeafNodes(srcTree, dstTree, overlapping);
+
+    using RangeT = tbb::blocked_range<size_t>;
+    using WordT = typename LeafT::Buffer::WordType;
+    tbb::parallel_for(RangeT(0, overlapping.size()), [op, &overlapping](const RangeT& r) {
+        for (auto i = r.begin(); i != r.end(); ++i) {
+            LeafT *dstLeaf = overlapping[i].first, *srcLeaf = overlapping[i].second;
+            WordT *w1 = dstLeaf->buffer().data();
+            const WordT *w2 = srcLeaf->buffer().data();
+            const WordT *w3 = &(srcLeaf->getValueMask().template getWord<WordT>(0));
+            for (Index32 n = LeafT::Buffer::WORD_COUNT; n--; ++w1) {
+                WordT tmp = *w1, state = *w3++;
+                op (tmp, *w2++);
+                *w1 = (state & tmp) | (~state & *w1);//inactive values are unchanged
+            }
+            dstLeaf->getValueMask() |= srcLeaf->getValueMask();
+            delete srcLeaf;
+        }
+    });
+}
+/// @endcond
+
+/// @cond COMPOSITE_INTERNAL
+/// Default functor for compActiveLeafVoxels
+template <typename TreeT>
+struct CopyOp
+{
+    using ValueT = typename TreeT::ValueType;
+    CopyOp() = default;
+    void operator()(ValueT& dst, const ValueT& src) const { dst = src; }
+};
+/// @endcond
 
 } // namespace composite
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compMax(GridOrTreeT& aTree, GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT>    Adapter;
-    typedef typename Adapter::TreeType  TreeT;
-    typedef typename TreeT::ValueType   ValueT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
+    using ValueT = typename TreeT::ValueType;
     struct Local {
         static inline void op(CombineArgs<ValueT>& args) {
             args.setResult(composite::max(args.a(), args.b()));
@@ -637,12 +742,12 @@ compMax(GridOrTreeT& aTree, GridOrTreeT& bTree)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compMin(GridOrTreeT& aTree, GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT>    Adapter;
-    typedef typename Adapter::TreeType  TreeT;
-    typedef typename TreeT::ValueType   ValueT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
+    using ValueT = typename TreeT::ValueType;
     struct Local {
         static inline void op(CombineArgs<ValueT>& args) {
             args.setResult(composite::min(args.a(), args.b()));
@@ -653,11 +758,11 @@ compMin(GridOrTreeT& aTree, GridOrTreeT& bTree)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compSum(GridOrTreeT& aTree, GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     struct Local {
         static inline void op(CombineArgs<typename TreeT::ValueType>& args) {
             args.setResult(args.a() + args.b());
@@ -668,11 +773,11 @@ compSum(GridOrTreeT& aTree, GridOrTreeT& bTree)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compMul(GridOrTreeT& aTree, GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     struct Local {
         static inline void op(CombineArgs<typename TreeT::ValueType>& args) {
             args.setResult(args.a() * args.b());
@@ -683,11 +788,11 @@ compMul(GridOrTreeT& aTree, GridOrTreeT& bTree)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compDiv(GridOrTreeT& aTree, GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     struct Local {
         static inline void op(CombineArgs<typename TreeT::ValueType>& args) {
             args.setResult(composite::divide(args.a(), args.b()));
@@ -728,12 +833,12 @@ struct CompReplaceOp
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 compReplace(GridOrTreeT& aTree, const GridOrTreeT& bTree)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
-    typedef typename TreeT::ValueOnCIter ValueOnCIterT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
+    using ValueOnCIterT = typename TreeT::ValueOnCIter;
 
     // Copy active states (but not values) from B to A.
     Adapter::tree(aTree).topologyUnion(Adapter::tree(bTree));
@@ -759,9 +864,9 @@ template<typename TreeType>
 class CsgVisitorBase
 {
 public:
-    typedef TreeType TreeT;
-    typedef typename TreeT::ValueType ValueT;
-    typedef typename TreeT::LeafNodeType::ChildAllIter ChildIterT;
+    using TreeT = TreeType;
+    using ValueT = typename TreeT::ValueType;
+    using ChildIterT = typename TreeT::LeafNodeType::ChildAllIter;
 
     enum { STOP = 3 };
 
@@ -801,9 +906,9 @@ protected:
 template<typename TreeType>
 struct CsgUnionVisitor: public CsgVisitorBase<TreeType>
 {
-    typedef TreeType TreeT;
-    typedef typename TreeT::ValueType ValueT;
-    typedef typename TreeT::LeafNodeType::ChildAllIter ChildIterT;
+    using TreeT = TreeType;
+    using ValueT = typename TreeT::ValueType;
+    using ChildIterT = typename TreeT::LeafNodeType::ChildAllIter;
 
     enum { STOP = CsgVisitorBase<TreeT>::STOP };
 
@@ -874,9 +979,9 @@ struct CsgUnionVisitor: public CsgVisitorBase<TreeType>
 template<typename TreeType>
 struct CsgIntersectVisitor: public CsgVisitorBase<TreeType>
 {
-    typedef TreeType TreeT;
-    typedef typename TreeT::ValueType ValueT;
-    typedef typename TreeT::LeafNodeType::ChildAllIter ChildIterT;
+    using TreeT = TreeType;
+    using ValueT = typename TreeT::ValueType;
+    using ChildIterT = typename TreeT::LeafNodeType::ChildAllIter;
 
     enum { STOP = CsgVisitorBase<TreeT>::STOP };
 
@@ -946,9 +1051,9 @@ struct CsgIntersectVisitor: public CsgVisitorBase<TreeType>
 template<typename TreeType>
 struct CsgDiffVisitor: public CsgVisitorBase<TreeType>
 {
-    typedef TreeType TreeT;
-    typedef typename TreeT::ValueType ValueT;
-    typedef typename TreeT::LeafNodeType::ChildAllIter ChildIterT;
+    using TreeT = TreeType;
+    using ValueT = typename TreeT::ValueType;
+    using ChildIterT = typename TreeT::LeafNodeType::ChildAllIter;
 
     enum { STOP = CsgVisitorBase<TreeT>::STOP };
 
@@ -1018,11 +1123,11 @@ struct CsgDiffVisitor: public CsgVisitorBase<TreeType>
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 csgUnion(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     TreeT &aTree = Adapter::tree(a), &bTree = Adapter::tree(b);
     CsgUnionVisitor<TreeT> visitor(aTree, bTree);
     aTree.visit2(bTree, visitor);
@@ -1030,11 +1135,11 @@ csgUnion(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 }
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 csgIntersection(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     TreeT &aTree = Adapter::tree(a), &bTree = Adapter::tree(b);
     CsgIntersectVisitor<TreeT> visitor(aTree, bTree);
     aTree.visit2(bTree, visitor);
@@ -1042,11 +1147,11 @@ csgIntersection(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 }
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline void
+inline void
 csgDifference(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 {
-    typedef TreeAdapter<GridOrTreeT> Adapter;
-    typedef typename Adapter::TreeType TreeT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreeT = typename Adapter::TreeType;
     TreeT &aTree = Adapter::tree(a), &bTree = Adapter::tree(b);
     CsgDiffVisitor<TreeT> visitor(aTree, bTree);
     aTree.visit2(bTree, visitor);
@@ -1055,11 +1160,11 @@ csgDifference(GridOrTreeT& a, GridOrTreeT& b, bool prune)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline typename GridOrTreeT::Ptr
+inline typename GridOrTreeT::Ptr
 csgUnionCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 {
-    typedef TreeAdapter<GridOrTreeT>            Adapter;
-    typedef typename Adapter::TreeType::Ptr     TreePtrT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreePtrT = typename Adapter::TreeType::Ptr;
 
     TreePtrT output = composite::doCSGCopy<composite::CSG_UNION>(
                         Adapter::tree(a), Adapter::tree(b));
@@ -1069,11 +1174,11 @@ csgUnionCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline typename GridOrTreeT::Ptr
+inline typename GridOrTreeT::Ptr
 csgIntersectionCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 {
-    typedef TreeAdapter<GridOrTreeT>            Adapter;
-    typedef typename Adapter::TreeType::Ptr     TreePtrT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreePtrT = typename Adapter::TreeType::Ptr;
 
     TreePtrT output = composite::doCSGCopy<composite::CSG_INTERSECTION>(
                         Adapter::tree(a), Adapter::tree(b));
@@ -1083,16 +1188,46 @@ csgIntersectionCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 
 
 template<typename GridOrTreeT>
-OPENVDB_STATIC_SPECIALIZATION inline typename GridOrTreeT::Ptr
+inline typename GridOrTreeT::Ptr
 csgDifferenceCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 {
-    typedef TreeAdapter<GridOrTreeT>            Adapter;
-    typedef typename Adapter::TreeType::Ptr     TreePtrT;
+    using Adapter = TreeAdapter<GridOrTreeT>;
+    using TreePtrT = typename Adapter::TreeType::Ptr;
 
     TreePtrT output = composite::doCSGCopy<composite::CSG_DIFFERENCE>(
                         Adapter::tree(a), Adapter::tree(b));
 
     return composite::GridOrTreeConstructor<GridOrTreeT>::construct(a, output);
+}
+
+////////////////////////////////////////////////////////
+
+/// @brief Composite the active values in leaf nodes, i.e. active
+///        voxels, of a source tree into a destination tree.
+///
+/// @param srcTree source tree from which active voxels are composited.
+///
+/// @param dstTree destination tree into which active voxels are composited.
+///
+/// @param op      a functor of the form <tt>void op(T& dst, const T& src)</tt>,
+///                where @c T is the @c ValueType of the tree, that composites
+///                a source value into a destination value. By default
+///                it copies the value from src to dst.
+///
+/// @details All active voxels in the source tree will
+///          be active in the destination tree, and their value is
+///          determined by a use-defined functor (OpT op) that operates on the
+///          source and destination values. The only exception is when
+///          the tree type is MaskTree, in which case no functor is
+///          needed since by defintion a MaskTree has no values (only topology).
+///
+/// @warning This function only operated on leaf node values,
+///          i.e. tile values are ignored.
+template<typename TreeT, typename OpT = composite::CopyOp<TreeT> >
+inline void
+compActiveLeafVoxels(TreeT &srcTree, TreeT &dstTree, OpT op = composite::CopyOp<TreeT>())
+{
+    composite::doCompActiveLeafVoxels<TreeT, OpT>(srcTree, dstTree, op);
 }
 
 
@@ -1101,7 +1236,3 @@ csgDifferenceCopy(const GridOrTreeT& a, const GridOrTreeT& b)
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_COMPOSITE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

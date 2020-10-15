@@ -1,52 +1,22 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file SignedFloodFill.h
 ///
-/// @brief Propagates the sign of distance values from the active
-/// voxels in the narrow band to the inactive values outside the
-/// narrow band.
+/// @brief Propagate the signs of distance values from the active voxels
+/// in the narrow band to the inactive values outside the narrow band.
 ///
 /// @author Ken Museth
 
 #ifndef OPENVDB_TOOLS_SIGNEDFLOODFILL_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_SIGNEDFLOODFILL_HAS_BEEN_INCLUDED
 
-#include <boost/utility/enable_if.hpp>
-#include <openvdb/math/Math.h> // for math::negative
+#include <openvdb/version.h>
 #include <openvdb/Types.h> // for Index typedef
-#include <boost/static_assert.hpp>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/type_traits/is_signed.hpp>
-
+#include <openvdb/math/Math.h> // for math::negative
 #include <openvdb/tree/NodeManager.h>
+#include <map>
+#include <type_traits>
 
 
 namespace openvdb {
@@ -111,10 +81,11 @@ template<typename TreeOrLeafManagerT>
 class SignedFloodFillOp
 {
 public:
-    typedef typename TreeOrLeafManagerT::ValueType    ValueT;
-    typedef typename TreeOrLeafManagerT::RootNodeType RootT;
-    typedef typename TreeOrLeafManagerT::LeafNodeType LeafT;
-    BOOST_STATIC_ASSERT(boost::is_floating_point<ValueT>::value || boost::is_signed<ValueT>::value);
+    using ValueT = typename TreeOrLeafManagerT::ValueType;
+    using RootT = typename TreeOrLeafManagerT::RootNodeType;
+    using LeafT = typename TreeOrLeafManagerT::LeafNodeType;
+    static_assert(std::is_signed<ValueT>::value,
+        "signed flood fill is supported only for signed value grids");
 
     SignedFloodFillOp(const TreeOrLeafManagerT& tree, Index minLevel = 0)
         : mOutside(ValueT(math::Abs(tree.background())))
@@ -135,9 +106,8 @@ public:
     {
         if (LeafT::LEVEL < mMinLevel) return;
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
-        if (!leaf.allocate()) return;//this assures that the buffer is allocated and in-memory
-#endif
+        if (!leaf.allocate()) return; // this assures that the buffer is allocated and in-memory
+
         const typename LeafT::NodeMaskType& valueMask = leaf.getValueMask();
         // WARNING: "Never do what you're about to see at home, we're what you call experts!"
         typename LeafT::ValueType* buffer =
@@ -211,7 +181,7 @@ public:
     void operator()(RootT& root) const
     {
         if (RootT::LEVEL < mMinLevel) return;
-        typedef typename RootT::ChildNodeType ChildT;
+        using ChildT = typename RootT::ChildNodeType;
         // Insert the child nodes into a map sorted according to their origin
         std::map<Coord, ChildT*> nodeKeys;
         typename RootT::ChildOnIter it = root.beginChildOn();
@@ -239,11 +209,12 @@ private:
 };// SignedFloodFillOp
 
 
+//{
+/// @cond OPENVDB_SIGNED_FLOOD_FILL_INTERNAL
+
 template<typename TreeOrLeafManagerT>
 inline
-typename boost::enable_if_c<
-    boost::is_floating_point<typename TreeOrLeafManagerT::ValueType>::value ||
-    boost::is_signed<typename TreeOrLeafManagerT::ValueType>::value, void>::type
+typename std::enable_if<std::is_signed<typename TreeOrLeafManagerT::ValueType>::value, void>::type
 doSignedFloodFill(TreeOrLeafManagerT& tree,
                   typename TreeOrLeafManagerT::ValueType outsideValue,
                   typename TreeOrLeafManagerT::ValueType insideValue,
@@ -256,12 +227,10 @@ doSignedFloodFill(TreeOrLeafManagerT& tree,
     nodes.foreachBottomUp(op, threaded, grainSize);
 }
 
-// Dummy (no-op) implementation for non-float types
+// Dummy (no-op) implementation for unsigned types
 template <typename TreeOrLeafManagerT>
 inline
-typename boost::disable_if_c<
-    boost::is_floating_point<typename TreeOrLeafManagerT::ValueType>::value ||
-    boost::is_signed<typename TreeOrLeafManagerT::ValueType>::value, void>::type
+typename std::enable_if<!std::is_signed<typename TreeOrLeafManagerT::ValueType>::value, void>::type
 doSignedFloodFill(TreeOrLeafManagerT&,
                   const typename TreeOrLeafManagerT::ValueType&,
                   const typename TreeOrLeafManagerT::ValueType&,
@@ -272,6 +241,9 @@ doSignedFloodFill(TreeOrLeafManagerT&,
     OPENVDB_THROW(TypeError,
         "signedFloodFill is supported only for signed value grids");
 }
+
+/// @endcond
+//}
 
 
 // If the narrow-band is symmetric and unchanged
@@ -305,7 +277,3 @@ signedFloodFill(TreeOrLeafManagerT& tree,
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_RESETBACKGROUND_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

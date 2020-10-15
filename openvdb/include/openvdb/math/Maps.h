@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file math/Maps.h
 
@@ -41,7 +14,10 @@
 #include <openvdb/io/io.h> // for io::getFormatVersion()
 #include <openvdb/util/Name.h>
 #include <openvdb/Types.h>
+#include <cmath> // for std::abs()
+#include <iostream>
 #include <map>
+#include <string>
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -309,8 +285,6 @@ private:
     MapRegistry() {}
 
     static MapRegistry* staticInstance();
-
-    static MapRegistry* mInstance;
 
     MapDictionary mMap;
 };
@@ -824,7 +798,7 @@ public:
 
     //@{
     /// @brief Return the lengths of the images of the segments
-    /// \f$(0,0,0)-(1,0,0)\f$, \f$(0,0,0)-(0,1,0)\f$, \f$(0,0,0)-(0,0,1)\f$
+    /// (0,0,0) &minus; 1,0,0), (0,0,0) &minus; (0,1,0) and (0,0,0) &minus; (0,0,1).
     /// @details This is equivalent to the absolute values of the scale values
     Vec3d voxelSize() const override { return mVoxelSize; }
     Vec3d voxelSize(const Vec3d&) const override { return voxelSize(); }
@@ -1077,9 +1051,9 @@ public:
     /// Return @c 1
     double determinant() const override { return 1.0; }
 
-    /// Return \f$ (1,1,1) \f$
+    /// Return (1,1,1).
     Vec3d voxelSize() const override { return Vec3d(1,1,1);}
-    /// Return \f$ (1,1,1) \f$
+    /// Return (1,1,1).
     Vec3d voxelSize(const Vec3d&) const override { return voxelSize();}
 
     /// Return the translation vector
@@ -1789,12 +1763,12 @@ public:
     double determinant() const override { return mAffineMap.determinant(); }
 
 
-    /// @brief Returns the lengths of the images
-    /// of the segments
-    /// \f$(0,0,0)-(1,0,0)\f$, \f$(0,0,0)-(0,1,0)\f$,
-    /// \f$(0,0,0)-(0,0,1)\f$
+    /// @{
+    /// @brief Returns the lengths of the images of the segments
+    /// (0,0,0) &minus; (1,0,0), (0,0,0) &minus; (0,1,0) and (0,0,0) &minus; (0,0,1).
     Vec3d voxelSize() const override { return mAffineMap.voxelSize();}
     Vec3d voxelSize(const Vec3d&) const override { return voxelSize();}
+    /// @}
 
     /// read serialization
     void read(std::istream& is) override
@@ -2716,7 +2690,3 @@ private:
 } // namespace openvdb
 
 #endif // OPENVDB_MATH_MAPS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
