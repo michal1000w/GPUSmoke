@@ -13,7 +13,7 @@ public:
     DoubleBuffer(int nelements);
     T* readTarget();
     T* writeTarget();
-    GRID3D readToGrid(int3 dim) {
+    GRID3D readToGrid() {
         std::cout << "  Reading Grid: ";
         clock_t startTime = clock();
         GRID3D output(dim, readTarget());

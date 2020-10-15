@@ -43,7 +43,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
             //DEBUG = false;
         }
 
-        GRID3D arr = state.density->readToGrid(vol_d);
+        GRID3D arr = state.density->readToGrid();
         //GRID3D arr_temp = state.temperature->readToGrid(vol_d);
         export_openvdb("frame."+std::to_string(f), vol_d, arr);
         
@@ -194,6 +194,7 @@ int main(int argc, char* args[])
 
     std::cout << "Clearing previous frames\n";
     std::system("erase_imgs.sh");
+    std::system("rm ./output/cache/*");
 
     if (DOMAIN_RESOLUTION.x*DOMAIN_RESOLUTION.y*DOMAIN_RESOLUTION.z <= 100000000)
         Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);

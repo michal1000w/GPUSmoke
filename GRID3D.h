@@ -50,10 +50,6 @@ public:
         cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost);
         //cudaMemcpy(grid_temp, grid_src_temp, sizeof(float) * size(), cudaMemcpyDeviceToHost);
     }
-    void load_temp_grid(int3 dim,float* grid_temp) {
-        grid_temp = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        cudaMemcpy(grid_temp, grid_temp, sizeof(float) * size(), cudaMemcpyDeviceToHost);
-    }
 
     GRID3D(int x, int y, int z, float* vdb) {
         resolution.x = x;
