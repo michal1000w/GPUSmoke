@@ -132,12 +132,12 @@ int main(int argc, char* args[])
 
 
     /////////VDB
-    export_vdb2("sphere",vol_d);
+    export_vdb("sphere",vol_d);
 
 
 
     clock_t startTime = clock();
-    GRID3D sphere = load_vdb3("sphere",vol_d);
+    GRID3D sphere = load_vdb("sphere",vol_d);
     std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
 
     if (false) {
