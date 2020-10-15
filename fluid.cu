@@ -131,6 +131,14 @@ int main(int argc, char* args[])
 
 
 
+
+    std::cout << "Writing sphere" << std::endl;
+    export_openvdb("sphere", vol_d);
+    std::cout << "Done" << std::endl;
+    exit(1);
+
+
+
     /////////VDB
     export_vdb("sphere",vol_d);
 

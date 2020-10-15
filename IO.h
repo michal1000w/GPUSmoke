@@ -29,6 +29,28 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 }
 
 
+
+
+GRID3D export_openvdb(std::string filename, int3 domain_resolution, bool DEBUG = false) {
+    filename = "input//" + filename + ".nvdb";
+
+    GRID3D output(domain_resolution.x, domain_resolution.y, domain_resolution.z);
+    
+
+
+    return output;
+}
+
+
+
+
+
+
+
+
+
+
+
 GRID3D load_vdb(std::string filename, int3 domain_resolution, bool DEBUG = false) {
     filename = "input//" + filename + ".nvdb";
 
