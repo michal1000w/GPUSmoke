@@ -43,15 +43,16 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
             //DEBUG = false;
         }
 
+
+#ifndef NOSAVE
         GRID3D* arr = new GRID3D();
         GRID3D* arr_temp = new GRID3D();
         arr->set_pointer(state.density->readToGrid());
         arr_temp->set_pointer(state.temperature->readToGrid());
-        /*
-        */
         export_openvdb("frame."+std::to_string(f), vol_d, arr,arr_temp);
         arr->free();
         arr_temp->free();
+#endif
     }
 
     delete[] img;
@@ -112,7 +113,7 @@ int main(int argc, char* args[])
     openvdb::initialize();
     srand(0);
     //simulation settings
-    int3 DOMAIN_RESOLUTION = make_int3(256,600,256);
+    int3 DOMAIN_RESOLUTION = make_int3(450,450,450);
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -171,13 +172,17 @@ int main(int argc, char* args[])
     
     
     ////////////////
-
-    //adding emmiters
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5 ,0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
-    object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
-    object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
-
+    if (EXAMPLE__ == 1) {
+        //adding emmiters
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+        object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
+    }
+    else if (EXAMPLE__ == 2) {
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(/*left-right*/vol_d.x * 0.5, 10.0, /*front-back*/200)));
+        ZOOM = 1.2; //1.8
+    }
 #endif
 
 

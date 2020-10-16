@@ -32,7 +32,8 @@
 #include <nanovdb/util/OpenToNanoVDB.h>
 ////////////////////////////////////////////
 
-
+#define EXAMPLE__ 2
+//#define NOSAVE
 
 
 

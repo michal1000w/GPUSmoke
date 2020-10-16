@@ -71,10 +71,20 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
 
 
         if (MOVEMENT) {
-            object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
-                current.get_location().y + cosf(-0.03f * float(state.step)) ,
-                current.get_location().z + MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step))
-            );
+            if (EXAMPLE__ == 1) {
+                object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
+                    current.get_location().y + cosf(-0.03f * float(state.step)),
+                    current.get_location().z + MOVEMENT_SIZE * cosf(-0.02f * MOVEMENT_SPEED * float(state.step))
+                );
+            }
+            else if (EXAMPLE__ == 2) {
+                float MOVEMENT_SIZE = 9.0;//9
+                float MOVEMENT_SPEED = 0.7;//10
+                object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * sinf(-0.12786786f * MOVEMENT_SPEED * float(state.step)),
+                    current.get_location().y + MOVEMENT_SIZE * 0.05f * cosf(-0.03f * float(state.step)),
+                    current.get_location().z + MOVEMENT_SIZE * cosf(-0.0767637f * MOVEMENT_SPEED * float(state.step))
+                );
+            }
         }
 
 
