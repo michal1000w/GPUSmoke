@@ -113,7 +113,7 @@ int main(int argc, char* args[])
     openvdb::initialize();
     srand(0);
     //simulation settings
-    int3 DOMAIN_RESOLUTION = make_int3(450,450,450);
+    int3 DOMAIN_RESOLUTION = make_int3(256,600,256);
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -149,6 +149,7 @@ int main(int argc, char* args[])
 
 
     /////////VDB
+#define VDBB
 #ifdef VDBB
     export_vdb("sphere",vol_d);
 
@@ -156,9 +157,9 @@ int main(int argc, char* args[])
 
     clock_t startTime = clock();
     GRID3D sphere = load_vdb("sphere",vol_d);
-    std::cout << "Loaded in : "<< double(clock() - startTime) / (double)CLOCKS_PER_SEC<< "s" << std::endl;
+    std::cout << "Loaded in : "<< double(clock() - startTime) << std::endl;
 
-    if (true) {
+    if (false) {
         OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
         SPHERE.load_density_grid(sphere, 3.0);
         object_list.push_back(SPHERE);

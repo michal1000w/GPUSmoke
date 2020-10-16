@@ -4,7 +4,7 @@
 #include <vector>
 //#include "OpenVDB/tinyvdbio.h"
 
-
+std::mutex mtx;
 
 // A couple IO utility functions
 
@@ -40,50 +40,58 @@ void create_grid_old(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openv
     // Get a voxel accessor.
 
     float* grid_src_arr = grid_src->get_grid();
-//#define MULTI
-#ifndef MULTI
+
     typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
     for (int x = 0; x < dim.x; x++) {
-#else
-    int THREADS = 24;//8
-    std::vector<typename openvdb::FloatGrid::Accessor> accessors;
-    //std::vector<typename openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType,true>> accessors;
-    for (int i = 0; i < THREADS; i++)
-        //accessors.push_back(openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType, true>(grid_dst.getAccessor()));
-        accessors.push_back(grid_dst.getAccessor());
-    int sizee = ceil((double)dim.x / (double)THREADS);
-    concurrency::parallel_for(0, THREADS, [&](int n) {
-        int end = (n * sizee) + (sizee - 1);
-        if (end > dim.x) {
-            end = dim.x;
-        }
-        for (int x = n * sizee; x < end; x++)
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-                    //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
-                    accessors[n].setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
-                }
-            }
-    });
-    for (int i = 0; i < THREADS; i++)
-        accessors[0].clear();
-    accessors.clear();
-#endif
-#ifdef MULTI
-#else
         for (int y = 0; y < dim.y; y++) {
             for (int z = 0; z < dim.z; z++) {
-                //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
                 accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
             }
         }
     }
-#endif
-    delete[] grid_src_arr;
-    auto tree = grid_dst.tree();
-    tree.clearAllAccessors();
-    openvdb::tools::signedFloodFill(tree);
+delete[] grid_src_arr;
+grid_src->free();
+auto tree = grid_dst.tree();
+tree.clearAllAccessors();
+openvdb::tools::signedFloodFill(tree);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+int copy(openvdb::FloatGrid::Accessor& accessor,
+    float* grid_src_arr,int3 dim, int sizee, int n) {
+    Sleep(n);
+    int end = (n * sizee) + (sizee - 1);
+    if (end > dim.x) {
+        end = dim.x;
+    }
+    for (int x = n * sizee; x < end; x++)
+        for (int y = 0; y < dim.y; y++) {
+            for (int z = 0; z < dim.z; z++) {
+                accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+                }
+        }
+    return 1;
+}
+
+
+struct Local {
+    static inline void diff(const float& a, const float& b, float& result) {
+        result = a + b;
+    }
+};
 
 void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
@@ -93,53 +101,60 @@ void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::
     //get bounding box
     int3 dim = grid_src->get_resolution();
 
+    grid_dst.tree().clearAllAccessors();
+
     // Get a voxel accessor.
 
     float* grid_src_arr = grid_src->get_grid();
-    //#define MULTI
-#ifndef MULTI
-    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
-    for (int x = 0; x < dim.x; x++) {
-#else
-    int THREADS = 24;//8
-    std::vector<typename openvdb::FloatGrid::Accessor> accessors;
+    
+    int THREADS = 12;//8
+
+
     //std::vector<typename openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType,true>> accessors;
-    for (int i = 0; i < THREADS; i++)
+    //for (int i = 0; i < THREADS; i++)
         //accessors.push_back(openvdb::tree::ValueAccessorRW<openvdb::FloatTree::ValueType, true>(grid_dst.getAccessor()));
-        accessors.push_back(grid_dst.getAccessor());
+        
     int sizee = ceil((double)dim.x / (double)THREADS);
-    concurrency::parallel_for(0, THREADS, [&](int n) {
-        int end = (n * sizee) + (sizee - 1);
-        if (end > dim.x) {
-            end = dim.x;
-        }
-        for (int x = n * sizee; x < end; x++)
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-                    //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
-                    accessors[n].setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
-                }
-            }
-        });
+    
+    //////////////////////
+    std::vector<typename openvdb::FloatGrid::Accessor> accessors;
+    for (int i = 0; i < THREADS; i++) {
+        accessors.push_back(grid_dst.getAccessor());
+    }
+    //////////////////////
+    //tworzenie w¹tków
+    std::vector<std::thread> pool;
+
+    /*
+    for (int i = 0; i < THREADS; i++) {
+        copy(accessors[i], grid_src_arr, dim, sizee, i);
+    }
+    */
+    for (int i = 0; i < THREADS; i++) {
+        std::thread T(copy,accessors[i],grid_src_arr,dim, sizee, i);
+        pool.push_back(move(T));
+    }
+    for (auto& T : pool)
+        if (T.joinable())
+            T.join();
+    pool.clear();
+    
+    //grid_dst.tree().combine(bGrid->tree(), Local::diff);
+  
+    
+    /*
+    */
     for (int i = 0; i < THREADS; i++)
         accessors[0].clear();
     accessors.clear();
-#endif
-#ifdef MULTI
-#else
-    for (int y = 0; y < dim.y; y++) {
-        for (int z = 0; z < dim.z; z++) {
-            //accessor.setValue(openvdb::Coord(x, y, z), grid_src(x, y, z));
-            accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
-        }
-    }
-    }
-#endif
-delete[] grid_src_arr;
-grid_src->free();
-auto tree = grid_dst.tree();
-tree.clearAllAccessors();
-openvdb::tools::signedFloodFill(tree);
+
+    grid_dst.tree().clearAllAccessors();
+    delete[] grid_src_arr;
+    grid_src->free();
+
+    openvdb::tools::signedFloodFill(grid_dst.tree());
+    grid_dst.setTransform(
+            openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
 }
 
 int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
@@ -169,13 +184,13 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     ////////////////////////////////////////////////////////
     
     //for (int i = 0; i < grids_src.size(); i++) {
-    std::mutex mtx;
+    std::mutex mtx1;
     concurrency::parallel_for(0, 2, [&](int i) {
         create_grid(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
 
-        std::lock_guard<std::mutex> lock(mtx);
+        std::lock_guard<std::mutex> lock(mtx1);
         grids->push_back(grids_dst[i]);
         });
     
@@ -365,40 +380,5 @@ int export_vdb(std::string filename, int3 domain_resolution) {
     return 0;
 }
 
-
-
-
-
-
-extern void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer);
-void renderImage(std::string filename, int ac) {
-    filename = "input//" + filename + ".nvdb";
-    try {
-        nanovdb::GridHandle<BufferT> handle;
-        if (ac > 1) {
-            handle = nanovdb::io::readGrid<BufferT>(filename);
-            std::cout << "Loaded NanoVDB grid[" << handle.gridMetaData()->gridName() << "]...\n";
-        }
-        else {
-            handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 100, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
-        }
-
-        if (handle.gridMetaData()->isFogVolume() == false) {
-            throw std::runtime_error("Grid must be a fog volume");
-        }
-
-        const int numIterations = 50;
-
-        const int width = 1024;
-        const int height = 1024;
-        BufferT   imageBuffer;
-        imageBuffer.init(width * height * sizeof(float));
-
-        runNanoVDB(handle, numIterations, width, height, imageBuffer);
-    }
-    catch (const std::exception& e) {
-        std::cerr << "An exception occurred: \"" << e.what() << "\"" << std::endl;
-    }
-}
 
 #endif
