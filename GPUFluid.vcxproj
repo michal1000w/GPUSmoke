@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Common.h" />
     <ClInclude Include="cutil_math.h" />
     <ClInclude Include="double_buffer.h" />
     <ClInclude Include="Fluid_Kernels.cuh" />
@@ -23,7 +24,10 @@
     <ClInclude Include="openvdb-old\blosc.h" />
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
+    <ClInclude Include="Renderer.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="IndexBuffer.h" />
+    <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="Window.h" />
     <CudaCompile Include="openvdb\common.h" />
     <CudaCompile Include="openvdb\ComputePrimitives.h" />
@@ -35,11 +39,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
+    <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="openvdb-old\miniz.c" />
     <ClCompile Include="openvdb-old\tinyvdbio.cc" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Unified_Buffer.cpp" />
+    <ClCompile Include="VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu" />

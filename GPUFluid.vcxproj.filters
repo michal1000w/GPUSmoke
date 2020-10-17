@@ -58,6 +58,18 @@
     <ClInclude Include="Texture.h">
       <Filter>OpenGL</Filter>
     </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBuffer.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="IndexBuffer.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -71,6 +83,12 @@
     </Filter>
     <Filter Include="OpenGL">
       <UniqueIdentifier>{5d1389bd-b4de-461c-9e0d-367897204c7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Shaders">
+      <UniqueIdentifier>{2b073d65-bce2-45fc-928a-f73e3a163e77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Buffers">
+      <UniqueIdentifier>{986b549b-0223-43c0-a937-9546a0c4d031}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +110,12 @@
     <ClCompile Include="Texture.cpp">
       <Filter>OpenGL</Filter>
     </ClCompile>
+    <ClCompile Include="VertexBuffer.cpp">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="IndexBuffer.cpp">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu">
@@ -112,7 +136,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="x64\Release\Shaders.shader">
-      <Filter>OpenGL</Filter>
+      <Filter>OpenGL\Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

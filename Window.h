@@ -1,9 +1,6 @@
-#include <GL/glew.h>
-#include <GL/glut.h>
-#include <GLFW/glfw3.h>
-#include <iostream>
-#include <sstream>
-
+#include "Common.h"
+#include "IndexBuffer.h"
+#include "VertexBuffer.h"
 
 struct ShaderProgramSource {
 	std::string VertexSource;
@@ -148,9 +145,13 @@ int Window(float* Img_res) {
 	if (!glfwInit())
 		return -1;
 
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
 	//create a windowed mode window
-	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha", NULL, NULL);
+	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.1", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -165,89 +166,75 @@ int Window(float* Img_res) {
 
 
 	///////////////////////////////////////////////
-	float positions[8] = {
-		-0.5f, -0.5f,
-		-0.5f,  0.5f,
-		 0.5f,  0.5f,
-		 0.5f, -0.5f
-	};
-	///////////////////////////////////////////////
-	unsigned int buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, 8 * sizeof(float), positions, GL_STATIC_DRAW);
+	{
+		float positions[12] = {
+			-0.5f, -0.5f,
+			 0.5f, -0.5f,
+			 0.5f,  0.5f,
+			-0.5f,  0.5f,
+		};
+		unsigned int indices[] = {
+			0,1,2,
+			2,3,0
+		};
+		///////////////////////////////////////////////
+		unsigned int vao;
+		GLCall(glGenVertexArrays(1, &vao));//1
+		GLCall(glBindVertexArray(vao));
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0);
-	
+		///////////////////////////////////////////////
+		VertexBuffer vb(positions, 4 * 2 * sizeof(float));
 
+		GLCall(glEnableVertexAttribArray(0));
+		GLCall(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
 
-	///////////////////////////////////////////////
-	ShaderProgramSource source = ParseShader("Shaders.shader");
-	unsigned int shader = CreateShader(source.VertexSource, 
-		source.FragmentSource);
-	glUseProgram(shader);
-	///////////////////////////////////////////////
-	
-	while (!glfwWindowShouldClose(window)) {
-		//////////////////
-		glClear(GL_COLOR_BUFFER_BIT);
-		loadBMP("file.bmp");
+		/////////////////////////////////////////////
+		IndexBuffer ib(indices, 6);
 
-		
-		glDrawArrays(GL_QUADS, 0, 4);
-		
+		/////////////////SHADERS/////////////////////
+		ShaderProgramSource source = ParseShader("Shaders.shader");
+		unsigned int shader = CreateShader(source.VertexSource,
+			source.FragmentSource);
+		GLCall(glUseProgram(shader));
+		//////////////////UNIFORM SHADER////////////////////
 
+		int location = glGetUniformLocation(shader, "u_Color");
+		GLCall(glUniform4f(location, 0.2f, 0.3f, 0.9f, 1.0f));
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
-
-	}
-	glDeleteProgram(shader);
-	glfwTerminate();
-	return 0;
-}
-
-/*
-int Window(float* Img_res) {
-	GLFWwindow* window;
-
-	//initialize
-	if (!glfwInit())
-		return -1;
+		float r = 0.0f;
+		float increment = 0.01f;
+		/////////////////////////////////////////////////
+		GLCall(glBindVertexArray(0));
+		GLCall(glUseProgram(0));
+		GLCall(glBindBuffer(GL_ARRAY_BUFFER, 0));
+		GLCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0));
 
 
-	//create a windowed mode window
-	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha", NULL, NULL);
-	if (!window) {
-		glfwTerminate();
-		return -1;
-	}
+		/////////////////////////////////////////////////
+		while (!glfwWindowShouldClose(window)) {
+			//////////////////
+			GLCall(glClear(GL_COLOR_BUFFER_BIT));
+			//loadBMP("file.bmp");
+			GLCall(glUseProgram(shader));
+			GLCall(glUniform4f(location, r, 0.3f, 0.85f, 1.0f));
 
-	glfwMakeContextCurrent(window);
+			GLCall(glBindVertexArray(vao));
+			ib.Bind();
 
-	if (glewInit() != GLEW_OK)
-		std::cout << "Error: glewInit\n";
+			GLCall(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
 
+			if (r > 1.0f)
+				increment = -0.01f;
+			else if (r < 0.0f)
+				increment = 0.01f;
+			r += increment;
 
-	GLuint texture = 0;
-	while (!glfwWindowShouldClose(window)) {
-		glClear(GL_COLOR_BUFFER_BIT);
+			glfwSwapBuffers(window);
+			glfwPollEvents();
 
-
-		glBegin(GL_QUADS);
-
-
-
-		glEnd();
-
-
-
-
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		}
+		GLCall(glDeleteProgram(shader));
 	}
 	glfwTerminate();
 	return 0;
 }
-*/
