@@ -29,7 +29,7 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 
 
 
-void create_grid_old(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
+void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst.background();
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
@@ -54,6 +54,8 @@ grid_src->free();
 auto tree = grid_dst.tree();
 tree.clearAllAccessors();
 openvdb::tools::signedFloodFill(tree);
+grid_dst.setTransform(
+    openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
 }
 
 
@@ -93,7 +95,7 @@ struct Local {
     }
 };
 
-void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
+void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst.background();
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
@@ -102,6 +104,8 @@ void create_grid(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::
     int3 dim = grid_src->get_resolution();
 
     grid_dst.tree().clearAllAccessors();
+
+    
 
     // Get a voxel accessor.
 
@@ -186,7 +190,7 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     //for (int i = 0; i < grids_src.size(); i++) {
     std::mutex mtx1;
     concurrency::parallel_for(0, 2, [&](int i) {
-        create_grid(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
+        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
 
@@ -247,7 +251,7 @@ int export_openvdb_old(std::string filename, int3 domain_resolution, GRID3D* gri
 
 
 
-    create_grid(*grid, grid_dst, /*center=*/openvdb::Vec3f(0, 0, 0));
+    create_grid_sthr(*grid, grid_dst, /*center=*/openvdb::Vec3f(0, 0, 0));
 
     grid_dst->free();
     // Associate some metadata with the grid.
@@ -257,7 +261,7 @@ int export_openvdb_old(std::string filename, int3 domain_resolution, GRID3D* gri
         openvdb::FloatGrid::create(/*background value=*/0.0);
     //clock_t startTime = clock();
 
-    create_grid(*grid_temp2, grid_temp, /*center=*/openvdb::Vec3f(0, 0, 0));
+    create_grid_sthr(*grid_temp2, grid_temp, /*center=*/openvdb::Vec3f(0, 0, 0));
 
     grid_temp->free();
 
