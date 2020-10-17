@@ -1,0 +1,10 @@
+^C:\USERS\MICHA\SOURCE\REPOS\GPUFLUID\THIRD_PARTY\GLFW-3.3.2\CMAKELISTS.TXT
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/micha/source/repos/GPUFluid/third_party/glfw-3.3.2 -BC:/Users/micha/source/repos/GPUFluid/third_party/glfw-3.3.2/build --check-stamp-file C:/Users/micha/source/repos/GPUFluid/third_party/glfw-3.3.2/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

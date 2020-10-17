@@ -23,6 +23,8 @@
     <ClInclude Include="openvdb-old\blosc.h" />
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
+    <ClInclude Include="Texture.h" />
+    <ClInclude Include="Window.h" />
     <CudaCompile Include="openvdb\common.h" />
     <CudaCompile Include="openvdb\ComputePrimitives.h" />
     <ClInclude Include="Renderer.cuh" />
@@ -36,12 +38,16 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="openvdb-old\miniz.c" />
     <ClCompile Include="openvdb-old\tinyvdbio.cc" />
+    <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Unified_Buffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu" />
     <CudaCompile Include="HugeScaleSolver.cu" />
     <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\Shaders.shader" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4AC2887C-CF72-405D-A7DF-FDEDD7398F6B}</ProjectGuid>
@@ -101,15 +107,15 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>openvdb/include;third_party/openvdb/nanovdb/;third_party/all/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third_party\GLFW\include;openvdb/include;third_party/openvdb/nanovdb/;third_party/all/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;openvdb.lib;libopenvdb.lib;blosc.lib;Half-2_5.lib;zlib.lib;tbb.lib;lz4.lib;boost_system-vc140-mt.lib;boost_iostreams-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>third_party\all\lib;openvdb\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;openvdb.lib;libopenvdb.lib;blosc.lib;Half-2_5.lib;zlib.lib;tbb.lib;lz4.lib;boost_system-vc140-mt.lib;boost_iostreams-vc140-mt.lib;glfw3.lib;opengl32.lib;glu32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>third_party\GLFW\lib;third_party\all\lib;openvdb\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>

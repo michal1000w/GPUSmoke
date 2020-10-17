@@ -52,6 +52,12 @@
     <ClInclude Include="GRID3D.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -62,6 +68,9 @@
     </Filter>
     <Filter Include="Headers">
       <UniqueIdentifier>{7c1ccf3e-4ce9-4d16-9937-8ef1d784ae4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL">
+      <UniqueIdentifier>{5d1389bd-b4de-461c-9e0d-367897204c7e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -80,6 +89,9 @@
     <ClCompile Include="openvdb-old\miniz.c">
       <Filter>Sources</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>OpenGL</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="fluid.cu">
@@ -97,5 +109,10 @@
     <CudaCompile Include="openvdb\ComputePrimitives.h">
       <Filter>OpenVDB</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\Shaders.shader">
+      <Filter>OpenGL</Filter>
+    </None>
   </ItemGroup>
 </Project>

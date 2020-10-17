@@ -1,7 +1,9 @@
 ﻿#include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
+#include "Window.h"
 
+#define GUI
 
 
 void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, 
@@ -63,55 +65,8 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
 
     cudaThreadExit();
 }
-/*
-void Huge_Scale(int3 vol_d, int3 img_d, uint8_t* img, float3 light, std::vector<OBJECT>& object_list, float3 cam, int ACCURACY_STEPS, int FRAMES, int STEPS) {
-    fluid_state_huge state(vol_d);
 
-    state.impulseLoc = make_float3(0.5 * float(vol_d.x),
-        0.5 * float(vol_d.y) - 170.0,
-        0.5 * float(vol_d.z));
-    state.impulseTemp = 20.0;//4.0
-    state.impulseDensity = 0.6;//0.35
-    state.impulseRadius = 18.0;//18.0
-    state.f_weight = 0.05;
-    state.time_step = 0.1;
-
-    dim3 full_grid(vol_d.x / 8 + 1, vol_d.y / 8 + 1, vol_d.z / 8 + 1);
-    dim3 full_block(8, 8, 8);
-
-
-    for (int f = 0; f <= FRAMES; f++) {
-
-        std::cout << "\rFrame " << f + 1 << "  -  ";
-
-        if (_kbhit()) {
-            std::cout << "Stopping simulation\n";
-            break;
-        }
-
-        render_fluid(
-            img, img_d,
-            state.density->readTarget(),
-            state.temperature->readTarget(),
-            vol_d, 1.0, light, cam, 0.0 * float(state.step),
-            STEPS);
-
-        save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
-        for (int st = 0; st < 1; st++) {
-            simulate_fluid(state, object_list, ACCURACY_STEPS);
-            state.step++;
-        }
-    }
-
-    delete[] img;
-
-    printf("CUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
-
-    cudaThreadExit();
-}
-*/
-int main(int argc, char* args[])
-{
+int initialize() {
     openvdb::initialize();
     srand(0);
     //simulation settings
@@ -222,5 +177,29 @@ int main(int argc, char* args[])
     std::system("make_video.sh");
     //std::system("pause");
 
+    return 0;
+}
+
+
+
+
+
+
+
+
+int main(int argc, char* args[]) {
+#ifdef GUI
+
+    std::cout << "Hello" << std::endl;
+
+    float Image_Resolution[2] = { 640, 640 };
+    const int3 img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
+
+    uint8_t* img = new uint8_t[3 * img_d.x * img_d.y];
+
+    Window(Image_Resolution);
+#else
+    initialize();
+#endif
     return 0;
 }

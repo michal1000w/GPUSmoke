@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\micha\source\repos\GPUFluid\third_party\glfw-3.3.2\build\CMakeFiles\86798da115d05d807dc5d0650f77ac94\uninstall.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\micha\source\repos\GPUFluid\third_party\glfw-3.3.2\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\micha\source\repos\GPUFluid\third_party\glfw-3.3.2\build\CMakeFiles\uninstall" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{097A3855-E39F-34BE-9602-1707F2E0679A}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,10 @@
+^C:\USERS\MICHA\SOURCE\REPOS\GPUFLUID\THIRD_PARTY\GLFW-3.3.2\BUILD\CMAKEFILES\86798DA115D05D807DC5D0650F77AC94\INSTALL_FORCE.RULE
+setlocal
+cd .
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
