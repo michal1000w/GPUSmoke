@@ -70,6 +70,12 @@
     <ClInclude Include="IndexBuffer.h">
       <Filter>OpenGL\Buffers</Filter>
     </ClInclude>
+    <ClInclude Include="VertexArray.h">
+      <Filter>OpenGL\Arrays</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBufferLayout.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -89,6 +95,9 @@
     </Filter>
     <Filter Include="OpenGL\Buffers">
       <UniqueIdentifier>{986b549b-0223-43c0-a937-9546a0c4d031}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Arrays">
+      <UniqueIdentifier>{9f33d9e5-7db5-4183-9889-e08c5a33bc1e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -115,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="IndexBuffer.cpp">
       <Filter>OpenGL\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexArray.cpp">
+      <Filter>OpenGL\Arrays</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
