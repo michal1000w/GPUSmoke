@@ -52,18 +52,6 @@
     <ClInclude Include="GRID3D.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Window.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Renderer.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
-    <ClInclude Include="Common.h">
-      <Filter>OpenGL</Filter>
-    </ClInclude>
     <ClInclude Include="VertexBuffer.h">
       <Filter>OpenGL\Buffers</Filter>
     </ClInclude>
@@ -75,6 +63,21 @@
     </ClInclude>
     <ClInclude Include="VertexBufferLayout.h">
       <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>OpenGL\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>OpenGL\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>OpenGL\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>OpenGL\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>OpenGL\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -99,6 +102,12 @@
     <Filter Include="OpenGL\Arrays">
       <UniqueIdentifier>{9f33d9e5-7db5-4183-9889-e08c5a33bc1e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OpenGL\Rendering">
+      <UniqueIdentifier>{406713f6-0702-48b9-9508-5f735fcd972b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Common">
+      <UniqueIdentifier>{d0acdae1-390e-4a07-b7e4-78be4f72f491}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">
@@ -116,9 +125,6 @@
     <ClCompile Include="openvdb-old\miniz.c">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>OpenGL</Filter>
-    </ClCompile>
     <ClCompile Include="VertexBuffer.cpp">
       <Filter>OpenGL\Buffers</Filter>
     </ClCompile>
@@ -127,6 +133,12 @@
     </ClCompile>
     <ClCompile Include="VertexArray.cpp">
       <Filter>OpenGL\Arrays</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>OpenGL\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>OpenGL\Shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

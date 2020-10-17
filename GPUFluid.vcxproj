@@ -25,6 +25,7 @@
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="VertexArray.h" />
@@ -45,6 +46,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="openvdb-old\miniz.c" />
     <ClCompile Include="openvdb-old\tinyvdbio.cc" />
+    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Unified_Buffer.cpp" />
     <ClCompile Include="VertexArray.cpp" />
