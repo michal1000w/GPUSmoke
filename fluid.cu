@@ -37,6 +37,8 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
             STEPS, Fire_Max_Temp, Smoke_and_Fire);
 
         save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
+
+
         for (int st = 0; st < 1; st++) {
             simulate_fluid(state, object_list, ACCURACY_STEPS, DEBUG, f, Dissolve_rate, Ambient_temp);
             state.step++;
