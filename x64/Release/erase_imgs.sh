@@ -1,1 +1,1 @@
-rm output/*.ppm
+rm output/*.bmp

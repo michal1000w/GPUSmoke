@@ -117,6 +117,9 @@
     <Filter Include="OpenGL\Textures">
       <UniqueIdentifier>{a1f19660-5e7e-47f4-ad63-56722b0fb0f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImageConverters">
+      <UniqueIdentifier>{18f084c9-eb83-4c3e-97a5-372c59e0a5b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">

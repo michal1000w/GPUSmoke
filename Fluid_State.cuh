@@ -34,6 +34,10 @@ struct fluid_state {
         cudaMalloc((void**)&diverge, sizeof(float) * nelems);
     }
 
+    fluid_state() {
+
+    }
+
     ~fluid_state() {
         delete velocity;
         delete density;

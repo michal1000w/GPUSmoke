@@ -6,6 +6,8 @@
 #include "Renderer.h"
 #include "Texture.h"
 
+#include "Solver.cuh"
+Solver solver;
 
 
 
@@ -79,35 +81,37 @@ int Window(float* Img_res) {
 		float increment = 0.01f;
 		/////////////////////////////////////////////////
 
-		Texture texture("file.bmp");
-		texture.Bind(/*slot*/0);
-		shader.SetUniform1i("u_Texture", /*slot*/0);
-
-		/////////////////////////////////////////////////
+		//Texture texture("file.bmp");
+		//texture.Bind(/*slot*/0);
+		//shader.SetUniform1i("u_Texture", /*slot*/0);
+		Texture texture("mf.bmp");
+		///////////////////////////////////////////
 		va.UnBind();
 		shader.UnBind();
 		vb.Unbind();
 		ib.Unbind();
 
 		Renderer renderer;
+		unsigned int frame = 0;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			//////////////////
+			solver.Simulation_Frame(frame);
+			frame++;
+			//////////////////
+			//Texture texture("output/R" + pad_number(frame) + ".bmp");
+			texture.UpdateTexture("output/R" + pad_number(frame) + ".bmp");
+			texture.Bind(/*slot*/0);
+			//shader.SetUniform1i("u_Texture", /*slot*/0);
+			//////////////////
 			renderer.Clear();
-			//loadBMP("file.bmp");
 			shader.Bind();
-			//shader.SetUniform4f("u_Color", r, 0.3f, 0.9f, 1.0f);
 
 			renderer.Draw(va, ib, shader);
 
-			if (r > 1.0f)
-				increment = -0.01f;
-			else if (r < 0.0f)
-				increment = 0.01f;
-			r += increment;
 
-			glfwSwapBuffers(window);
-			glfwPollEvents();
+			GLCall(glfwSwapBuffers(window));
+			GLCall(glfwPollEvents());
 
 		}
 	}

@@ -1,11 +1,27 @@
-﻿#include "Solver.cuh"
+﻿#define GUI
+
+
+//#include "Solver.cuh"
 #include "Window.h"
 
+extern Solver solver;
 
-//#define GUI
 
 
 int main(int argc, char* args[]) {
+#ifdef EXPERIMENTAL
+    solver.Initialize();
+    solver.ClearCache();
+    solver.ExportVDBScene();
+    float Image_Resolution[2] = { 640, 640 };
+    solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
+
+    solver.Initialize_Simulation();
+    Window(Image_Resolution);
+    solver.Clear_Simulation_Data();
+    std::cout << "Rendering animation video..." << std::endl;
+    std::system("make_video.sh");
+#else
 #ifdef GUI
 
     std::cout << "Hello" << std::endl;
@@ -18,6 +34,7 @@ int main(int argc, char* args[]) {
     Window(Image_Resolution);
 #else
     initialize();
+#endif
 #endif
     return 0;
 }

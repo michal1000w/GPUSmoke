@@ -4,7 +4,6 @@
 
 
 
-
 class Texture {
 private:
 	unsigned int m_RendererID;
@@ -15,6 +14,8 @@ private:
 public:
 	Texture(const std::string& path);
 	~Texture();
+
+	void UpdateTexture(const std::string& path);
 
 	void Bind(unsigned int slot = 0) const;
 	void Unbind() const;
