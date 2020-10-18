@@ -47,7 +47,9 @@ public:
     GRID3D get_density_grid();
     float get_initial_temp();
     void cudaFree() { vdb_object.freeCuda(); }
-	
+	void free() {
+		vdb_object.free();
+	}
 
 private:
 	int type;

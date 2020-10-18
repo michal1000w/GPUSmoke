@@ -10,9 +10,8 @@
 
 class GRID3D {
     void deletep(float&) {}
-    template <typename Y>
     void deletep(float*& ptr) {
-        delete ptr;
+        delete[] ptr;
         ptr = nullptr;
     }
 public:
@@ -48,7 +47,7 @@ public:
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         //grid_temp = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost);
-        
+        grid_temp = new float[1];
         //cudaMemcpy(grid_temp, grid_src_temp, sizeof(float) * size(), cudaMemcpyDeviceToHost);
     }
 
@@ -178,8 +177,8 @@ public:
     }
     void free() {
         //std::cout << "Free grid memory" << std::endl;
-        deletep(*grid);
-        deletep(*grid_temp);
+        deletep(grid);
+        deletep(grid_temp);
 
     }
     void freeCuda() {
@@ -187,7 +186,7 @@ public:
         cudaFree(vdb_temp);
     }
     ~GRID3D() {
-        free();
+        //free();
     }
     float* get_grid() {
         return this->grid;

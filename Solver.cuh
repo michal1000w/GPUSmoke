@@ -7,22 +7,23 @@
 #ifdef EXPERIMENTAL
 
 class Solver {
-private:
-    int3 DOMAIN_RESOLUTION;
+public:
     int ACCURACY_STEPS;
-    std::vector<OBJECT> object_list;
     float Smoke_Dissolve;
     float Ambient_Temperature;
-    float speed;
-    int FRAMES;
     float Fire_Max_Temperature;
-    float Image_Resolution[2];
     int STEPS;
-    float ZOOM;
     bool Smoke_And_Fire;
+private:
+    int3 DOMAIN_RESOLUTION;
+    std::vector<OBJECT> object_list;
+    int FRAMES;
+    float Image_Resolution[2];
+    float ZOOM;
     int3 vol_d;
     int3 img_d;
     uint8_t* img;
+    float speed;
     float time_step;
     float rotation;
 
@@ -45,7 +46,8 @@ public:
 
     void ClearCache() {
         std::cout << "Clearing previous frames\n";
-        std::system("erase_imgs.sh");
+        //std::system("erase_imgs.sh");
+        std::system("rm ./output/*.bmp");
         std::system("rm ./output/cache/*");
         std::cout << "Done";
     }
@@ -55,9 +57,10 @@ public:
 
 
         clock_t startTime = clock();
-        GRID3D sphere = load_vdb("sphere", vol_d);
+        
+        GRID3D sphere(vol_d.x, vol_d.y, vol_d.z);
+        load_vdb("sphere", vol_d, sphere);
         std::cout << "Loaded in : " << double(clock() - startTime) << std::endl;
-
         if (false) {
             OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
             SPHERE.load_density_grid(sphere, 3.0);
@@ -67,7 +70,11 @@ public:
             OBJECT SPHERE("vdbsingle", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
             SPHERE.load_density_grid(sphere, 6.0);
             object_list.push_back(SPHERE);
+            SPHERE.free();
         }
+        
+        sphere.free();
+        
     }
 
     void Initialize() {
@@ -114,7 +121,7 @@ public:
 
         setLight(5.0, 1.0, -0.5);
 
-        img = new uint8_t[3 * img_d.x * img_d.y];
+        
     }
 
     Solver() {
@@ -154,11 +161,20 @@ public:
 
         full_grid = dim3(vol_d.x / 8 + 1, vol_d.y / 8 + 1, vol_d.z / 8 + 1);
         full_block = dim3(8, 8, 8);
+
+        img = new uint8_t[3 * img_d.x * img_d.y];
     }
 
     void Clear_Simulation_Data() {
         delete state;
         delete[] img;
+
+        for (auto i : object_list) {
+            if (i.get_type() == "vdb" || i.get_type() == "vdbs")
+                i.cudaFree();
+            i.free();
+        }
+        object_list.clear();
 
         printf("CUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
@@ -193,6 +209,8 @@ public:
             export_openvdb("frame." + std::to_string(f), vol_d, arr, arr_temp);
             arr->free();
             arr_temp->free();
+            delete arr;
+            delete arr_temp;
         }
     }
     unsigned char* loadImgData() {

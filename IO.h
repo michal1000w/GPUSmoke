@@ -428,10 +428,9 @@ int export_openvdb_old(std::string filename, int3 domain_resolution, GRID3D* gri
 
 
 
-GRID3D load_vdb(std::string filename, int3 domain_resolution, bool DEBUG = false) {
+int load_vdb(std::string filename, int3 domain_resolution,GRID3D& outputt , bool DEBUG = false) {
     filename = "input//" + filename + ".nvdb";
 
-    GRID3D outputt(domain_resolution.x, domain_resolution.y, domain_resolution.z);
     //nanovdb::FloatGrid* output = nullptr;
     try {
         // returns a GridHandle using CUDA for memory management.
@@ -455,7 +454,7 @@ GRID3D load_vdb(std::string filename, int3 domain_resolution, bool DEBUG = false
         
         int THREADS = 8;//8
         int sizee = ceil((double)dims3.x / (double)THREADS);
-        concurrency::parallel_for(0, THREADS, [&](int n) {
+        for (int n = 0; n < THREADS; n++){
             int end = (n * sizee) + (sizee - 1);
             if (end > dims3.x) {
                 end = dims3.x;
@@ -468,13 +467,13 @@ GRID3D load_vdb(std::string filename, int3 domain_resolution, bool DEBUG = false
                         outputt.set(x, y, z, object.getValue(nanovdb::Coord(x, y, z)));
                         outputt.set_temp(x, y, z, object.getValue(nanovdb::Coord(x, y, z)));
                     }
-            });
-            
+            }
+        //handle.clear();
     }
     catch (const std::exception& e) {
         std::cout << "[Import] An exception occurred: \"" << e.what() << "\"" << std::endl;
     }
-    return outputt;
+    return true;
 }
 
 

@@ -13,14 +13,15 @@ int main(int argc, char* args[]) {
     solver.Initialize();
     solver.ClearCache();
     solver.ExportVDBScene();
+    float Window_Resolution[2] = { 1600, 640 };
     float Image_Resolution[2] = { 640, 640 };
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 
     solver.Initialize_Simulation();
-    Window(Image_Resolution);
+    Window(Window_Resolution);
     solver.Clear_Simulation_Data();
-    std::cout << "Rendering animation video..." << std::endl;
-    std::system("make_video.sh");
+    //std::cout << "Rendering animation video..." << std::endl;
+    //std::system("make_video.sh");
 #else
 #ifdef GUI
 
