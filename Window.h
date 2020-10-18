@@ -135,9 +135,7 @@ int Window(float* Img_res) {
 		ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
 
 
-		bool show_window = true;
-		bool show_another_window = false;
-		ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+		//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 		float fps = 0;
 		/////////////////////////////////////////////////
@@ -161,6 +159,7 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 			/////////////////////////////
 			/////    CREATE WINDOW    ///
+			ImGui::Begin("Properties Panel");
 			{
 				ImGui::Text("Simulation Settings");
 				ImGui::SliderFloat("Ambient Temp:", &solver.Ambient_Temperature, -10.0f, 100.0f);
@@ -187,6 +186,7 @@ int Window(float* Img_res) {
 				ImGui::SameLine();
 				ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
 			}
+			ImGui::End();
 			/////////////////////////////
 
 			renderer.Draw(va, ib, shader);
