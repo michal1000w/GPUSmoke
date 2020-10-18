@@ -162,13 +162,15 @@ int Window(float* Img_res) {
 			/////////////////////////////
 			/////    CREATE WINDOW    ///
 			{
-				ImGui::Text("Basic Settings");
+				ImGui::Text("Simulation Settings");
 				ImGui::SliderFloat("Ambient Temp:", &solver.Ambient_Temperature, -10.0f, 100.0f);
+				ImGui::SliderFloat("Smoke Dissolve:", &solver.Smoke_Dissolve, 0.93f, 1.0f);
+				ImGui::SliderInt("Simulation accuracy:", &solver.ACCURACY_STEPS, 1, 32);
 				//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
 				ImGui::Text("Render Settings:");
 				ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
-
+				ImGui::SliderInt("Render samples:", &solver.STEPS, 1, 512);
 
 
 				if (ImGui::Button("Reset")) {
