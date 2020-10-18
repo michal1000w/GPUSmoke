@@ -79,6 +79,9 @@
     <ClInclude Include="Shader.h">
       <Filter>OpenGL\Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="LoadTexture.h">
+      <Filter>OpenGL</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -139,6 +142,9 @@
     </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>OpenGL\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>OpenGL\Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

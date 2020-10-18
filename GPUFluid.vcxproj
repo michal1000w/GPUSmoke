@@ -19,6 +19,7 @@
     <ClInclude Include="GRID3D.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
+    <ClInclude Include="LoadTexture.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="openvdb-old\blosc-export.h" />
     <ClInclude Include="openvdb-old\blosc.h" />
@@ -46,6 +47,7 @@
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="openvdb-old\miniz.c" />
     <ClCompile Include="openvdb-old\tinyvdbio.cc" />
+    <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Unified_Buffer.cpp" />
