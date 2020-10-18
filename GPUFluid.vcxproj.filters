@@ -67,9 +67,6 @@
     <ClInclude Include="Renderer.h">
       <Filter>OpenGL\Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="Texture.h">
-      <Filter>OpenGL\Rendering</Filter>
-    </ClInclude>
     <ClInclude Include="Window.h">
       <Filter>OpenGL\Common</Filter>
     </ClInclude>
@@ -79,8 +76,14 @@
     <ClInclude Include="Shader.h">
       <Filter>OpenGL\Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>OpenGL\Textures</Filter>
+    </ClInclude>
     <ClInclude Include="LoadTexture.h">
-      <Filter>OpenGL\Common</Filter>
+      <Filter>OpenGL\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Solver.cuh">
+      <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -111,6 +114,9 @@
     <Filter Include="OpenGL\Common">
       <UniqueIdentifier>{d0acdae1-390e-4a07-b7e4-78be4f72f491}</UniqueIdentifier>
     </Filter>
+    <Filter Include="OpenGL\Textures">
+      <UniqueIdentifier>{a1f19660-5e7e-47f4-ad63-56722b0fb0f1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">
@@ -137,20 +143,17 @@
     <ClCompile Include="VertexArray.cpp">
       <Filter>OpenGL\Arrays</Filter>
     </ClCompile>
-    <ClCompile Include="Texture.cpp">
-      <Filter>OpenGL\Rendering</Filter>
-    </ClCompile>
     <ClCompile Include="Shader.cpp">
       <Filter>OpenGL\Shaders</Filter>
     </ClCompile>
     <ClCompile Include="Renderer.cpp">
       <Filter>OpenGL\Rendering</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>OpenGL\Textures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="fluid.cu">
-      <Filter>Sources</Filter>
-    </CudaCompile>
     <CudaCompile Include="HugeScaleSolver.cu">
       <Filter>Sources</Filter>
     </CudaCompile>
@@ -162,6 +165,9 @@
     </CudaCompile>
     <CudaCompile Include="openvdb\ComputePrimitives.h">
       <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="main.cu">
+      <Filter>Sources</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

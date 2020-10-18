@@ -1,8 +1,14 @@
 #pragma once
 #include "Common.h"
 #include <iostream>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
-unsigned char* loadTexture(const char* imagepath, unsigned int& Width,
+
+unsigned char* loadBMPTexture(const char* imagepath, unsigned int& Width,
 	unsigned int& Height, unsigned int& BPP, unsigned int CHANNELS) {
 
 	unsigned char header[54];
@@ -52,5 +58,4 @@ unsigned char* loadTexture(const char* imagepath, unsigned int& Width,
 	Height = height;
 	BPP = imageSize;
 	return data;
-
 }

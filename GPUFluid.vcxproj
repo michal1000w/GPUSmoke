@@ -27,6 +27,7 @@
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Shader.h" />
+    <ClInclude Include="Solver.cuh" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="VertexArray.h" />
@@ -55,7 +56,7 @@
     <ClCompile Include="VertexBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="fluid.cu" />
+    <CudaCompile Include="main.cu" />
     <CudaCompile Include="HugeScaleSolver.cu" />
     <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu" />
   </ItemGroup>

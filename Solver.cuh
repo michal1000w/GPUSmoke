@@ -1,23 +1,19 @@
-﻿#include "IO.h"
+﻿#pragma once
+#include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
-#include "Window.h"
-
-#define GUI
 
 
-void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img, 
-    float3 light, std::vector<OBJECT>& object_list, float3 cam, 
-    int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate, 
+
+
+void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
+    float3 light, std::vector<OBJECT>& object_list, float3 cam,
+    int ACCURACY_STEPS, int FRAMES, int STEPS, float Dissolve_rate,
     float Ambient_temp, float Fire_Max_Temp, bool Smoke_and_Fire,
     float time_step) {
-    
-    
-    fluid_state state(vol_d);
 
-    //VDB
-    
-    //VDB
+
+    fluid_state state(vol_d);
 
 
     state.f_weight = 0.05;
@@ -28,7 +24,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
 
     bool DEBUG = true;
     for (int f = 0; f <= FRAMES; f++) {
-        
+
         std::cout << "\rFrame " << f + 1 << "  -  ";
 
         render_fluid(
@@ -53,7 +49,7 @@ void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,
         GRID3D* arr_temp = new GRID3D();
         arr->set_pointer(state.density->readToGrid());
         arr_temp->set_pointer(state.temperature->readToGrid());
-        export_openvdb("frame."+std::to_string(f), vol_d, arr,arr_temp);
+        export_openvdb("frame." + std::to_string(f), vol_d, arr, arr_temp);
         arr->free();
         arr_temp->free();
 #endif
@@ -70,7 +66,7 @@ int initialize() {
     openvdb::initialize();
     srand(0);
     //simulation settings
-    int3 DOMAIN_RESOLUTION = make_int3(256,600,256);
+    int3 DOMAIN_RESOLUTION = make_int3(256, 600, 256);
     int ACCURACY_STEPS = 8; //8
     std::vector<OBJECT> object_list;
 
@@ -78,7 +74,7 @@ int initialize() {
     float Ambient_Temperature = 0.0f; //0.0f
     float speed = 1.0; //1.0
 
-    
+
 
 
     //rendering settings
@@ -101,20 +97,20 @@ int initialize() {
 
 
 
-    
+
 
 
 
     /////////VDB
 #define VDBB
 #ifdef VDBB
-    export_vdb("sphere",vol_d);
+    export_vdb("sphere", vol_d);
 
 
 
     clock_t startTime = clock();
-    GRID3D sphere = load_vdb("sphere",vol_d);
-    std::cout << "Loaded in : "<< double(clock() - startTime) << std::endl;
+    GRID3D sphere = load_vdb("sphere", vol_d);
+    std::cout << "Loaded in : " << double(clock() - startTime) << std::endl;
 
     if (false) {
         OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
@@ -127,8 +123,8 @@ int initialize() {
         object_list.push_back(SPHERE);
     }
 #else
-    
-    
+
+
     ////////////////
     if (EXAMPLE__ == 1) {
         //adding emmiters
@@ -162,7 +158,7 @@ int initialize() {
     std::system("erase_imgs.sh");
     std::system("rm ./output/cache/*");
 
-    if (DOMAIN_RESOLUTION.x*DOMAIN_RESOLUTION.y*DOMAIN_RESOLUTION.z <= 100000000)
+    if (DOMAIN_RESOLUTION.x * DOMAIN_RESOLUTION.y * DOMAIN_RESOLUTION.z <= 100000000)
         Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);
     else {
         std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
@@ -172,7 +168,7 @@ int initialize() {
     for (int i = 0; i < object_list.size(); i++) { //czyszczenie pamięci GPU
         object_list[i].cudaFree();
     }
-    
+
     std::cout << "Rendering animation video..." << std::endl;
     std::system("make_video.sh");
     //std::system("pause");
@@ -180,26 +176,3 @@ int initialize() {
     return 0;
 }
 
-
-
-
-
-
-
-
-int main(int argc, char* args[]) {
-#ifdef GUI
-
-    std::cout << "Hello" << std::endl;
-
-    float Image_Resolution[2] = { 640, 640 };
-    const int3 img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
-
-    uint8_t* img = new uint8_t[3 * img_d.x * img_d.y];
-
-    Window(Image_Resolution);
-#else
-    initialize();
-#endif
-    return 0;
-}
