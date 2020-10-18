@@ -23,14 +23,15 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 
 ### Running Simulation
 1. Create a new folder named `output` next to the `gpufluid.exe`
-2. Run `gpufluid.exe`
+2. Create a new folder named `cache` in `output` folder
+3. Run `gpufluid.exe`
 
 ## TODO list
 ### Short Term
-* [ ] Render temperature
-* [ ] Simple Graphical Interface
+* [*] Render temperature
+* [*] Simple Graphical Interface
 * [ ] Sliders with most important factors
-* [ ] Camera and light rotation
+* [*] Camera and light rotation
 
 ### Short-Medium Term
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
@@ -38,13 +39,14 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [ ] Object Collision
 * [ ] Simple Forces --> (Wind, Turbulance, Noise)
 * [ ] Preset creator (LOAD/SAVE)
-* [ ] Fix Density over 1.0 issue
+* [*] Fix Density over 1.0 issue
 
 ### Medium-Long Term
 * [ ] Smoke Colors
-* [ ] OpenVDB IO
-    * [ ] Import
-    * [ ] Export
+* [*] OpenVDB IO
+    * [*] Import
+    * [*] Export
+    * Works but slowly
 * [ ] Obj import
 * [ ] Simple Blender integration
 * [ ] Faster and better Render Engine
