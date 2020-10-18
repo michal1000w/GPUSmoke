@@ -28,10 +28,10 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 
 ## TODO list
 ### Short Term
-* [*] Render temperature
-* [*] Simple Graphical Interface
+* [x] Render temperature
+* [x] Simple Graphical Interface
 * [ ] Sliders with most important factors
-* [*] Camera and light rotation
+* [x] Camera and light rotation
 
 ### Short-Medium Term
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
@@ -39,13 +39,13 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [ ] Object Collision
 * [ ] Simple Forces --> (Wind, Turbulance, Noise)
 * [ ] Preset creator (LOAD/SAVE)
-* [*] Fix Density over 1.0 issue
+* [x] Fix Density over 1.0 issue
 
 ### Medium-Long Term
 * [ ] Smoke Colors
-* [*] OpenVDB IO
-    * [*] Import
-    * [*] Export
+* [x] OpenVDB IO
+    * [x] Import
+    * [x] Export
     * Works but slowly
 * [ ] Obj import
 * [ ] Simple Blender integration
