@@ -109,15 +109,15 @@ int Window(float* Img_res) {
 		ib.Unbind();
 
 		Renderer renderer;
-		unsigned int frame = 0;
+		solver.frame = 0;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			//////////////////
-			solver.Simulation_Frame(frame);
-			frame++;
+			solver.Simulation_Frame(solver.frame);
+			solver.frame++;
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
-			texture.UpdateTexture("output/R" + pad_number(frame) + ".bmp");
+			texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
 			texture.Bind(/*slot*/0);
 			//shader.SetUniform1i("u_Texture", /*slot*/0);
 			//////////////////
@@ -164,7 +164,17 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
 		solver.setCamera(solver.getCamera().x, solver.getCamera().y, solver.getCamera().z - 2.5f);
 	}
-		
+	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
+		std::cout << "\nRestarting\n";
+		//clearing
+		solver.ClearCache();
+		solver.frame = 0;
+		solver.Clear_Simulation_Data();
+		//preparation
+		solver.Initialize();
+		solver.ExportVDBScene();
+		solver.Initialize_Simulation();
+	}
 }
 
 void cursorEnterCallback(GLFWwindow* window, int entered) {

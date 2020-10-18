@@ -31,18 +31,6 @@
     <ClInclude Include="Renderer.cuh">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="openvdb-old\miniz.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="openvdb-old\tinyvdbio.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="openvdb-old\blosc.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
-    <ClInclude Include="openvdb-old\blosc-export.h">
-      <Filter>Headers</Filter>
-    </ClInclude>
     <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
@@ -84,6 +72,18 @@
     </ClInclude>
     <ClInclude Include="Solver.cuh">
       <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\blosc.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\blosc-export.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\tinyvdbio.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\miniz.h">
+      <Filter>OpenVDB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -131,12 +131,6 @@
     <ClCompile Include="Unified_Buffer.cpp">
       <Filter>Sources</Filter>
     </ClCompile>
-    <ClCompile Include="openvdb-old\tinyvdbio.cc">
-      <Filter>Sources</Filter>
-    </ClCompile>
-    <ClCompile Include="openvdb-old\miniz.c">
-      <Filter>Sources</Filter>
-    </ClCompile>
     <ClCompile Include="VertexBuffer.cpp">
       <Filter>OpenGL\Buffers</Filter>
     </ClCompile>
@@ -154,6 +148,12 @@
     </ClCompile>
     <ClCompile Include="Texture.cpp">
       <Filter>OpenGL\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb-old\tinyvdbio.cc">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb-old\miniz.c">
+      <Filter>OpenVDB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

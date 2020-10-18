@@ -31,8 +31,8 @@ private:
     fluid_state* state;
     dim3 full_grid;
     dim3 full_block;
-
 public:
+    unsigned int frame;
     void setImageResolution(unsigned int x, unsigned int y) {
         Image_Resolution[0] = x;
         Image_Resolution[1] = y;
