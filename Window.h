@@ -14,6 +14,8 @@ static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos)
 void cursorEnterCallback(GLFWwindow *window, int entered);
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+
 
 
 int Window(float* Img_res) {
@@ -42,7 +44,9 @@ int Window(float* Img_res) {
 	glfwSetMouseButtonCallback(window, mouseButtonCallback);
 	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
 	glfwSetScrollCallback(window, scrollCallback);
-	/////////////
+	/////////////KLAWIATURA
+	glfwSetKeyCallback(window, keyCallback);
+	////////////
 
 	glfwMakeContextCurrent(window);
 
@@ -132,21 +136,47 @@ int Window(float* Img_res) {
 	return 0;
 }
 
-static void cursorPositionCallback(GLFWwindow* windows, double xPos, double yPos) {
+static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos) {
 	
+}
+
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		/*Rotate*/
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			solver.setRotation(solver.getRotation() - 0.1f);
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			solver.setRotation(solver.getRotation() + 0.1f);
+		}
+	}
+	else{ /*Left-Right*/
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			solver.setCamera(solver.getCamera().x - 2.5f, solver.getCamera().y, solver.getCamera().z);
+		}
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			solver.setCamera(solver.getCamera().x + 2.5f, solver.getCamera().y, solver.getCamera().z);
+		}
+	} /*Forward - Backward*/
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y, solver.getCamera().z + 2.5f);
+	}
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y, solver.getCamera().z - 2.5f);
+	}
+		
 }
 
 void cursorEnterCallback(GLFWwindow* window, int entered) {
 	if (entered) {
-		
+
 	}
 }
 
 void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 	double xPos, yPos;
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-		//left button pressed
-		//glfwGetCursorPos(window, &xPos, &yPos);
+		
 	}
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
 		//left button released
@@ -156,5 +186,5 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
 	solver.setCamera(solver.getCamera().x, solver.getCamera().y,
 		solver.getCamera().z + 2.5f * yOffset);
-	std::cout <<"   "<< yOffset;
+	//std::cout <<"   "<< yOffset;
 }

@@ -24,6 +24,7 @@ private:
     int3 img_d;
     uint8_t* img;
     float time_step;
+    float rotation;
 
     float3 Camera;
     float3 Light;
@@ -136,6 +137,14 @@ public:
         Light.z = z;
     }
 
+    void setRotation(float rotation = 0.0f) {
+        this->rotation = rotation;
+    }
+
+    float getRotation() const {
+        return this->rotation;
+    }
+
     void Initialize_Simulation() {
         state = new fluid_state(vol_d);
 
@@ -170,7 +179,7 @@ public:
             img, img_d,
             state->density->readTarget(),
             state->temperature->readTarget(),
-            vol_d, 1.0, Light, Camera, 0.0 * float(state->step),
+            vol_d, 1.0, Light, Camera, rotation,
             STEPS, Fire_Max_Temperature, Smoke_And_Fire);
 
         //save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
