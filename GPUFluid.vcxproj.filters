@@ -80,7 +80,7 @@
       <Filter>OpenGL\Shaders</Filter>
     </ClInclude>
     <ClInclude Include="LoadTexture.h">
-      <Filter>OpenGL</Filter>
+      <Filter>OpenGL\Common</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

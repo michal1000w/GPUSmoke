@@ -40,15 +40,18 @@ int Window(float* Img_res) {
 	///////////////////////////////////////////////
 	{
 		float positions[] = {
-			-0.5f, -0.5f, 0.0f, 0.0f,
-			 0.5f, -0.5f, 1.0f, 0.0f,
-			 0.5f,  0.5f, 1.0f, 1.0f,
-			-0.5f,  0.5f, 0.0f, 1.0f
+			-1.0f, -1.0f, 0.0f, 0.0f,
+			 1.0f, -1.0f, 1.0f, 0.0f,
+			 1.0f,  1.0f, 1.0f, 1.0f,
+			-1.0f,  1.0f, 0.0f, 1.0f
 		};
 		unsigned int indices[] = {
 			0,1,2,
 			2,3,0
 		};
+
+		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+		GLCall(glEnable(GL_BLEND));
 		///////////////////////////////////////////////
 		unsigned int vao;
 		GLCall(glGenVertexArrays(1, &vao));//1
@@ -93,7 +96,7 @@ int Window(float* Img_res) {
 			renderer.Clear();
 			//loadBMP("file.bmp");
 			shader.Bind();
-			shader.SetUniform4f("u_Color", r, 0.3f, 0.9f, 1.0f);
+			//shader.SetUniform4f("u_Color", r, 0.3f, 0.9f, 1.0f);
 
 			renderer.Draw(va, ib, shader);
 
