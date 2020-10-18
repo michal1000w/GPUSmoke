@@ -126,6 +126,10 @@ public:
         Camera.z = z;
     }
 
+    float3 getCamera() {
+        return Camera;
+    }
+
     void setLight(float x, float y, float z) {
         Light.x = x;
         Light.y = y;

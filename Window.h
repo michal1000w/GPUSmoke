@@ -10,6 +10,10 @@
 Solver solver;
 
 
+static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos);
+void cursorEnterCallback(GLFWwindow *window, int entered);
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 
 
 int Window(float* Img_res) {
@@ -30,6 +34,15 @@ int Window(float* Img_res) {
 		glfwTerminate();
 		return -1;
 	}
+
+	//////////KURSOR
+	glfwSetCursorPosCallback(window, cursorPositionCallback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL); //GLFW_CURSOR_HIDDEN
+	glfwSetCursorEnterCallback(window, cursorEnterCallback);
+	glfwSetMouseButtonCallback(window, mouseButtonCallback);
+	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
+	glfwSetScrollCallback(window, scrollCallback);
+	/////////////
 
 	glfwMakeContextCurrent(window);
 
@@ -117,4 +130,31 @@ int Window(float* Img_res) {
 	}
 	glfwTerminate();
 	return 0;
+}
+
+static void cursorPositionCallback(GLFWwindow* windows, double xPos, double yPos) {
+	
+}
+
+void cursorEnterCallback(GLFWwindow* window, int entered) {
+	if (entered) {
+		
+	}
+}
+
+void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
+	double xPos, yPos;
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+		//left button pressed
+		//glfwGetCursorPos(window, &xPos, &yPos);
+	}
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE) {
+		//left button released
+	}
+}
+
+void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
+	solver.setCamera(solver.getCamera().x, solver.getCamera().y,
+		solver.getCamera().z + 2.5f * yOffset);
+	std::cout <<"   "<< yOffset;
 }
