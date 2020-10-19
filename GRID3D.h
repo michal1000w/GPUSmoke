@@ -148,6 +148,7 @@ public:
                 random -= ratio;
 
                 grid_temp[i] += random;
+                grid_temp[i] = max(0.5f, grid_temp[i]);
             }
         }
     }

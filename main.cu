@@ -12,7 +12,11 @@ int main(int argc, char* args[]) {
 #ifdef EXPERIMENTAL
     solver.Initialize();
     solver.ClearCache();
+#ifdef OBJECTS_EXPERIMENTAL
+    solver.ExampleScene();
+#else
     solver.ExportVDBScene();
+#endif
     //solver.ExampleScene();
     float Window_Resolution[2] = { 1600, 640 };
     float Image_Resolution[2] = { 640, 640 };

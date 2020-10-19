@@ -21,7 +21,23 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-
+void UpdateSolver() {
+	std::cout << "\nRestarting\n";
+	//clearing
+	solver.ClearCache();
+	solver.frame = 0;
+	solver.Clear_Simulation_Data();
+	//preparation
+	//solver.Initialize();
+	solver.UpdateDomainResolution();
+	//solver.UpdateTimeStep();
+#ifdef OBJECTS_EXPERIMENTAL
+	solver.ExampleScene();
+#else
+	solver.ExportVDBScene();
+#endif
+	solver.Initialize_Simulation();
+}
 
 int Window(float* Img_res) {
 	GLFWwindow* window;
@@ -172,31 +188,40 @@ int Window(float* Img_res) {
 				ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 				ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
 				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 32);
+				//ImGui::SliderFloat("Simulation speed", &solver.speed, 0.0f, 3.0f);//bugs
 				//ImGui::ColorEdit3("clear color", (float*)&clear_color);
-
-
-
 
 
 				ImGui::Text("Render Settings:");
 				ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
+				ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 1, 100);
 				ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
 
-
 				if (ImGui::Button("Reset")) {
-					std::cout << "\nRestarting\n";
-					//clearing
-					solver.ClearCache();
-					solver.frame = 0;
-					solver.Clear_Simulation_Data();
-					
-					//solver.Initialize();
-					solver.UpdateDomainResolution();
-					solver.ExportVDBScene();
-					solver.Initialize_Simulation();
+					UpdateSolver();
 				}
 				ImGui::SameLine();
 				ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
+				ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
+			}
+			ImGui::End();
+			/////////////////////////////
+
+			ImGui::Begin("Objects Panel");
+			{
+				ImGui::Text("Object list:");
+				ImGui::BeginChild("Scrolling");
+
+				for (int object = 0; object < solver.object_list.size(); object++) {
+					std::string name = ("  -> " + solver.object_list[object].get_name());
+					ImGui::Text(name.c_str());
+					ImGui::SameLine();
+					ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
+					ImGui::SliderFloat3(("position-"+std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
+					solver.object_list[object].UpdateLocation();
+				}
+				ImGui::EndChild();
+				
 			}
 			ImGui::End();
 			/////////////////////////////
@@ -250,16 +275,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		solver.setCamera(solver.getCamera().x, solver.getCamera().y, solver.getCamera().z - 2.5f);
 	}
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
-		std::cout << "\nRestarting\n";
-		//clearing
-		solver.ClearCache();
-		solver.frame = 0;
-		solver.Clear_Simulation_Data();
-		//preparation
-		//solver.Initialize();
-		solver.UpdateDomainResolution();
-		solver.ExportVDBScene();
-		solver.Initialize_Simulation();
+		UpdateSolver();
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
 		solver.setCamera(solver.getCamera().x, solver.getCamera().y + 2.5f, solver.getCamera().z);

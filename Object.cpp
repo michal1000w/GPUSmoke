@@ -2,7 +2,8 @@
 
 
 ////////////////////////CONSTRUCTORS//////////////////////////////////
-OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float3 location) {
+/*
+OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float3 location, int number) {
 	this->set_type(type);
 	this->size = size;
 	this->initial_velocity = initial_velocity;
@@ -11,9 +12,15 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->location = location;
 	this->set_impulseDensity();
 	this->set_impulseTemp();
+	this->name = get_object();
+	if (number != -1)
+		this->name += std::to_string(number);
+	this->selected = false;
+	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 }
+*/
 
-OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float Temp, float Density, float3 location) {
+OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float Temp, float Density, float3 location, int number) {
 	this->set_type(type);
 	this->size = size;
 	this->initial_velocity = initial_velocity;
@@ -21,6 +28,11 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->location = location;
 	this->set_impulseDensity(Density);
 	this->set_impulseTemp(Temp);
+	this->name = get_object();
+	if (number != -1)
+		this->name += std::to_string(number);
+	this->selected = false;
+	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 }
 
 
@@ -121,4 +133,18 @@ GRID3D OBJECT::get_density_grid() {
 
 float OBJECT::get_initial_temp() {
 	return this->initial_temperature;
+}
+
+std::string OBJECT::get_object() {
+	std::string namee = "OBJ-";
+	namee += get_type();
+	return namee;
+}
+
+std::string OBJECT::get_name() {
+	return name;
+}
+
+void OBJECT::set_name(std::string name) {
+	this->name = name;
 }

@@ -25,8 +25,8 @@
 class OBJECT {
 public:
 	//Contructors
-	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f, float3 location = make_float3(0.0,0.0,0.0));
-	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f,float Temp = 5.0f, float Density = 0.9f, float3 location = make_float3(0.0, 0.0, 0.0));
+	//OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f, float3 location = make_float3(0.0,0.0,0.0), int number = -1);
+	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f,float Temp = 5.0f, float Density = 0.9f, float3 location = make_float3(0.0, 0.0, 0.0), int number = -1);
 	//SETTERS-GETTERS
 	std::string get_type();
 	void set_type(std::string type = "emmiter");
@@ -50,7 +50,18 @@ public:
 	void free() {
 		vdb_object.free();
 	}
+	std::string get_object();
+	std::string get_name();
+	void set_name(std::string);
 
+	void UpdateLocation() {
+		this->location.x = Location[0];
+		this->location.y = Location[1];
+		this->location.z = Location[2];
+	}
+
+	bool selected;
+	float Location[3];
 private:
 	int type;
 	float size;
@@ -61,6 +72,7 @@ private:
 	float3 location;
     GRID3D vdb_object;
     float initial_temperature;
+	std::string name;
 };
 
 

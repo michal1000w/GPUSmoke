@@ -3,28 +3,36 @@
 #include "Simulation.cuh"
 #include "Renderer.cuh"
 
+
+
 #define EXPERIMENTAL
+#define OBJECTS_EXPERIMENTAL
+
+
+
+
 #ifdef EXPERIMENTAL
 
 class Solver {
 public:
-    int ACCURACY_STEPS;
-    float Smoke_Dissolve;
-    float Ambient_Temperature;
-    float Fire_Max_Temperature;
-    int STEPS;
-    bool Smoke_And_Fire;
-    int3 New_DOMAIN_RESOLUTION;
+    int ACCURACY_STEPS;//
+    float Smoke_Dissolve;//
+    float Ambient_Temperature;//
+    float Fire_Max_Temperature;//
+    int STEPS;//
+    bool Smoke_And_Fire;//
+    int3 New_DOMAIN_RESOLUTION;//
+    float speed;
+    std::vector<OBJECT> object_list;
+    bool preserve_object_list;
 private:
     int3 DOMAIN_RESOLUTION;
-    std::vector<OBJECT> object_list;
     int FRAMES;
     float Image_Resolution[2];
     float ZOOM;
     int3 vol_d;
     int3 img_d;
     uint8_t* img;
-    float speed;
     float time_step;
     float rotation;
 
@@ -34,6 +42,9 @@ private:
     dim3 full_grid;
     dim3 full_block;
 public:
+    void UpdateTimeStep() {
+        time_step = speed * 0.1; //chyba dobre
+    }
     void UpdateDomainResolution() {
         if (New_DOMAIN_RESOLUTION.x * New_DOMAIN_RESOLUTION.y * New_DOMAIN_RESOLUTION.z <= 490*490*490){
             DOMAIN_RESOLUTION = New_DOMAIN_RESOLUTION;
@@ -93,10 +104,12 @@ public:
 
     void ExampleScene() {
         //adding emmiters
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
-        object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
+        if (!preserve_object_list) {
+            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0), object_list.size()));
+        }
     }
 
     void Initialize() {
@@ -144,11 +157,11 @@ public:
 
         setLight(5.0, 1.0, -0.5);
 
-        
     }
 
     Solver() {
         std::cout << "Create Solver Instance" << std::endl;
+        preserve_object_list = true;
     }
     
     void setCamera(float x, float y, float z) {
@@ -192,12 +205,14 @@ public:
         delete state;
         delete[] img;
 
-        for (auto i : object_list) {
-            if (i.get_type() == "vdb" || i.get_type() == "vdbs")
-                i.cudaFree();
-            i.free();
+        if (!preserve_object_list) {
+            for (auto i : object_list) {
+                if (i.get_type() == "vdb" || i.get_type() == "vdbs")
+                    i.cudaFree();
+                i.free();
+            }
+            object_list.clear();
         }
-        object_list.clear();
 
         printf("CUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 

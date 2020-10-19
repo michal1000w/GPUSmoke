@@ -1,4 +1,5 @@
 #git submodule update --init --recursive --depth 2
+git submodule update --init --recursive --depth 1
 
 C:\\vcpkg\\vcpkg.exe install zlib:x64-windows
 C:\\vcpkg\\vcpkg.exe install blosc:x64-windows
