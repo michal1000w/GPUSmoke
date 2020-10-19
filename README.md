@@ -26,7 +26,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 2. Create a new folder named `cache` in `output` folder
 3. Run `gpufluid.exe`
 
-##GUI
+## GUI
 1. W - zoom in
 2. S - zoom out
 3. A - go left
