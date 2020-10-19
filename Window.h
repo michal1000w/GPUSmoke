@@ -24,7 +24,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void UpdateSolver() {
 	std::cout << "\nRestarting\n";
 	//clearing
-	solver.ClearCache();
+	//solver.ClearCache();
 	solver.frame = 0;
 	solver.Clear_Simulation_Data();
 	//preparation
@@ -51,7 +51,7 @@ int Window(float* Img_res) {
 
 
 	//create a windowed mode window
-	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.1  -  Michal Wieczorek", NULL, NULL);
+	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.15  -  Michal Wieczorek", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -157,8 +157,10 @@ int Window(float* Img_res) {
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
 			//////////////////
-			solver.Simulation_Frame(solver.frame);
-			solver.frame++;
+			if (solver.SIMULATE) {
+				solver.Simulation_Frame(solver.frame);
+				solver.frame++;
+			}
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
@@ -226,6 +228,12 @@ int Window(float* Img_res) {
 				ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 				ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
 				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 32);
+				if (ImGui::Button("Simulate")) {
+					if (solver.SIMULATE == false)
+						solver.SIMULATE = true;
+					else
+						solver.SIMULATE = false;
+				}
 				//ImGui::SliderFloat("Simulation speed", &solver.speed, 0.0f, 3.0f);//bugs
 				//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
@@ -290,6 +298,7 @@ int Window(float* Img_res) {
 					ImGui::SameLine();
 					ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
 					ImGui::SliderFloat3(("position-"+std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
+					ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 100.0);
 					solver.object_list[object].UpdateLocation();
 				}
 				ImGui::EndChild();

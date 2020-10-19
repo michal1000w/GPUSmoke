@@ -53,7 +53,7 @@ unsigned char* loadBMPTexture(const char* imagepath, unsigned int& Width,
 	//Everything is in memory now, the file can be closed
 	fclose(file);
 
-	std::cout << "Texture loaded successfully";
+	//std::cout << "Texture loaded successfully";
 	Width = width;
 	Height = height;
 	BPP = imageSize;

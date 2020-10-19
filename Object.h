@@ -62,9 +62,9 @@ public:
 
 	bool selected;
 	float Location[3];
+	float size;
 private:
 	int type;
-	float size;
 	float initial_velocity;
 	float velocity_frequence;
 	float impulseTemp;

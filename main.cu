@@ -30,7 +30,7 @@ int main(int argc, char* args[]) {
     cudaSetDevice(Best_Device_Index);
 #ifdef EXPERIMENTAL
     solver.Initialize();
-    solver.ClearCache();
+    //solver.ClearCache();
 #ifdef OBJECTS_EXPERIMENTAL
     solver.ExampleScene();
 #else

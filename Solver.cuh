@@ -65,6 +65,7 @@ public:
     int EXPORT_END_FRAME;
     char EXPORT_FOLDER[100] = {0};
     bool EXPORT_VDB;
+    bool SIMULATE;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -215,6 +216,7 @@ public:
         Initialize();
         ExampleScene(true);
         preserve_object_list = true;
+        SIMULATE = true;
     }
     
     void setCamera(float x, float y, float z) {
