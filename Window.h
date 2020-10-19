@@ -209,6 +209,22 @@ int Window(float* Img_res) {
 
 			ImGui::Begin("Objects Panel");
 			{
+				if (ImGui::Button("Delete selected")) {
+					REPEAT:
+					for (int object = 0; object < solver.object_list.size(); object++) {
+						if (solver.object_list[object].selected) {
+							if (solver.object_list[object].get_type() == "vdb" ||
+								solver.object_list[object].get_type() == "vdbs")
+							solver.object_list[object].cudaFree();
+							solver.object_list[object].free();
+							solver.object_list.erase(solver.object_list.begin() + object);
+							goto REPEAT;
+						}
+					}
+				}
+				if (ImGui::Button("Add Emitter")) {
+					solver.object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
+				}
 				ImGui::Text("Object list:");
 				ImGui::BeginChild("Scrolling");
 

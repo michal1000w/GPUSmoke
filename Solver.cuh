@@ -42,6 +42,9 @@ private:
     dim3 full_grid;
     dim3 full_block;
 public:
+    int3 getDomainResolution() const {
+        return DOMAIN_RESOLUTION;
+    }
     void UpdateTimeStep() {
         time_step = speed * 0.1; //chyba dobre
     }
@@ -102,9 +105,9 @@ public:
         
     }
 
-    void ExampleScene() {
+    void ExampleScene(bool force = false) {
         //adding emmiters
-        if (!preserve_object_list) {
+        if (!preserve_object_list || force) {
             object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0), object_list.size()));
             object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0), object_list.size()));
             object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0), object_list.size()));
@@ -117,7 +120,7 @@ public:
 
         srand(0);
         //simulation settings
-        DOMAIN_RESOLUTION = make_int3(64, 64, 64);
+        DOMAIN_RESOLUTION = make_int3(256, 490, 256);
         New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
         object_list;
@@ -161,6 +164,8 @@ public:
 
     Solver() {
         std::cout << "Create Solver Instance" << std::endl;
+        Initialize();
+        ExampleScene(true);
         preserve_object_list = true;
     }
     
