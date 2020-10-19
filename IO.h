@@ -516,4 +516,34 @@ int export_vdb(std::string filename, int3 domain_resolution) {
 }
 
 
+
+
+
+
+
+
+
+std::vector<std::string> load_scene_from_file(std::string filename) {
+    filename = "scenes\\" + filename + ".txt";
+
+    std::vector<std::string> lines;
+
+    std::string line;
+    std::ifstream myfile(filename);
+    if (myfile.is_open())
+    {
+        while (std::getline(myfile, line))
+        {
+            lines.push_back(line);
+        }
+        myfile.close();
+    }
+    else {
+        std::cout << "Error\n";
+        std::cout << "Cannot open: " << filename << std::endl;
+        lines.push_back("ERROR");
+        return lines;
+    }
+    return lines;
+}
 #endif

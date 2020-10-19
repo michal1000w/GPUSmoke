@@ -83,6 +83,139 @@ private:
     dim3 full_grid;
     dim3 full_block;
 public:
+    bool what_it_is(std::string in) {
+        if (in == "true" || in == "True") {
+            return true;
+        }
+        else if (in == "false" || in == "False") {
+            return false;
+        }
+        else {
+            return 2;
+        }
+    }
+    void LoadSceneFromFile(std::string filename, bool DEBUG = true) {
+        std::vector<std::string> lines = load_scene_from_file(filename);
+
+        if (lines[0] == "ERROR") return;
+
+        std::cout << "Loading scene\n";
+        preserve_object_list = false;
+        frame = 0;
+
+
+        std::vector<std::string> podzial;
+        for (std::string i : lines) {
+            std::string fragment = "";
+            std::string fragment2 = "";
+            int i1 = 1;
+            int length = i.length();
+            while (i1 < length) {
+                if (i[i1] == '=')
+                    break;
+                fragment += i[i1];
+                i1++;
+            }
+            i1++;
+            while (i1 < length) {
+                fragment2 += i[i1];
+                i1++;
+            }
+            podzial.push_back(fragment);
+            podzial.push_back(fragment2);
+        }
+
+
+        std::cout << lines[0] << std::endl;
+        if (lines[0].find("JFLOW") == -1) {
+            std::cout << "Invalid JFlow file" << std::endl;
+            return;
+        }
+
+        Clear_Simulation_Data();
+
+        int zrobione = 0;
+
+        for (int line = 0; line < lines.size(); line++) {
+            if (lines[line][0] != '#') continue;
+
+            std::cout << podzial[line*2] << "    " << podzial[line*2+1] << std::endl;
+
+            if (podzial[line * 2] == "scene_type") {
+                if (podzial[line * 2] == "ELEMENTS") {
+                    SAMPLE_SCENE = 0;
+                }
+            }
+            if (podzial[line * 2] == "domain_resolution_x") {   
+                New_DOMAIN_RESOLUTION.x = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "domain_resolution_y") {
+                New_DOMAIN_RESOLUTION.y = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "domain_resolution_z") {
+                New_DOMAIN_RESOLUTION.z = stoi(podzial[line * 2 + 1]);
+            }
+
+            if (podzial[line * 2] == "ambient_temperature") {
+                Ambient_Temperature = stof(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "smoke_dissolve") {
+                Smoke_Dissolve = stof(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "simulation_accuracy") {
+                ACCURACY_STEPS = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "fire_and_smoke_render") {
+                Smoke_And_Fire = what_it_is(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "fire_emmision_rate") {
+                Fire_Max_Temperature = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "render_samples") {
+                STEPS = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "preserve_object_list") {
+                preserve_object_list = what_it_is(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "output_cache") {
+                for (int j = 0; j < 100; j++)
+                    EXPORT_FOLDER[j] = 0;
+                for (int j = 0; j < podzial[line * 2 + 1].length(); j++) {
+                    EXPORT_FOLDER[j] = podzial[line * 2 + 1][j];
+                }
+            }
+            if (podzial[line * 2] == "end_frame") {
+                EXPORT_END_FRAME = stoi(podzial[line * 2 + 1]);
+            }
+
+            if (podzial[line * 2] == "object") {
+                int i1 = 1;
+                std::vector<std::string> attributes;
+                std::string current = "";
+                while (i1 < podzial[line * 2 + 1].length()) {
+                    if (podzial[line * 2 + 1][i1] == ';' || podzial[line * 2 + 1][i1] == '}') {
+                        attributes.push_back(current);
+                        current = "";
+                        i1++;
+                        continue;
+                    }
+                    current += podzial[line * 2 + 1][i1];
+                    i1++;
+                }
+                object_list.push_back(OBJECT(attributes[0],/*name*/
+                    stof(attributes[4]),/*size*/
+                    50, 0.9, 5, 0.9, /*not implemented yet*/
+                    make_float3(stof(attributes[1]), stof(attributes[2]), stof(attributes[3])), /*position*/
+                    object_list.size()/*ID*/
+                ));
+            }
+
+        }
+        UpdateDomainResolution();
+        Initialize_Simulation();
+    }
+
+
     int3 getDomainResolution() const {
         return DOMAIN_RESOLUTION;
     }

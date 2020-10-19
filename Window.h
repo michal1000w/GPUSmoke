@@ -153,6 +153,7 @@ int Window(float* Img_res) {
 		//ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 		float fps = 0;
+		bool save_panel = true;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
@@ -177,8 +178,27 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 			/////////////////////////////
 			/////    CREATE WINDOW    ///
-			ImGui::Begin("IO Panel");
+			ImGui::Begin("IO Panel", &save_panel , ImGuiWindowFlags_MenuBar);
 			{
+				if (ImGui::BeginMenuBar())
+				{
+					if (ImGui::BeginMenu("File"))
+					{
+						if (ImGui::MenuItem("Open..", "Ctrl+O")) { 
+							solver.LoadSceneFromFile("scene2");
+						}
+						if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
+						if (ImGui::MenuItem("Close", "Ctrl+W")) { 
+							save_panel = false;
+							break; }
+						ImGui::EndMenu();
+					}
+					ImGui::EndMenuBar();
+				}
+
+
+
+
 				ImGui::Text("Example scenes");
 				const char* items[] = { "VDB","VDBFire", "Objects" };// , "vdb", "vdbs" };
 				static const char* current_item = "Objects";
@@ -227,7 +247,7 @@ int Window(float* Img_res) {
 				ImGui::Text("Simulation Settings");
 				ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 				ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 32);
+				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 64);
 				if (ImGui::Button("Simulate")) {
 					if (solver.SIMULATE == false)
 						solver.SIMULATE = true;
