@@ -93,14 +93,14 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
 
 
         if (current.get_type() == "emitter") {
-            wavey_impulse_temperature << < grid, block >> > (
+            wavey_impulse_temperature_new << < grid, block >> > (
                 state.temperature->readTarget(),
                 current.get_location(), SIZEE,
                 current.get_impulseTemp(), current.get_initial_velocity(), current.get_velocity_frequence(),
                 state.dim,
                 frame
                 );
-            wavey_impulse_density << < grid, block >> > (
+            wavey_impulse_density_new << < grid, block >> > (
                 state.density->readTarget(),
                 current.get_location(), SIZEE,
                 current.get_impulseDensity(), 1.0f, current.get_velocity_frequence(),

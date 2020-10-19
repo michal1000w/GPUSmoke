@@ -25,10 +25,12 @@ Texture::Texture(const std::string& path) :
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
 	if (m_LocalBuffer)
-		delete m_LocalBuffer;
+		delete[] m_LocalBuffer;
 }
 
 void Texture::UpdateTexture(const std::string& path) {
+	glDeleteTextures(1, &m_RendererID);//free old texture
+
 
 	m_LocalBuffer = loadBMPTexture(path.c_str(), m_Width, m_Height,
 		m_BPP,/*Channels*/ 3);
@@ -50,7 +52,7 @@ void Texture::UpdateTexture(const std::string& path) {
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 
 	if (m_LocalBuffer)
-		delete m_LocalBuffer;
+		delete[] m_LocalBuffer;
 }
 
 Texture::~Texture() {

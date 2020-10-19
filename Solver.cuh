@@ -276,12 +276,10 @@ public:
     void Simulation_Frame(unsigned int frame = 0) {
         unsigned int f = frame;
         std::cout << "\rFrame " << f + 1 << "  -  ";
-
         for (int st = 0; st < 1; st++) {
             simulate_fluid(*state, object_list, ACCURACY_STEPS, false, f, Smoke_Dissolve, Ambient_Temperature);
             state->step++;
         }
-
 
         render_fluid(
             img, img_d,
@@ -290,8 +288,10 @@ public:
             vol_d, 1.0, Light, Camera, rotation,
             STEPS, Fire_Max_Temperature, Smoke_And_Fire);
 
-        //save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
+        
+        
         generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+        
 
         if (EXPORT_VDB) {
             GRID3D* arr = new GRID3D();

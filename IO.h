@@ -26,13 +26,14 @@ void generateBitmapImage(unsigned char* image, int height, int width, const char
 
     FILE* imageFile = fopen(imageFileName, "wb");
 
+    
     unsigned char* fileHeader = createBitmapFileHeader(height, stride);
     fwrite(fileHeader, 1, FILE_HEADER_SIZE, imageFile);
 
     unsigned char* infoHeader = createBitmapInfoHeader(height, width);
     fwrite(infoHeader, 1, INFO_HEADER_SIZE, imageFile);
-
-
+    
+    
     //////
     int j = height - 1;
     for (int i = 0; i < height; i++) {
@@ -40,14 +41,9 @@ void generateBitmapImage(unsigned char* image, int height, int width, const char
         fwrite(padding, 1, paddingSize, imageFile);
         j--;
     }
-    /*
-    int j = 0;
-    for (int i = 0; i < height; i++) {
-        fwrite(image + (i * widthInBytes), BYTES_PER_PIXEL, width, imageFile);
-        fwrite(padding, 1, paddingSize, imageFile);
-    }
-    */
+    
     fclose(imageFile);
+    delete[] infoHeader;
 }
 
 unsigned char* createBitmapFileHeader(int height, int stride)
@@ -74,6 +70,7 @@ unsigned char* createBitmapFileHeader(int height, int stride)
 
 unsigned char* createBitmapInfoHeader(int height, int width)
 {
+    /*
     static unsigned char infoHeader[] = {
         0,0,0,0, /// header size
         0,0,0,0, /// image width
@@ -87,7 +84,10 @@ unsigned char* createBitmapInfoHeader(int height, int width)
         0,0,0,0, /// colors in color table
         0,0,0,0, /// important color count
     };
-
+    */
+    unsigned char* infoHeader = new unsigned char[17+36];
+    for (int i = 0; i < 17 + 36; i++)
+        infoHeader[i] = 0;
     infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
     infoHeader[4] = (unsigned char)(width);
     infoHeader[5] = (unsigned char)(width >> 8);

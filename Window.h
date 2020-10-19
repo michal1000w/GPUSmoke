@@ -82,7 +82,7 @@ int Window(float* Img_res) {
 	int2 Window = make_int2(Img_res[0], Img_res[1]);
 
 	
-	float range_x = ((float)Image.x / (float)Window.x);
+	float range_x = ((float)Image.x / (float)Window.x)/2.0;
 	float range_y = ((float)Image.y / (float)Window.y);
 	if (Image.x == Window.x) range_x = 1.0f;
 	if (Image.y == Window.y) range_y = 1.0f;
@@ -168,6 +168,7 @@ int Window(float* Img_res) {
 			renderer.Clear();
 			shader.Bind();
 			/////////////////////////////
+			
 			//New Frame//////////////////
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
@@ -301,7 +302,7 @@ int Window(float* Img_res) {
 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
+			
 
 			GLCall(glfwSwapBuffers(window));
 			GLCall(glfwPollEvents());

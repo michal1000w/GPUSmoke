@@ -9,6 +9,25 @@ extern Solver solver;
 
 
 int main(int argc, char* args[]) {
+    int devicesCount;
+    cudaGetDeviceCount(&devicesCount);
+    for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex)
+    {
+        cudaDeviceProp deviceProperties;
+        cudaGetDeviceProperties(&deviceProperties, deviceIndex);
+        std::cout << deviceProperties.name << "   ->  " << deviceProperties.totalGlobalMem << std::endl;
+    }
+    int Best_Device_Index = 0;
+    int Memory = 0;
+    for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+        cudaDeviceProp deviceProperties;
+        cudaGetDeviceProperties(&deviceProperties, deviceIndex);
+        if (deviceProperties.totalGlobalMem > Memory){
+            Memory = deviceProperties.totalGlobalMem;
+            Best_Device_Index = deviceIndex;
+        }
+    }
+    cudaSetDevice(Best_Device_Index);
 #ifdef EXPERIMENTAL
     solver.Initialize();
     solver.ClearCache();
