@@ -49,7 +49,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [ ] Adaptive Domain
 * [ ] Object Collision
 * [ ] Simple Forces --> (Wind, Turbulance, Noise)
-* [ ] Preset creator (LOAD/SAVE)
+* [x] Preset creator (LOAD/SAVE)
 * [x] Fix Density over 1.0 issue
 
 ### Medium-Long Term
