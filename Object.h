@@ -7,7 +7,7 @@
 #include <cuda_runtime.h>
 #include "double_buffer.cpp"
 
-#define EMMITER 1
+#define EMITTER 1
 #define SMOKE 2
 #define VDBOBJECT 3
 #define VDBSINGLE 4
@@ -29,7 +29,7 @@ public:
 	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f,float Temp = 5.0f, float Density = 0.9f, float3 location = make_float3(0.0, 0.0, 0.0), int number = -1);
 	//SETTERS-GETTERS
 	std::string get_type();
-	void set_type(std::string type = "emmiter");
+	void set_type(std::string type = "emitter");
 	float get_size();
 	void set_size(float size = 1.0f);
 	float get_initial_velocity();

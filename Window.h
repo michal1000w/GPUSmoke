@@ -209,6 +209,23 @@ int Window(float* Img_res) {
 
 			ImGui::Begin("Objects Panel");
 			{
+				ImGui::Text("Emitter type");
+				const char* items[] = { "emitter", "smoke" };// , "vdb", "vdbs" };
+				static const char* current_item = "emitter";
+
+				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+				{
+					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+					{
+						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(items[n], is_selected)) {
+							current_item = items[n];
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+					}
+					ImGui::EndCombo();
+				}
 				if (ImGui::Button("Delete selected")) {
 					REPEAT:
 					for (int object = 0; object < solver.object_list.size(); object++) {
@@ -223,8 +240,9 @@ int Window(float* Img_res) {
 					}
 				}
 				if (ImGui::Button("Add Emitter")) {
-					solver.object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
+					solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
 				}
+
 				ImGui::Text("Object list:");
 				ImGui::BeginChild("Scrolling");
 

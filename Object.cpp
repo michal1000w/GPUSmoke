@@ -38,8 +38,8 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 
 ////////////////////////GETTERS-SETTERS///////////////////////////////
 std::string OBJECT::get_type() {
-	if (this->type == EMMITER)
-		return "emmiter";
+	if (this->type == EMITTER)
+		return "emitter";
 	else if (this->type == SMOKE)
 		return "smoke";
 	else if (this->type == VDBOBJECT)
@@ -75,8 +75,8 @@ float3 OBJECT::get_location() {
 
 
 void OBJECT::set_type(std::string type) {
-	if (type == "EMMITER" || type == "emmiter")
-		this->type = EMMITER;
+	if (type == "EMITTER" || type == "emitter")
+		this->type = EMITTER;
 	else if (type == "SMOKE" || type == "smoke")
 		this->type = SMOKE;
 	else if (type == "VDB" || type == "vdb")

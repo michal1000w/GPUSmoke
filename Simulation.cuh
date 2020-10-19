@@ -92,7 +92,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 
 
-        if (current.get_type() == "emmiter") {
+        if (current.get_type() == "emitter") {
             wavey_impulse_temperature << < grid, block >> > (
                 state.temperature->readTarget(),
                 current.get_location(), SIZEE,
@@ -161,7 +161,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
         //if (false)
         if (current.get_type() == "smoke" || current.get_type() == "vdbs") {
             current.cudaFree();
-            object_list.erase(object_list.begin() + i); //remove emmiter from the list
+            object_list.erase(object_list.begin() + i); //remove emitter from the list
         }
     }
 
@@ -270,7 +270,7 @@ void simulate_fluid(fluid_state_huge& state, std::vector<OBJECT>& object_list, i
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         if (current.get_type() == "smoke")
-            object_list.erase(object_list.begin() + i); //remove emmiter from the list
+            object_list.erase(object_list.begin() + i); //remove emitter from the list
 
         if (MOVEMENT) {
             object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),

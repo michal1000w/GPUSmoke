@@ -106,11 +106,11 @@ public:
     }
 
     void ExampleScene(bool force = false) {
-        //adding emmiters
+        //adding emitters
         if (!preserve_object_list || force) {
-            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0), object_list.size()));
-            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0), object_list.size()));
-            object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0), object_list.size()));
             object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0), object_list.size()));
         }
     }
@@ -384,14 +384,14 @@ int initialize() {
 
     ////////////////
     if (EXAMPLE__ == 1) {
-        //adding emmiters
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+        //adding emitters
+        object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
         object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
     }
     else if (EXAMPLE__ == 2) {
-        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(/*left-right*/vol_d.x * 0.5, 10.0, /*front-back*/200)));
+        object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(/*left-right*/vol_d.x * 0.5, 10.0, /*front-back*/200)));
         ZOOM = 1.2; //1.8
     }
 #endif
