@@ -96,6 +96,53 @@ public:
             return 2;
         }
     }
+
+
+    void SaveSceneToFile(std::string fielname) {
+        std::vector<std::string> lines;
+        //header
+        lines.push_back("#name=JFLOW");
+        lines.push_back("#version=" + VERSION);
+        lines.push_back("#type=" + RELEASE_STATUS);
+        //simulation info
+        lines.push_back("#scene_type=" + std::to_string(SAMPLE_SCENE));
+        lines.push_back("#domain_resolution_x=" +
+            std::to_string(DOMAIN_RESOLUTION.x));
+        lines.push_back("#domain_resolution_y=" +
+            std::to_string(DOMAIN_RESOLUTION.y));
+        lines.push_back("#domain_resolution_z=" +
+            std::to_string(DOMAIN_RESOLUTION.z));
+        lines.push_back("#ambient_temperature=" + std::to_string(Ambient_Temperature));
+        lines.push_back("#smoke_dissolve=" + std::to_string(Smoke_Dissolve));
+        lines.push_back("#simulation_accuracy=" + std::to_string(ACCURACY_STEPS));
+        //render info
+        lines.push_back("#fire_and_smoke_render=" + std::to_string(Smoke_And_Fire));
+        lines.push_back("#fire_emmision_rate=" + std::to_string(Fire_Max_Temperature));
+        lines.push_back("#render_samples=" + std::to_string(STEPS));
+        lines.push_back("#preserve_object_list=" + std::to_string(preserve_object_list));
+        //cache info
+        std::string FOLDER = EXPORT_FOLDER;
+        FOLDER = trim(FOLDER);
+        lines.push_back("#output_cache=" + FOLDER);
+        lines.push_back("#end_frame=" + std::to_string(EXPORT_END_FRAME));
+
+        for (int i = 0; i < object_list.size(); i++) {
+            std::string current = "#object={";
+
+            current += object_list[i].get_type() + ";";
+            current += std::to_string(object_list[i].location.x) + ";";
+            current += std::to_string(object_list[i].location.y) + ";";
+            current += std::to_string(object_list[i].location.z) + ";";
+            current += std::to_string(object_list[i].size) + "";
+            current += "}";
+
+            lines.push_back(current);
+        }
+
+        save_scene_to_file(fielname, lines);
+    }
+
+
     void LoadSceneFromFile(std::string filename, bool DEBUG = true) {
         std::vector<std::string> lines = load_scene_from_file(filename);
 
@@ -141,11 +188,14 @@ public:
         for (int line = 0; line < lines.size(); line++) {
             if (lines[line][0] != '#') continue;
 
-            std::cout << podzial[line*2] << "    " << podzial[line*2+1] << std::endl;
+            std::cout << podzial[line*2] << "  ->  " << podzial[line*2+1] << std::endl;
 
             if (podzial[line * 2] == "scene_type") {
-                if (podzial[line * 2] == "ELEMENTS") {
+                if (podzial[line * 2 + 1] == "ELEMENTS") {
                     SAMPLE_SCENE = 0;
+                }
+                else {
+                    SAMPLE_SCENE = stoi(podzial[line * 2 + 1]);
                 }
             }
             if (podzial[line * 2] == "domain_resolution_x") {   

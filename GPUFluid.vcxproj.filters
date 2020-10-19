@@ -109,6 +109,9 @@
     <ClInclude Include="third_party\imgui\imgui_impl_glfw.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="APP_INFO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

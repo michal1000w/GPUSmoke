@@ -521,7 +521,35 @@ int export_vdb(std::string filename, int3 domain_resolution) {
 
 
 
+int save_scene_to_file(std::string filename, std::vector<std::string> lines) {
+    filename = "scenes\\" + filename + ".txt";
+    
+    std::ifstream myfile(filename);
+    if (myfile.is_open()) {
+        std::cout << "\nError!!!\n";
+        std::cout << "File already exists\n";
+        return 1;
+    }
+    else {
+        myfile.close();
 
+        std::fstream  savefile;
+        savefile.open(filename, std::ios::out);
+
+        if (savefile.is_open()) {
+            for (int i = 0; i < lines.size(); i++) {
+                savefile << lines[i] << "\n";
+            }
+        }
+        else {
+            std::cout << "\nError!!!\n";
+            std::cout << "Cannot open file\n";
+            return 1;
+        }
+        savefile.close();
+    }
+    return 0;
+}
 
 std::vector<std::string> load_scene_from_file(std::string filename) {
     filename = "scenes\\" + filename + ".txt";

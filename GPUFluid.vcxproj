@@ -11,6 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="APP_INFO.h" />
     <ClInclude Include="Common.h" />
     <ClInclude Include="cutil_math.h" />
     <ClInclude Include="double_buffer.h" />

@@ -51,7 +51,7 @@ int Window(float* Img_res) {
 
 
 	//create a windowed mode window
-	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.15  -  Michal Wieczorek", NULL, NULL);
+	window = glfwCreateWindow(Img_res[0], Img_res[1], FULL_NAME.c_str(), NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -183,6 +183,17 @@ int Window(float* Img_res) {
 			if (SAVE_FILE_TAB) {
 				ImGui::Begin("Save Panel");
 				{
+					ImGui::Text("Enter filename");
+					ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
+					if (ImGui::Button("Save")) {
+						std::string filename = solver.SAVE_FOLDER;
+						filename = trim(filename);
+						solver.SaveSceneToFile(filename);
+						SAVE_FILE_TAB = false;
+					}
+					if (ImGui::Button("Close")) {
+						SAVE_FILE_TAB = false;
+					}
 				}
 				ImGui::End();
 			}
@@ -195,6 +206,9 @@ int Window(float* Img_res) {
 						std::string filename = solver.OPEN_FOLDER;
 						filename = trim(filename);
 						solver.LoadSceneFromFile(filename);
+						OPEN_FILE_TAB = false;
+					}
+					if (ImGui::Button("Close")) {
 						OPEN_FILE_TAB = false;
 					}
 				}

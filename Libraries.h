@@ -12,6 +12,7 @@
 
 //#include <cuda_fp16.h> //to siê gryzie
 #include "cutil_math.h"
+#include "APP_INFO.h"
 
 
 //#include "Fluid_Kernels.cuh"
