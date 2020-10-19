@@ -41,7 +41,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 ### Short Term
 * [x] Render temperature
 * [x] Simple Graphical Interface
-* [ ] Sliders with most important factors
+* [x] Sliders with most important factors
 * [x] Camera and light rotation
 
 ### Short-Medium Term
