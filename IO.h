@@ -1,10 +1,32 @@
 #ifndef __IO
 #define __IO
 #include "Libraries.h"
+#include <string>
+#include <iostream>
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <filesystem>
+#include <experimental/filesystem>
 #include <vector>
 
 
 //#include "OpenVDB/tinyvdbio.h"
+
+
+
+std::vector<std::string> get_file_list(std::string directory) {
+    std::vector<std::string> list;
+    for (const auto& entry : std::experimental::filesystem::directory_iterator(directory)) {
+        //std::cout << entry.path() << std::endl;
+        list.push_back(entry.path().string());
+    }
+    return list;
+}
+
+
+
+
+
+
 
 #include <stdio.h>
 const int BYTES_PER_PIXEL = 3; /// red, green, & blue

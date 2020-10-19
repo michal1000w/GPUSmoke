@@ -194,6 +194,15 @@ int Window(float* Img_res) {
 					if (ImGui::Button("Close")) {
 						SAVE_FILE_TAB = false;
 					}
+					ImGui::Text("Saved projects:");
+					ImGui::BeginChild("Scrolling");
+					std::string directory = "scenes\\";
+					std::vector <std::string> list = solver.getFilesList(directory);
+					for (int object = 0; object < list.size(); object++) {
+						std::string name = (" -> " + list[object]);
+						ImGui::Text(name.c_str());
+					}
+					ImGui::EndChild();
 				}
 				ImGui::End();
 			}
@@ -211,6 +220,17 @@ int Window(float* Img_res) {
 					if (ImGui::Button("Close")) {
 						OPEN_FILE_TAB = false;
 					}
+					///////////////////////////////////////
+					ImGui::Text("Saved projects:");
+					ImGui::BeginChild("Scrolling");
+					std::string directory = "scenes\\";
+					std::vector <std::string> list = solver.getFilesList(directory);
+					for (int object = 0; object < list.size(); object++) {
+						std::string name = (" -> " + list[object]);
+						ImGui::Text(name.c_str());
+					}
+					ImGui::EndChild();
+					///////////////////////////////////////
 				}
 				ImGui::End();
 			}
@@ -222,10 +242,12 @@ int Window(float* Img_res) {
 					if (ImGui::BeginMenu("File"))
 					{
 						if (ImGui::MenuItem("Open..", "Ctrl+O")) {
+							SAVE_FILE_TAB = false;
 							OPEN_FILE_TAB = true;
 							//solver.LoadSceneFromFile("scene2");
 						}
 						if (ImGui::MenuItem("Save", "Ctrl+S")) {
+							OPEN_FILE_TAB = false;
 							SAVE_FILE_TAB = true;
 						}
 						if (ImGui::MenuItem("Close", "Ctrl+W")) { 

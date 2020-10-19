@@ -97,6 +97,9 @@ public:
         }
     }
 
+    std::vector<std::string> getFilesList(std::string directory) {
+        return get_file_list(directory);
+    }
 
     void SaveSceneToFile(std::string fielname) {
         std::vector<std::string> lines;
