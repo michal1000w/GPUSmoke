@@ -25,6 +25,7 @@ public:
     float speed;
     std::vector<OBJECT> object_list;
     bool preserve_object_list;
+    int SAMPLE_SCENE;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -88,13 +89,13 @@ public:
         GRID3D sphere(vol_d.x, vol_d.y, vol_d.z);
         load_vdb("sphere", vol_d, sphere);
         std::cout << "Loaded in : " << double(clock() - startTime) << std::endl;
-        if (false) {
+        if (SAMPLE_SCENE == 2) {
             OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
             SPHERE.load_density_grid(sphere, 3.0);
             object_list.push_back(SPHERE);
             SPHERE.free();
         }
-        else {
+        else if (SAMPLE_SCENE == 1){
             OBJECT SPHERE("vdbsingle", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
             SPHERE.load_density_grid(sphere, 6.0);
             object_list.push_back(SPHERE);
@@ -108,10 +109,9 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
         if (!preserve_object_list || force) {
-            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0), object_list.size()));
-            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0), object_list.size()));
-            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0), object_list.size()));
-            object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0), object_list.size()));
+            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
+            //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
+            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, vol_d.z / 2.0), object_list.size()));
         }
     }
 
@@ -120,7 +120,7 @@ public:
 
         srand(0);
         //simulation settings
-        DOMAIN_RESOLUTION = make_int3(256, 490, 256);
+        DOMAIN_RESOLUTION = make_int3(96, 490, 96);
         New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
         object_list;
@@ -156,7 +156,7 @@ public:
         //Z - prz�d ty�
         setCamera(static_cast<float>(vol_d.x) * 0.5,
             static_cast<float>(vol_d.y) * 0.5,
-            static_cast<float>(vol_d.z) * -0.4 * (1.0 / ZOOM));
+            static_cast<float>(vol_d.z) * -1.1 * (1.0 / ZOOM));
 
         setLight(5.0, 1.0, -0.5);
 
@@ -164,6 +164,7 @@ public:
 
     Solver() {
         std::cout << "Create Solver Instance" << std::endl;
+        SAMPLE_SCENE = 0;
         Initialize();
         ExampleScene(true);
         preserve_object_list = true;
@@ -210,11 +211,12 @@ public:
         delete state;
         delete[] img;
 
-        if (!preserve_object_list) {
+        if (!preserve_object_list || SAMPLE_SCENE == 1 || SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
-                if (i.get_type() == "vdb" || i.get_type() == "vdbs")
-                    i.cudaFree();
-                i.free();
+                //if (i.get_type() == "vdb" || i.get_type() == "vdbs")
+                    //i.cudaFree();
+                if (i.get_type() != "vdb")
+                    i.free();
             }
             object_list.clear();
         }

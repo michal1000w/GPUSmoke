@@ -31,11 +31,10 @@ void UpdateSolver() {
 	//solver.Initialize();
 	solver.UpdateDomainResolution();
 	//solver.UpdateTimeStep();
-#ifdef OBJECTS_EXPERIMENTAL
-	solver.ExampleScene();
-#else
-	solver.ExportVDBScene();
-#endif
+	if (solver.SAMPLE_SCENE == 0)
+		solver.ExampleScene();
+	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
+		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
 }
 
@@ -52,7 +51,7 @@ int Window(float* Img_res) {
 
 
 	//create a windowed mode window
-	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.1", NULL, NULL);
+	window = glfwCreateWindow(Img_res[0], Img_res[1], "JFlow Alpha 0.0.1  -  Michal Wieczorek", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -175,6 +174,37 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 			/////////////////////////////
 			/////    CREATE WINDOW    ///
+			ImGui::Begin("IO Panel");
+			{
+				ImGui::Text("Example scenes");
+				const char* items[] = { "VDB","VDBFire", "Objects" };// , "vdb", "vdbs" };
+				static const char* current_item = "Objects";
+
+				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+				{
+					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+					{
+						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+						if (ImGui::Selectable(items[n], is_selected)) {
+							current_item = items[n];
+						}
+						if (is_selected)
+							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+					}
+					ImGui::EndCombo();
+				}
+				if (ImGui::Button("Load Scene")) {
+					if (current_item == "VDB")
+						solver.SAMPLE_SCENE = 1;
+					else if (current_item == "Objects")
+						solver.SAMPLE_SCENE = 0;
+					else if (current_item == "VDBFire")
+						solver.SAMPLE_SCENE = 2;
+					solver.preserve_object_list = false;
+					UpdateSolver();
+					solver.preserve_object_list = true;
+				}
+			}
 			ImGui::Begin("Properties Panel");
 			{
 				ImGui::Text("Domain Resolution");
