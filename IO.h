@@ -483,7 +483,10 @@ using BufferT = nanovdb::CudaDeviceBuffer;
 int export_vdb(std::string filename, int3 domain_resolution) {
     filename = "input//" + filename + ".nvdb";
     try {
-        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(100, 40, 100), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+        float size = min(min(domain_resolution.x, domain_resolution.y),domain_resolution.z);
+        size /= 3;
+        auto handle = nanovdb::createFogVolumeSphere<float, BufferT>(
+            size, nanovdb::Vec3R(domain_resolution.x/2.0, 0.0, domain_resolution.z/2), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
        
         nanovdb::io::writeGrid(filename, handle, nanovdb::io::Codec::BLOSC);
     }

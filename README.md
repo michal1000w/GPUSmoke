@@ -26,6 +26,17 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 2. Create a new folder named `cache` in `output` folder
 3. Run `gpufluid.exe`
 
+##GUI
+1. W - zoom in
+2. S - zoom out
+3. A - go left
+4. D - go right
+5. Left mouse button + A/D rotate camera
+6. Scrool zomm in/out
+7. Q - camera up
+8. Z - camera down
+9. R - reset simulation
+
 ## TODO list
 ### Short Term
 * [x] Render temperature

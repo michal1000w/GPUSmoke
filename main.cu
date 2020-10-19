@@ -13,6 +13,7 @@ int main(int argc, char* args[]) {
     solver.Initialize();
     solver.ClearCache();
     solver.ExportVDBScene();
+    //solver.ExampleScene();
     float Window_Resolution[2] = { 1600, 640 };
     float Image_Resolution[2] = { 640, 640 };
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);

@@ -14,6 +14,7 @@ public:
     float Fire_Max_Temperature;
     int STEPS;
     bool Smoke_And_Fire;
+    int3 New_DOMAIN_RESOLUTION;
 private:
     int3 DOMAIN_RESOLUTION;
     std::vector<OBJECT> object_list;
@@ -33,6 +34,16 @@ private:
     dim3 full_grid;
     dim3 full_block;
 public:
+    void UpdateDomainResolution() {
+        if (New_DOMAIN_RESOLUTION.x * New_DOMAIN_RESOLUTION.y * New_DOMAIN_RESOLUTION.z <= 490*490*490){
+            DOMAIN_RESOLUTION = New_DOMAIN_RESOLUTION;
+            std::cout << "New domain resolution set\n";
+            }
+        else
+            std::cout << "\nError!!!\nDomain Size too Big\n";
+
+        vol_d = make_int3(DOMAIN_RESOLUTION.x, DOMAIN_RESOLUTION.y, DOMAIN_RESOLUTION.z); //Domain resolution
+    }
     unsigned int frame;
     void setImageResolution(unsigned int x, unsigned int y) {
         Image_Resolution[0] = x;
@@ -53,7 +64,9 @@ public:
     }
 
     void ExportVDBScene() {
+        std::cout << "Exporting scene\n";
         export_vdb("sphere", vol_d);
+        std::cout << "Done\n";
 
 
         clock_t startTime = clock();
@@ -65,6 +78,7 @@ public:
             OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
             SPHERE.load_density_grid(sphere, 3.0);
             object_list.push_back(SPHERE);
+            SPHERE.free();
         }
         else {
             OBJECT SPHERE("vdbsingle", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
@@ -77,12 +91,21 @@ public:
         
     }
 
+    void ExampleScene() {
+        //adding emmiters
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 10.0, 200.0)));
+        object_list.push_back(OBJECT("emmiter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, 200.0)));
+        object_list.push_back(OBJECT("smoke", 10, 50, 0.9, 50, 1.0, make_float3(vol_d.x * 0.5, 30.0, 200.0)));
+    }
+
     void Initialize() {
         openvdb::initialize();
 
         srand(0);
         //simulation settings
-        DOMAIN_RESOLUTION = make_int3(256, 600, 256);
+        DOMAIN_RESOLUTION = make_int3(64, 64, 64);
+        New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
         object_list;
 

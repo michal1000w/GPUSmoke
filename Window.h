@@ -161,15 +161,26 @@ int Window(float* Img_res) {
 			/////    CREATE WINDOW    ///
 			ImGui::Begin("Properties Panel");
 			{
+				ImGui::Text("Domain Resolution");
+				ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, 490);
+				ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, 490);
+				ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, 490);
+
+
+
 				ImGui::Text("Simulation Settings");
-				ImGui::SliderFloat("Ambient Temp:", &solver.Ambient_Temperature, -10.0f, 100.0f);
-				ImGui::SliderFloat("Smoke Dissolve:", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-				ImGui::SliderInt("Simulation accuracy:", &solver.ACCURACY_STEPS, 1, 32);
+				ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
+				ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
+				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 32);
 				//ImGui::ColorEdit3("clear color", (float*)&clear_color);
+
+
+
+
 
 				ImGui::Text("Render Settings:");
 				ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
-				ImGui::SliderInt("Render samples:", &solver.STEPS, 1, 512);
+				ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
 
 
 				if (ImGui::Button("Reset")) {
@@ -180,6 +191,7 @@ int Window(float* Img_res) {
 					solver.Clear_Simulation_Data();
 					
 					//solver.Initialize();
+					solver.UpdateDomainResolution();
 					solver.ExportVDBScene();
 					solver.Initialize_Simulation();
 				}
@@ -245,8 +257,15 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		solver.Clear_Simulation_Data();
 		//preparation
 		//solver.Initialize();
+		solver.UpdateDomainResolution();
 		solver.ExportVDBScene();
 		solver.Initialize_Simulation();
+	}
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y + 2.5f, solver.getCamera().z);
+	}
+	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y - 2.5f, solver.getCamera().z);
 	}
 }
 
