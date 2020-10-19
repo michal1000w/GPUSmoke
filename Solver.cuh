@@ -13,6 +13,42 @@
 
 #ifdef EXPERIMENTAL
 
+std::string trim(const std::string& str,
+    const std::string& whitespace = " \t")
+{
+    const auto strBegin = str.find_first_not_of(whitespace);
+    if (strBegin == std::string::npos)
+        return ""; // no content
+
+    const auto strEnd = str.find_last_not_of(whitespace);
+    const auto strRange = strEnd - strBegin + 1;
+
+    return str.substr(strBegin, strRange);
+}
+
+std::string reduce(const std::string& str,
+    const std::string& fill = " ",
+    const std::string& whitespace = " \t")
+{
+    // trim first
+    auto result = trim(str, whitespace);
+
+    // replace sub ranges
+    auto beginSpace = result.find_first_of(whitespace);
+    while (beginSpace != std::string::npos)
+    {
+        const auto endSpace = result.find_first_not_of(whitespace, beginSpace);
+        const auto range = endSpace - beginSpace;
+
+        result.replace(beginSpace, range, fill);
+
+        const auto newStart = beginSpace + fill.length();
+        beginSpace = result.find_first_of(whitespace, newStart);
+    }
+
+    return result;
+}
+
 class Solver {
 public:
     int ACCURACY_STEPS;//
@@ -26,6 +62,9 @@ public:
     std::vector<OBJECT> object_list;
     bool preserve_object_list;
     int SAMPLE_SCENE;
+    int EXPORT_END_FRAME;
+    char EXPORT_FOLDER[100] = {0};
+    bool EXPORT_VDB;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -74,7 +113,10 @@ public:
         std::cout << "Clearing previous frames\n";
         //std::system("erase_imgs.sh");
         std::system("rm ./output/*.bmp");
-        std::system("rm ./output/cache/*");
+        std::string FOLDER = EXPORT_FOLDER;
+        FOLDER = trim(FOLDER);
+        //std::system("rm ./output/cache/*");
+        std::system(("rm ./" + FOLDER + "*").c_str());
         std::cout << "Done";
     }
 
@@ -165,6 +207,11 @@ public:
     Solver() {
         std::cout << "Create Solver Instance" << std::endl;
         SAMPLE_SCENE = 0;
+        EXPORT_END_FRAME = 500;
+        std::string folder = "output/cache/";
+        for (int i = 0; i < folder.length(); i++)
+            EXPORT_FOLDER[i] = folder[i];
+        EXPORT_VDB = false;
         Initialize();
         ExampleScene(true);
         preserve_object_list = true;
@@ -221,7 +268,7 @@ public:
             object_list.clear();
         }
 
-        printf("CUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
+        printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
         cudaThreadExit();
     }
@@ -246,23 +293,27 @@ public:
         //save_image(img, img_d, "output/R" + pad_number(f + 1) + ".ppm");
         generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
 
-        if (false) {
+        if (EXPORT_VDB) {
             GRID3D* arr = new GRID3D();
             GRID3D* arr_temp = new GRID3D();
             arr->set_pointer(state->density->readToGrid());
             arr_temp->set_pointer(state->temperature->readToGrid());
-            export_openvdb("frame." + std::to_string(f), vol_d, arr, arr_temp);
-            arr->free();
-            arr_temp->free();
+            std::string FOLDER = EXPORT_FOLDER;
+            FOLDER = trim(FOLDER);
+            export_openvdb(FOLDER,"frame." + std::to_string(f), vol_d, arr, arr_temp, false);
+            //arr->free();
+            //arr_temp->free();
             delete arr;
             delete arr_temp;
+            if (frame >= EXPORT_END_FRAME)
+                EXPORT_VDB = false;
         }
     }
     unsigned char* loadImgData() {
         return img;
     }
 };
-
+Solver solver;
 #else
 
 void Medium_Scale(int3 vol_d, int3 img_d, uint8_t* img,

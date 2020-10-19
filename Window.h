@@ -7,7 +7,7 @@
 #include "Texture.h"
 
 #include "Solver.cuh"
-Solver solver;
+extern Solver solver;
 
 
 #include "third_party/imgui/imgui.h"
@@ -203,6 +203,13 @@ int Window(float* Img_res) {
 					solver.preserve_object_list = false;
 					UpdateSolver();
 					solver.preserve_object_list = true;
+				}
+				ImGui::Text("Exporting settings");
+				ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
+				ImGui::InputText("Cache Folder",solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
+				if (ImGui::Button("Export VDB")) {
+					solver.EXPORT_VDB = true;
+					UpdateSolver();
 				}
 			}
 			ImGui::Begin("Properties Panel");

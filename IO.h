@@ -2,6 +2,8 @@
 #define __IO
 #include "Libraries.h"
 #include <vector>
+
+
 //#include "OpenVDB/tinyvdbio.h"
 
 #include <stdio.h>
@@ -140,6 +142,8 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 
 
 void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
+    bool DEBUG = false;
+    
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst.background();
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
@@ -147,9 +151,14 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
     //get bounding box
     int3 dim = grid_src->get_resolution();
 
+    if (DEBUG)
+    std::cout << dim.x << ";" << dim.y << ";" << dim.z << std::endl;
+
     // Get a voxel accessor.
 
     float* grid_src_arr = grid_src->get_grid();
+    if (DEBUG)
+    std::cout << "Copying..." << std::endl;
 
     typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
     for (int x = 0; x < dim.x; x++) {
@@ -159,10 +168,16 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
             }
         }
     }
+    if (DEBUG)
+    std::cout << "Clearing\n";
 delete[] grid_src_arr;
-grid_src->free();
+//grid_src->free();
+if (DEBUG)
+std::cout << "Cleared\n";
 auto tree = grid_dst.tree();
 tree.clearAllAccessors();
+if (DEBUG)
+std::cout << "Transforming\n";
 openvdb::tools::signedFloodFill(tree);
 grid_dst.setTransform(
     openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
@@ -271,12 +286,13 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
             openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
 }
 
-int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
-    filename = "output/cache/" + filename + ".vdb";
+int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = true) {
+    filename = folder + filename + ".vdb";
     
     std::cout << " || Saving OpenVDB:  ";
     clock_t startTime = clock();
     
+    std::cout << "\n" << filename << std::endl;
 
     std::vector < GRID3D* > grids_src;
     std::vector <openvdb::FloatGrid::Ptr> grids_dst;
@@ -287,6 +303,8 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     openvdb::FloatGrid::Ptr grid_temp2 =
         openvdb::FloatGrid::create(/*background value=*/0.0);
 
+    if (DEBUG)
+        std::cout << "Grids prepared" << std::endl;
     ////////////////////////////////////////////////////////
     grid->setName("density");
     grid_temp2->setName("temperature");
@@ -296,10 +314,14 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     grids_dst.push_back(grid);
     grids_dst.push_back(grid_temp2);
     ////////////////////////////////////////////////////////
+
+    if (DEBUG)
+        std::cout << "Starting threads" << std::endl;
     
     //for (int i = 0; i < grids_src.size(); i++) {
     std::mutex mtx1;
     concurrency::parallel_for(0, 2, [&](int i) {
+    //for (int i = 0; i < 2; i++){
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
@@ -308,7 +330,8 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
         grids->push_back(grids_dst[i]);
         });
     
-
+    if (DEBUG)
+        std::cout << "Grids copied" << std::endl;
 
     std::cout << (clock() - startTime);
     startTime = clock();
@@ -321,10 +344,11 @@ int export_openvdb(std::string filename, int3 domain_resolution, GRID3D* grid_ds
     file.write({ grid, grid_temp2 });
     file.close();
     */
-
     
     std::ofstream ofile(filename, std::ios_base::binary);
     openvdb::io::Stream(ofile).write(*grids);
+    if (DEBUG)
+        std::cout << "Grids saved" << std::endl;
     
     grids_dst.clear();
     grids_src.clear();
