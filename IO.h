@@ -43,7 +43,6 @@ void generateBitmapImage(unsigned char* image, int height, int width, const char
     }
     
     fclose(imageFile);
-    delete[] infoHeader;
 }
 
 unsigned char* createBitmapFileHeader(int height, int stride)
@@ -70,7 +69,7 @@ unsigned char* createBitmapFileHeader(int height, int stride)
 
 unsigned char* createBitmapInfoHeader(int height, int width)
 {
-    /*
+    
     static unsigned char infoHeader[] = {
         0,0,0,0, /// header size
         0,0,0,0, /// image width
@@ -84,10 +83,6 @@ unsigned char* createBitmapInfoHeader(int height, int width)
         0,0,0,0, /// colors in color table
         0,0,0,0, /// important color count
     };
-    */
-    unsigned char* infoHeader = new unsigned char[17+36];
-    for (int i = 0; i < 17 + 36; i++)
-        infoHeader[i] = 0;
     infoHeader[0] = (unsigned char)(INFO_HEADER_SIZE);
     infoHeader[4] = (unsigned char)(width);
     infoHeader[5] = (unsigned char)(width >> 8);
