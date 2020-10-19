@@ -63,7 +63,9 @@ public:
     bool preserve_object_list;
     int SAMPLE_SCENE;
     int EXPORT_END_FRAME;
-    char EXPORT_FOLDER[100] = {0};
+    char EXPORT_FOLDER[100] = { 0 };
+    char SAVE_FOLDER[100] = { 0 };
+    char OPEN_FOLDER[100] = { 0 };
     bool EXPORT_VDB;
     bool SIMULATE;
 private:

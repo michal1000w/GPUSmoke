@@ -154,6 +154,8 @@ int Window(float* Img_res) {
 
 		float fps = 0;
 		bool save_panel = true;
+		bool SAVE_FILE_TAB = false;
+		bool OPEN_FILE_TAB = false;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
@@ -178,16 +180,40 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 			/////////////////////////////
 			/////    CREATE WINDOW    ///
+			if (SAVE_FILE_TAB) {
+				ImGui::Begin("Save Panel");
+				{
+				}
+				ImGui::End();
+			}
+			if (OPEN_FILE_TAB) {
+				ImGui::Begin("Open Panel");
+				{
+					ImGui::Text("Enter filename");
+					ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
+					if (ImGui::Button("Open")) {
+						std::string filename = solver.OPEN_FOLDER;
+						filename = trim(filename);
+						solver.LoadSceneFromFile(filename);
+						OPEN_FILE_TAB = false;
+					}
+				}
+				ImGui::End();
+			}
+
 			ImGui::Begin("IO Panel", &save_panel , ImGuiWindowFlags_MenuBar);
 			{
 				if (ImGui::BeginMenuBar())
 				{
 					if (ImGui::BeginMenu("File"))
 					{
-						if (ImGui::MenuItem("Open..", "Ctrl+O")) { 
-							solver.LoadSceneFromFile("scene2");
+						if (ImGui::MenuItem("Open..", "Ctrl+O")) {
+							OPEN_FILE_TAB = true;
+							//solver.LoadSceneFromFile("scene2");
 						}
-						if (ImGui::MenuItem("Save", "Ctrl+S")) { /* Do stuff */ }
+						if (ImGui::MenuItem("Save", "Ctrl+S")) {
+							SAVE_FILE_TAB = true;
+						}
 						if (ImGui::MenuItem("Close", "Ctrl+W")) { 
 							save_panel = false;
 							break; }
@@ -235,6 +261,7 @@ int Window(float* Img_res) {
 					UpdateSolver();
 				}
 			}
+			ImGui::End();
 			ImGui::Begin("Properties Panel");
 			{
 				ImGui::Text("Domain Resolution");
