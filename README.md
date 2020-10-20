@@ -49,7 +49,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
 * [ ] Adaptive Domain
 * [ ] Object Collision
-* [ ] Simple Forces --> (Wind, Turbulance, Noise)
+* [x] Simple Forces --> (Wind, Turbulance, Noise)
 * [x] Preset creator (LOAD/SAVE)
 * [x] Fix Density over 1.0 issue
 
