@@ -11,6 +11,8 @@ extern Solver solver;
 int main(int argc, char* args[]) {
     int devicesCount;
     cudaGetDeviceCount(&devicesCount);
+    std::cout << "Found " << devicesCount << " devices:" << std::endl;
+    std::cout << "----------------------------------------" << std::endl;
     for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex)
     {
         cudaDeviceProp deviceProperties;
@@ -19,7 +21,7 @@ int main(int argc, char* args[]) {
     }
     int Best_Device_Index = 0;
     int Memory = 0;
-    for (int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex) {
+    for (int deviceIndex = 0; deviceIndex < devicesCount; deviceIndex++) {
         cudaDeviceProp deviceProperties;
         cudaGetDeviceProperties(&deviceProperties, deviceIndex);
         if (deviceProperties.totalGlobalMem > Memory){
@@ -27,7 +29,9 @@ int main(int argc, char* args[]) {
             Best_Device_Index = deviceIndex;
         }
     }
+    std::cout << "----------------------------------------" << std::endl;
     cudaSetDevice(Best_Device_Index);
+    std::cout << "Choosing device: " << Best_Device_Index << std::endl;
 #ifdef EXPERIMENTAL
     solver.Initialize();
     //solver.ClearCache();

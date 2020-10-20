@@ -82,8 +82,11 @@ int Window(float* Img_res) {
 	int2 Window = make_int2(Img_res[0], Img_res[1]);
 
 	
-	float range_x = ((float)Image.x / (float)Window.x)/2.0;
+	float range_x = ((float)Image.x / (float)Window.x);
+	range_x = 2.0 * range_x - 1.0;
+
 	float range_y = ((float)Image.y / (float)Window.y);
+	range_y = 2.0 * range_y - 1.0;
 	if (Image.x == Window.x) range_x = 1.0f;
 	if (Image.y == Window.y) range_y = 1.0f;
 	{
@@ -290,9 +293,11 @@ int Window(float* Img_res) {
 					solver.preserve_object_list = true;
 				}
 				ImGui::Text("Exporting settings");
+				ImGui::InputInt("Start frame", &solver.EXPORT_START_FRAME);
 				ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
 				ImGui::InputText("Cache Folder",solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
 				if (ImGui::Button("Export VDB")) {
+					solver.ClearCache();
 					solver.EXPORT_VDB = true;
 					UpdateSolver();
 				}
@@ -339,7 +344,7 @@ int Window(float* Img_res) {
 			ImGui::Begin("Objects Panel");
 			{
 				ImGui::Text("Emitter type");
-				const char* items[] = { "emitter", "smoke" };// , "vdb", "vdbs" };
+				const char* items[] = { "emitter", "force" };// , "vdb", "vdbs" };
 				static const char* current_item = "emitter";
 
 				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
@@ -382,6 +387,8 @@ int Window(float* Img_res) {
 					ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
 					ImGui::SliderFloat3(("position-"+std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
 					ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 100.0);
+					if (solver.object_list[object].type >= 5)
+						ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
 					solver.object_list[object].UpdateLocation();
 				}
 				ImGui::EndChild();

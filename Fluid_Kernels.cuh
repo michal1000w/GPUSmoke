@@ -291,6 +291,27 @@ __global__ void soft_impulse(T* target, float3 c,
 }
 
 template <typename T>
+__global__ void force_field_force(T* target, float3 c,
+    float radius, float force, int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    T cur = target[get_voxel(x, y, z, vd)];
+
+    if (dist < radius) {
+        target[get_voxel(x, y, z, vd)] = cur + force * (1.0f/(dist*dist));
+    }
+}
+
+template <typename T>
 __global__ void wavey_impulse_temperature(T* target, float3 c,
     float3 size, T base, float amp, float freq, int3 vd, int frame)
 {

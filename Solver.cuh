@@ -63,6 +63,7 @@ public:
     bool preserve_object_list;
     int SAMPLE_SCENE;
     int EXPORT_END_FRAME;
+    int EXPORT_START_FRAME;
     char EXPORT_FOLDER[100] = { 0 };
     char SAVE_FOLDER[100] = { 0 };
     char OPEN_FOLDER[100] = { 0 };
@@ -128,6 +129,7 @@ public:
         FOLDER = trim(FOLDER);
         lines.push_back("#output_cache=" + FOLDER);
         lines.push_back("#end_frame=" + std::to_string(EXPORT_END_FRAME));
+        lines.push_back("#start_frame=" + std::to_string(EXPORT_START_FRAME));
 
         for (int i = 0; i < object_list.size(); i++) {
             std::string current = "#object={";
@@ -241,6 +243,9 @@ public:
             }
             if (podzial[line * 2] == "end_frame") {
                 EXPORT_END_FRAME = stoi(podzial[line * 2 + 1]);
+            }
+            if (podzial[line * 2] == "start_frame") {
+                EXPORT_START_FRAME = stoi(podzial[line * 2 + 1]);
             }
 
             if (podzial[line * 2] == "object") {
@@ -362,6 +367,7 @@ public:
 
 
         //rendering settings
+        
         FRAMES = 500;
         Fire_Max_Temperature = 50.0f;
         Image_Resolution[0] = 640;
@@ -396,6 +402,7 @@ public:
     Solver() {
         std::cout << "Create Solver Instance" << std::endl;
         SAMPLE_SCENE = 0;
+        EXPORT_START_FRAME = 0;
         EXPORT_END_FRAME = 500;
         std::string folder = "output/cache/";
         for (int i = 0; i < folder.length(); i++)
@@ -483,7 +490,7 @@ public:
         generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
         
 
-        if (EXPORT_VDB) {
+        if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
             GRID3D* arr = new GRID3D();
             GRID3D* arr_temp = new GRID3D();
             arr->set_pointer(state->density->readToGrid());

@@ -33,6 +33,7 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 		this->name += std::to_string(number);
 	this->selected = false;
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
+	this->force_strength = 0.0f;
 }
 
 
@@ -46,7 +47,42 @@ std::string OBJECT::get_type() {
 		return "vdb";
 	else if (this->type == VDBSINGLE)
 		return "vdbs";
+	else if (this->type == FORCE_FIELD_FORCE)
+		return "fff";
 }
+
+void OBJECT::set_type(std::string type) {
+	if (type == "EMITTER" || type == "emitter")
+		this->type = EMITTER;
+	else if (type == "SMOKE" || type == "smoke")
+		this->type = SMOKE;
+	else if (type == "VDB" || type == "vdb")
+		this->type = VDBOBJECT;
+	else if (type == "VDBSINGLE" || type == "vdbsingle")
+		this->type = VDBSINGLE;
+	else if (type == "FFieldFORCE" || type == "force" || type == "fff")
+		this->type = FORCE_FIELD_FORCE;
+	else {
+		std::cout << "Type: " << type << " not known!!!" << std::endl;
+		exit(1);
+	}
+}
+
+std::string OBJECT::get_object() {
+	std::string namee = "";
+	if (this->type < 5) namee += "OBJ-";
+	else if (this->type >= 5) namee += "FF-";
+	namee += get_type();
+	return namee;
+}
+
+
+
+
+
+
+
+
 
 float OBJECT::get_size() {
 	return this->size;
@@ -74,20 +110,7 @@ float3 OBJECT::get_location() {
 //////////////////
 
 
-void OBJECT::set_type(std::string type) {
-	if (type == "EMITTER" || type == "emitter")
-		this->type = EMITTER;
-	else if (type == "SMOKE" || type == "smoke")
-		this->type = SMOKE;
-	else if (type == "VDB" || type == "vdb")
-		this->type = VDBOBJECT;
-	else if (type == "VDBSINGLE" || type == "vdbsingle")
-		this->type = VDBSINGLE;
-	else {
-		std::cout << "Type: " << type << " not known!!!" << std::endl;
-		exit(1);
-	}
-}
+
 
 void OBJECT::set_size(float size) {
 	this->size = size;
@@ -135,11 +158,7 @@ float OBJECT::get_initial_temp() {
 	return this->initial_temperature;
 }
 
-std::string OBJECT::get_object() {
-	std::string namee = "OBJ-";
-	namee += get_type();
-	return namee;
-}
+
 
 std::string OBJECT::get_name() {
 	return name;

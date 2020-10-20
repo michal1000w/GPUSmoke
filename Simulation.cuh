@@ -155,7 +155,14 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 state.dim
                 , current.get_density_grid().get_grid_device()
                 );
-
+        }
+        else if (current.get_type() == "fff") {
+            force_field_force << < grid, block >> > (
+                state.velocity->readTarget(),
+                current.get_location(), current.size,
+                current.force_strength,
+                state.dim
+                );
         }
 
         //if (false)

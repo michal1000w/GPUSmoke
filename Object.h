@@ -11,6 +11,7 @@
 #define SMOKE 2
 #define VDBOBJECT 3
 #define VDBSINGLE 4
+#define FORCE_FIELD_FORCE 5
 #define MS_TO_SEC 0.001
 
 
@@ -48,24 +49,21 @@ public:
     GRID3D get_density_grid();
     float get_initial_temp();
     void cudaFree() { vdb_object.freeCuda(); }
-	void free() {
-		vdb_object.free();
-	}
+	void free() { vdb_object.free(); }
 	std::string get_object();
 	std::string get_name();
 	void set_name(std::string);
+	void set_force_strength(float strength) { force_strength = strength; }
+	float get_force_strength() const { return force_strength; }
 
-	void UpdateLocation() {
-		this->location.x = Location[0];
-		this->location.y = Location[1];
-		this->location.z = Location[2];
-	}
+	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
 
 	bool selected;
 	float Location[3];
 	float size;
-private:
+	float force_strength;
 	int type;
+private:
 	float initial_velocity;
 	float velocity_frequence;
 	float impulseTemp;
