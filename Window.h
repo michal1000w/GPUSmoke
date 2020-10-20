@@ -243,6 +243,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SameLine();
 		ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
 		ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
+		ImGui::Text(("Frame: " + std::to_string(solver.frame)).c_str());
 	}
 	ImGui::End();
 	/////////////////////////////
@@ -291,10 +292,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text(name.c_str());
 			ImGui::SameLine();
 			ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
-			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
+			float maximum = max(max(solver.New_DOMAIN_RESOLUTION.x, solver.New_DOMAIN_RESOLUTION.y), solver.New_DOMAIN_RESOLUTION.z);
+			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, maximum);
 			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
 			if (solver.object_list[object].type >= 5) {
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
+				ImGui::SameLine();
+				ImGui::Checkbox(("Square-" + std::to_string(object)).c_str(), &solver.object_list[object].square);
 				if (solver.object_list[object].type == FORCE_FIELD_TURBULANCE)
 					ImGui::SliderFloat(("turbulance frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, 20);
 				if (solver.object_list[object].type == FORCE_FIELD_WIND)

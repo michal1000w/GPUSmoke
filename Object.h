@@ -65,6 +65,7 @@ public:
 	float Location[3];
 	float size;
 	float force_strength;
+	bool square = false;
 	int type;
 	float initial_velocity;
 	float force_direction[3] = { 1.0,0,0 };

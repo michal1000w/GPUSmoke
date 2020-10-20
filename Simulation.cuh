@@ -157,29 +157,60 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 );
         }
         else if (current.get_type() == "fff") {
-            force_field_force << < grid, block >> > (
-                state.velocity->readTarget(),
-                current.get_location(), current.size,
-                current.force_strength,
-                state.dim
-                );
+            if (current.square) {
+                force_field_force << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength * current.force_strength,
+                    state.dim
+                    );
+            }
+            else {
+                force_field_force << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength,
+                    state.dim
+                    );
+            }
         }
         else if (current.get_type() == "ffp") {
-            force_field_power << < grid, block >> > (
-                state.velocity->readTarget(),
-                current.get_location(), current.size,
-                current.force_strength,
-                state.dim
-                );
+            if (current.square) {
+                force_field_power << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength * current.force_strength,
+                    state.dim
+                    );
+            }
+            else {
+                force_field_power << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength,
+                    state.dim
+                    );
+            }
         }
         else if (current.get_type() == "fft") {
-            force_field_turbulance << < grid, block >> > (
-                state.velocity->readTarget(),
-                current.get_location(), current.size,
-                current.force_strength, current.set_vel_freq + current.velocity_frequence,
-                state.dim,
-                frame
-                );
+            if (current.square) {
+                force_field_turbulance << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength*current.force_strength, current.set_vel_freq + current.velocity_frequence,
+                    state.dim,
+                    frame
+                    );
+            }
+            else {
+                force_field_turbulance << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength, current.set_vel_freq + current.velocity_frequence,
+                    state.dim,
+                    frame
+                    );
+            }
             if (current.vel_freq_mov) {
                 current.set_vel_freq += current.vel_freq_step;
                 if (current.set_vel_freq >= current.max_vel_freq)
@@ -192,6 +223,18 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
             }
         }
         else if (current.get_type() == "ffw") {
+            if (current.square) {
+                float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
+                force_field_wind << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength * current.force_strength,
+                    direction,
+                    state.dim
+                    );
+            }
+        }
+        else {
             float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
             force_field_wind << < grid, block >> > (
                 state.velocity->readTarget(),
