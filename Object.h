@@ -12,6 +12,7 @@
 #define VDBOBJECT 3
 #define VDBSINGLE 4
 #define FORCE_FIELD_FORCE 5
+#define FORCE_FIELD_POWER 6
 #define MS_TO_SEC 0.001
 
 

@@ -164,6 +164,14 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 state.dim
                 );
         }
+        else if (current.get_type() == "ffp") {
+            force_field_power << < grid, block >> > (
+                state.velocity->readTarget(),
+                current.get_location(), current.size,
+                current.force_strength,
+                state.dim
+                );
+        }
 
         //if (false)
         if (current.get_type() == "smoke" || current.get_type() == "vdbs") {

@@ -291,7 +291,7 @@ __global__ void soft_impulse(T* target, float3 c,
 }
 
 template <typename T>
-__global__ void force_field_force_old(T* target, float3 c,
+__global__ void force_field_power(T* target, float3 c,
     float radius, float force, int3 vd)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
