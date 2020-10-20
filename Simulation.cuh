@@ -172,6 +172,25 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                 state.dim
                 );
         }
+        else if (current.get_type() == "fft") {
+            force_field_turbulance << < grid, block >> > (
+                state.velocity->readTarget(),
+                current.get_location(), current.size,
+                current.force_strength, current.set_vel_freq + current.velocity_frequence,
+                state.dim,
+                frame
+                );
+            if (current.vel_freq_mov) {
+                current.set_vel_freq += current.vel_freq_step;
+                if (current.set_vel_freq >= current.max_vel_freq)
+                    current.vel_freq_mov = false;
+            }
+            else {
+                current.set_vel_freq -= current.vel_freq_step;
+                if (current.set_vel_freq <= 0.0)
+                    current.vel_freq_mov = true;
+            }
+        }
 
         //if (false)
         if (current.get_type() == "smoke" || current.get_type() == "vdbs") {

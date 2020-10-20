@@ -13,6 +13,7 @@
 #define VDBSINGLE 4
 #define FORCE_FIELD_FORCE 5
 #define FORCE_FIELD_POWER 6
+#define FORCE_FIELD_TURBULANCE 7
 #define MS_TO_SEC 0.001
 
 
@@ -64,9 +65,14 @@ public:
 	float size;
 	float force_strength;
 	int type;
-private:
 	float initial_velocity;
+
 	float velocity_frequence;
+	bool vel_freq_mov = true;
+	float set_vel_freq;
+	float max_vel_freq = 20.0;
+	float vel_freq_step = 0.4;
+private:
 	float impulseTemp;
 	float impulseDensity;
 	float3 location;

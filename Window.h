@@ -250,7 +250,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::Begin("Objects Panel");
 	{
 		ImGui::Text("Emitter type");
-		const char* items[] = { "emitter", "force", "power" };// , "vdb", "vdbs" };
+		const char* items[] = { "emitter", "force", "power", "turbulance" };// , "vdb", "vdbs" };
 		static const char* current_item = "emitter";
 
 		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
@@ -280,7 +280,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			}
 		}
 		if (ImGui::Button("Add Emitter")) {
-			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
+			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
 		}
 
 		ImGui::Text("Object list:");
@@ -292,9 +292,17 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::SameLine();
 			ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
 			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
-			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 100.0);
-			if (solver.object_list[object].type >= 5)
+			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
+			if (solver.object_list[object].type >= 5) {
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
+				if (solver.object_list[object].type == FORCE_FIELD_TURBULANCE)
+					ImGui::SliderFloat(("turbulance frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, 20);
+			}
+			else if (solver.object_list[object].type == EMITTER) {
+				ImGui::SliderFloat(("initial velocity-" + std::to_string(object)).c_str(), &solver.object_list[object].initial_velocity, 0.0, 150.0);
+				ImGui::SliderFloat(("velocity frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, solver.object_list[object].max_vel_freq);
+				//solver.object_list[object].set_vel_freq = solver.object_list[object].velocity_frequence;
+			}
 			solver.object_list[object].UpdateLocation();
 		}
 		ImGui::EndChild();

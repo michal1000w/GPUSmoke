@@ -326,12 +326,39 @@ __global__ void force_field_force(T* target, float3 c,
     float dist = length(p - c);
 
     T cur = target[get_voxel(x, y, z, vd)];
-    float power = force * (1.0f / (dist * dist));
-
-    float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
 
     if (dist < radius) {
+        float power = force * (1.0f / (dist * dist));
+        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+
         target[get_voxel(x, y, z, vd)] = cur + vector * power;
+    }
+}
+
+template <typename T>
+__global__ void force_field_turbulance(T* target, float3 c,
+    float radius, float force, float freq, int3 vd, int frame)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    T cur = target[get_voxel(x, y, z, vd)];
+
+    if (dist < radius) {
+        float power = force * (1.0f / (dist * dist));
+        float random = float((frame * (x + y - z)) % 1000) / 1000.0;
+        float v = (sin(freq * p.x + random) + sin(freq * p.z + random) - 0.1f);
+        //v = v * v * v * v * v;
+        //v = v * v * v;
+
+        target[get_voxel(x, y, z, vd)] = cur + v * power;
     }
 }
 
