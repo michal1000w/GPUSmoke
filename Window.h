@@ -54,7 +54,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	if (helper_window) {
 		ImGui::Begin("Helper Panel");
 		{
-			ImGui::Text("Helper window");
+			ImGui::Text("Useful shortcuts:");
 
 			ImGui::Text("W/A/S/D - Camera movement");
 			ImGui::Text("Q/Z - Camera up/down");

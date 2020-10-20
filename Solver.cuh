@@ -473,7 +473,7 @@ public:
         delete state;
         delete[] img;
 
-        if (!preserve_object_list || SAMPLE_SCENE == 1 || SAMPLE_SCENE == 2) {
+        if (!preserve_object_list || /*SAMPLE_SCENE == 1 || */SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
                 //if (i.get_type() == "vdb" || i.get_type() == "vdbs")
                     //i.cudaFree();
