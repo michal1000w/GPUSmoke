@@ -49,10 +49,29 @@ void UpdateSolver() {
 
 
 void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
-	float& progress, bool& save_panel) {
+	float& progress, bool& save_panel, bool& helper_window) {
 
-	/////////////////////////////
-			/////    CREATE WINDOW    ///
+	if (helper_window) {
+		ImGui::Begin("Helper Panel");
+		{
+			ImGui::Text("Helper window");
+
+			ImGui::Text("W/A/S/D - Camera movement");
+			ImGui::Text("Q/Z - Camera up/down");
+			ImGui::Text("Left mouse + A/D - Camera rotation");
+			ImGui::Text("R - reset simulation");
+			ImGui::Text("F - stop exporting");
+
+			if (ImGui::Button("Close")) {
+				helper_window = false;
+			}
+		}
+		ImGui::End();
+	}
+
+
+
+
 	if (SAVE_FILE_TAB) {
 		ImGui::Begin("Save Panel");
 		{
@@ -114,17 +133,23 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		{
 			if (ImGui::BeginMenu("File"))
 			{
-				if (ImGui::MenuItem("Open..", "Ctrl+O")) {
+				if (ImGui::MenuItem("Open..", "")) {
 					SAVE_FILE_TAB = false;
 					OPEN_FILE_TAB = true;
 					//solver.LoadSceneFromFile("scene2");
 				}
-				if (ImGui::MenuItem("Save", "Ctrl+S")) {
+				if (ImGui::MenuItem("Save", "")) {
 					OPEN_FILE_TAB = false;
 					SAVE_FILE_TAB = true;
 				}
-				if (ImGui::MenuItem("Close", "Ctrl+W")) {
+				if (ImGui::MenuItem("Close", "")) {
 					save_panel = false;
+				}
+				ImGui::EndMenu();
+			}
+			if (ImGui::BeginMenu("Help")) {
+				if (ImGui::MenuItem("Help", "")) {
+					helper_window = true;
 				}
 				ImGui::EndMenu();
 			}
@@ -422,6 +447,7 @@ int Window(float* Img_res) {
 		bool SAVE_FILE_TAB = false;
 		bool OPEN_FILE_TAB = false;
 		float progress = 0.0f;
+		bool helper_window = true;
 		//std::thread* sim;
 		solver.DONE_FRAME = true;
 		/////////////////////////////////////////////////
@@ -447,7 +473,7 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 
 			//std::thread GUI_THR( RenderGUI ,std::ref(SAVE_FILE_TAB), std::ref(OPEN_FILE_TAB), std::ref(fps), std::ref(progress), std::ref(save_panel));
-			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel);
+			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window);
 			//New Frame//////////////////
 			
 
@@ -508,6 +534,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS) {
 		solver.setCamera(solver.getCamera().x, solver.getCamera().y - 2.5f, solver.getCamera().z);
 	}
+	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
+		solver.EXPORT_VDB = false;
+	}
+
+
 }
 
 void cursorEnterCallback(GLFWwindow* window, int entered) {

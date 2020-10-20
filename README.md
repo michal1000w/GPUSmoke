@@ -36,6 +36,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 7. Q - camera up
 8. Z - camera down
 9. R - reset simulation
+10. F - stop exporting
 
 ## TODO list
 ### Short Term
