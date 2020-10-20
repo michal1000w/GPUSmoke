@@ -430,7 +430,9 @@ int Window(float* Img_res) {
 
 
 			//////////////////
-			solver.Simulation_Frame();
+			if (solver.SIMULATE) {
+				solver.Simulation_Frame();
+			}
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
