@@ -139,7 +139,9 @@ public:
             current += std::to_string(object_list[i].location.x) + ";";
             current += std::to_string(object_list[i].location.y) + ";";
             current += std::to_string(object_list[i].location.z) + ";";
-            current += std::to_string(object_list[i].size) + "";
+            current += std::to_string(object_list[i].size) + ";";
+            current += std::to_string(object_list[i].velocity_frequence) + ";"; //nowe
+            current += std::to_string(object_list[i].force_strength) + ""; //nowe
             current += "}";
 
             lines.push_back(current);
@@ -263,12 +265,16 @@ public:
                     current += podzial[line * 2 + 1][i1];
                     i1++;
                 }
+
                 object_list.push_back(OBJECT(attributes[0],/*name*/
                     stof(attributes[4]),/*size*/
-                    50, 0.9, 5, 0.9, /*not implemented yet*/
+                    50,  /*initial velocity*/
+                    stof(attributes[5]), /*velocity frequence*/
+                    5, 0.9,/*temperature, density*/
                     make_float3(stof(attributes[1]), stof(attributes[2]), stof(attributes[3])), /*position*/
                     object_list.size()/*ID*/
                 ));
+                object_list[object_list.size() - 1].force_strength = stof(attributes[6]);
             }
 
         }
