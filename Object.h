@@ -14,6 +14,7 @@
 #define FORCE_FIELD_FORCE 5
 #define FORCE_FIELD_POWER 6
 #define FORCE_FIELD_TURBULANCE 7
+#define FORCE_FIELD_WIND 8
 #define MS_TO_SEC 0.001
 
 
@@ -66,6 +67,7 @@ public:
 	float force_strength;
 	int type;
 	float initial_velocity;
+	float force_direction[3] = { 1.0,0,0 };
 
 	float velocity_frequence;
 	bool vel_freq_mov = true;

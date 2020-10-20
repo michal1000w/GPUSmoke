@@ -336,6 +336,30 @@ __global__ void force_field_force(T* target, float3 c,
 }
 
 template <typename T>
+__global__ void force_field_wind(T* target, float3 c,
+    float radius, float force, float3 direction, int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    T cur = target[get_voxel(x, y, z, vd)];
+
+    if (dist < radius) {
+        float power = force * (1.0f / (dist * dist));
+        
+
+        target[get_voxel(x, y, z, vd)] = cur + direction * power;
+    }
+}
+
+template <typename T>
 __global__ void force_field_turbulance(T* target, float3 c,
     float radius, float force, float freq, int3 vd, int frame)
 {

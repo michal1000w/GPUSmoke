@@ -250,7 +250,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::Begin("Objects Panel");
 	{
 		ImGui::Text("Emitter type");
-		const char* items[] = { "emitter", "force", "power", "turbulance" };// , "vdb", "vdbs" };
+		const char* items[] = { "emitter", "force", "power", "turbulance", "wind" };// , "vdb", "vdbs" };
 		static const char* current_item = "emitter";
 
 		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
@@ -297,6 +297,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
 				if (solver.object_list[object].type == FORCE_FIELD_TURBULANCE)
 					ImGui::SliderFloat(("turbulance frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, 20);
+				if (solver.object_list[object].type == FORCE_FIELD_WIND)
+					ImGui::SliderFloat3(("wind direction-" + std::to_string(object)).c_str(), solver.object_list[object].force_direction, -1, 1);
 			}
 			else if (solver.object_list[object].type == EMITTER) {
 				ImGui::SliderFloat(("initial velocity-" + std::to_string(object)).c_str(), &solver.object_list[object].initial_velocity, 0.0, 150.0);

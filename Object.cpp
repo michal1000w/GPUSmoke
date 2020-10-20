@@ -53,6 +53,8 @@ std::string OBJECT::get_type() {
 		return "ffp";
 	else if (this->type == FORCE_FIELD_TURBULANCE)
 		return "fft";
+	else if (this->type == FORCE_FIELD_WIND)
+		return "ffw";
 }
 
 void OBJECT::set_type(std::string type) {
@@ -70,6 +72,8 @@ void OBJECT::set_type(std::string type) {
 		this->type = FORCE_FIELD_POWER;
 	else if (type == "FFieldTURBULANCE" || type == "turbulance" || type == "fft")
 		this->type = FORCE_FIELD_TURBULANCE;
+	else if (type == "FFieldWIND" || type == "wind" || type == "ffw")
+		this->type = FORCE_FIELD_WIND;
 	else {
 		std::cout << "Type: " << type << " not known!!!" << std::endl;
 		exit(1);

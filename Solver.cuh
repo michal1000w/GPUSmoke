@@ -141,7 +141,10 @@ public:
             current += std::to_string(object_list[i].location.z) + ";";
             current += std::to_string(object_list[i].size) + ";";
             current += std::to_string(object_list[i].velocity_frequence) + ";"; //nowe
-            current += std::to_string(object_list[i].force_strength) + ""; //nowe
+            current += std::to_string(object_list[i].force_strength) + ";"; //nowe
+            current += std::to_string(object_list[i].force_direction[0]) + ";";
+            current += std::to_string(object_list[i].force_direction[1]) + ";";
+            current += std::to_string(object_list[i].force_direction[2]) + "";
             current += "}";
 
             lines.push_back(current);
@@ -275,6 +278,10 @@ public:
                     object_list.size()/*ID*/
                 ));
                 object_list[object_list.size() - 1].force_strength = stof(attributes[6]);
+                object_list[object_list.size() - 1].force_direction[0] = stof(attributes[7]);
+                object_list[object_list.size() - 1].force_direction[1] = stof(attributes[8]);
+                object_list[object_list.size() - 1].force_direction[2] = stof(attributes[9]);
+
             }
 
         }

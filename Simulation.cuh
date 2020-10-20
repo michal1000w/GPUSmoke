@@ -191,6 +191,16 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                     current.vel_freq_mov = true;
             }
         }
+        else if (current.get_type() == "ffw") {
+            float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
+            force_field_wind << < grid, block >> > (
+                state.velocity->readTarget(),
+                current.get_location(), current.size,
+                current.force_strength,
+                direction,
+                state.dim
+                );
+        }
 
         //if (false)
         if (current.get_type() == "smoke" || current.get_type() == "vdbs") {
