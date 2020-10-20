@@ -14,6 +14,8 @@ extern Solver solver;
 #include "third_party/imgui/imgui_impl_opengl3.h"
 #include "third_party/imgui/imgui_impl_glfw.h"
 
+#include <thread>
+
 
 static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos);
 void cursorEnterCallback(GLFWwindow *window, int entered);
@@ -37,6 +39,266 @@ void UpdateSolver() {
 		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
 }
+
+
+
+
+
+
+
+
+
+void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
+	float& progress, bool& save_panel) {
+
+	/////////////////////////////
+			/////    CREATE WINDOW    ///
+	if (SAVE_FILE_TAB) {
+		ImGui::Begin("Save Panel");
+		{
+			ImGui::Text("Enter filename");
+			ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
+			if (ImGui::Button("Save")) {
+				std::string filename = solver.SAVE_FOLDER;
+				filename = trim(filename);
+				solver.SaveSceneToFile(filename);
+				SAVE_FILE_TAB = false;
+			}
+			if (ImGui::Button("Close")) {
+				SAVE_FILE_TAB = false;
+			}
+			ImGui::Text("Saved projects:");
+			ImGui::BeginChild("Scrolling");
+			std::string directory = "scenes\\";
+			std::vector <std::string> list = solver.getFilesList(directory);
+			for (int object = 0; object < list.size(); object++) {
+				std::string name = (" -> " + list[object]);
+				ImGui::Text(name.c_str());
+			}
+			ImGui::EndChild();
+		}
+		ImGui::End();
+	}
+	if (OPEN_FILE_TAB) {
+		ImGui::Begin("Open Panel");
+		{
+			ImGui::Text("Enter filename");
+			ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
+			if (ImGui::Button("Open")) {
+				std::string filename = solver.OPEN_FOLDER;
+				filename = trim(filename);
+				solver.LoadSceneFromFile(filename);
+				OPEN_FILE_TAB = false;
+			}
+			if (ImGui::Button("Close")) {
+				OPEN_FILE_TAB = false;
+			}
+			///////////////////////////////////////
+			ImGui::Text("Saved projects:");
+			ImGui::BeginChild("Scrolling");
+			std::string directory = "scenes\\";
+			std::vector <std::string> list = solver.getFilesList(directory);
+			for (int object = 0; object < list.size(); object++) {
+				std::string name = (" -> " + list[object]);
+				ImGui::Text(name.c_str());
+			}
+			ImGui::EndChild();
+			///////////////////////////////////////
+		}
+		ImGui::End();
+	}
+
+	ImGui::Begin("IO Panel", &save_panel, ImGuiWindowFlags_MenuBar);
+	{
+		if (ImGui::BeginMenuBar())
+		{
+			if (ImGui::BeginMenu("File"))
+			{
+				if (ImGui::MenuItem("Open..", "Ctrl+O")) {
+					SAVE_FILE_TAB = false;
+					OPEN_FILE_TAB = true;
+					//solver.LoadSceneFromFile("scene2");
+				}
+				if (ImGui::MenuItem("Save", "Ctrl+S")) {
+					OPEN_FILE_TAB = false;
+					SAVE_FILE_TAB = true;
+				}
+				if (ImGui::MenuItem("Close", "Ctrl+W")) {
+					save_panel = false;
+				}
+				ImGui::EndMenu();
+			}
+			ImGui::EndMenuBar();
+		}
+
+
+
+
+		ImGui::Text("Example scenes");
+		const char* items[] = { "VDB","VDBFire", "Objects" };// , "vdb", "vdbs" };
+		static const char* current_item = "Objects";
+
+		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+			{
+				bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+				if (ImGui::Selectable(items[n], is_selected)) {
+					current_item = items[n];
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+			}
+			ImGui::EndCombo();
+		}
+		if (ImGui::Button("Load Scene")) {
+			if (current_item == "VDB")
+				solver.SAMPLE_SCENE = 1;
+			else if (current_item == "Objects")
+				solver.SAMPLE_SCENE = 0;
+			else if (current_item == "VDBFire")
+				solver.SAMPLE_SCENE = 2;
+			solver.preserve_object_list = false;
+			UpdateSolver();
+			solver.preserve_object_list = true;
+		}
+		ImGui::Text("Exporting settings");
+		ImGui::InputInt("Start frame", &solver.EXPORT_START_FRAME);
+		ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
+		ImGui::InputText("Cache Folder", solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
+		if (ImGui::Button("Export VDB")) {
+			solver.ClearCache();
+			solver.EXPORT_VDB = true;
+			UpdateSolver();
+			progress = 0.0;
+		}
+		if (solver.EXPORT_VDB) {
+			ImGui::ProgressBar(progress, ImVec2(-1, 0));
+			progress += 1.0 / ((float)solver.EXPORT_END_FRAME);
+
+		}
+		if (solver.EXPORT_VDB)
+			if (ImGui::Button("Stop")) {
+				progress = 0.0;
+				solver.EXPORT_VDB = false;
+			}
+	}
+	ImGui::End();
+	ImGui::Begin("Properties Panel");
+	{
+		ImGui::Text("Domain Resolution");
+		ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, 490);
+		ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, 490);
+		ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, 490);
+
+
+
+		ImGui::Text("Simulation Settings");
+		ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
+		ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
+		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 64);
+		if (ImGui::Button("Simulate")) {
+			if (solver.SIMULATE == false)
+				solver.SIMULATE = true;
+			else
+				solver.SIMULATE = false;
+		}
+		//ImGui::SliderFloat("Simulation speed", &solver.speed, 0.0f, 3.0f);//bugs
+		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
+
+
+		ImGui::Text("Render Settings:");
+		ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
+		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 1, 100);
+		ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
+
+		if (ImGui::Button("Reset")) {
+			UpdateSolver();
+		}
+		ImGui::SameLine();
+		ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
+		ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
+	}
+	ImGui::End();
+	/////////////////////////////
+
+	ImGui::Begin("Objects Panel");
+	{
+		ImGui::Text("Emitter type");
+		const char* items[] = { "emitter", "force" };// , "vdb", "vdbs" };
+		static const char* current_item = "emitter";
+
+		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+		{
+			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+			{
+				bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+				if (ImGui::Selectable(items[n], is_selected)) {
+					current_item = items[n];
+				}
+				if (is_selected)
+					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+			}
+			ImGui::EndCombo();
+		}
+		if (ImGui::Button("Delete selected")) {
+		REPEAT:
+			for (int object = 0; object < solver.object_list.size(); object++) {
+				if (solver.object_list[object].selected) {
+					if (solver.object_list[object].get_type() == "vdb" ||
+						solver.object_list[object].get_type() == "vdbs")
+						solver.object_list[object].cudaFree();
+					solver.object_list[object].free();
+					solver.object_list.erase(solver.object_list.begin() + object);
+					goto REPEAT;
+				}
+			}
+		}
+		if (ImGui::Button("Add Emitter")) {
+			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
+		}
+
+		ImGui::Text("Object list:");
+		ImGui::BeginChild("Scrolling");
+
+		for (int object = 0; object < solver.object_list.size(); object++) {
+			std::string name = ("  -> " + solver.object_list[object].get_name());
+			ImGui::Text(name.c_str());
+			ImGui::SameLine();
+			ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
+			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
+			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 100.0);
+			if (solver.object_list[object].type >= 5)
+				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
+			solver.object_list[object].UpdateLocation();
+		}
+		ImGui::EndChild();
+
+	}
+	ImGui::End();
+	/////////////////////////////
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 int Window(float* Img_res) {
 	GLFWwindow* window;
@@ -160,14 +422,15 @@ int Window(float* Img_res) {
 		bool SAVE_FILE_TAB = false;
 		bool OPEN_FILE_TAB = false;
 		float progress = 0.0f;
+		//std::thread* sim;
+		solver.DONE_FRAME = true;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
+
+
 			//////////////////
-			if (solver.SIMULATE) {
-				solver.Simulation_Frame(solver.frame);
-				solver.frame++;
-			}
+			solver.Simulation_Frame();
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
@@ -177,237 +440,14 @@ int Window(float* Img_res) {
 			renderer.Clear();
 			shader.Bind();
 			/////////////////////////////
-			
-			//New Frame//////////////////
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
-			/////////////////////////////
-			/////    CREATE WINDOW    ///
-			if (SAVE_FILE_TAB) {
-				ImGui::Begin("Save Panel");
-				{
-					ImGui::Text("Enter filename");
-					ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
-					if (ImGui::Button("Save")) {
-						std::string filename = solver.SAVE_FOLDER;
-						filename = trim(filename);
-						solver.SaveSceneToFile(filename);
-						SAVE_FILE_TAB = false;
-					}
-					if (ImGui::Button("Close")) {
-						SAVE_FILE_TAB = false;
-					}
-					ImGui::Text("Saved projects:");
-					ImGui::BeginChild("Scrolling");
-					std::string directory = "scenes\\";
-					std::vector <std::string> list = solver.getFilesList(directory);
-					for (int object = 0; object < list.size(); object++) {
-						std::string name = (" -> " + list[object]);
-						ImGui::Text(name.c_str());
-					}
-					ImGui::EndChild();
-				}
-				ImGui::End();
-			}
-			if (OPEN_FILE_TAB) {
-				ImGui::Begin("Open Panel");
-				{
-					ImGui::Text("Enter filename");
-					ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
-					if (ImGui::Button("Open")) {
-						std::string filename = solver.OPEN_FOLDER;
-						filename = trim(filename);
-						solver.LoadSceneFromFile(filename);
-						OPEN_FILE_TAB = false;
-					}
-					if (ImGui::Button("Close")) {
-						OPEN_FILE_TAB = false;
-					}
-					///////////////////////////////////////
-					ImGui::Text("Saved projects:");
-					ImGui::BeginChild("Scrolling");
-					std::string directory = "scenes\\";
-					std::vector <std::string> list = solver.getFilesList(directory);
-					for (int object = 0; object < list.size(); object++) {
-						std::string name = (" -> " + list[object]);
-						ImGui::Text(name.c_str());
-					}
-					ImGui::EndChild();
-					///////////////////////////////////////
-				}
-				ImGui::End();
-			}
 
-			ImGui::Begin("IO Panel", &save_panel , ImGuiWindowFlags_MenuBar);
-			{
-				if (ImGui::BeginMenuBar())
-				{
-					if (ImGui::BeginMenu("File"))
-					{
-						if (ImGui::MenuItem("Open..", "Ctrl+O")) {
-							SAVE_FILE_TAB = false;
-							OPEN_FILE_TAB = true;
-							//solver.LoadSceneFromFile("scene2");
-						}
-						if (ImGui::MenuItem("Save", "Ctrl+S")) {
-							OPEN_FILE_TAB = false;
-							SAVE_FILE_TAB = true;
-						}
-						if (ImGui::MenuItem("Close", "Ctrl+W")) { 
-							save_panel = false;
-							break; }
-						ImGui::EndMenu();
-					}
-					ImGui::EndMenuBar();
-				}
-
-
-
-
-				ImGui::Text("Example scenes");
-				const char* items[] = { "VDB","VDBFire", "Objects" };// , "vdb", "vdbs" };
-				static const char* current_item = "Objects";
-
-				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-				{
-					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-					{
-						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(items[n], is_selected)) {
-							current_item = items[n];
-						}
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-					}
-					ImGui::EndCombo();
-				}
-				if (ImGui::Button("Load Scene")) {
-					if (current_item == "VDB")
-						solver.SAMPLE_SCENE = 1;
-					else if (current_item == "Objects")
-						solver.SAMPLE_SCENE = 0;
-					else if (current_item == "VDBFire")
-						solver.SAMPLE_SCENE = 2;
-					solver.preserve_object_list = false;
-					UpdateSolver();
-					solver.preserve_object_list = true;
-				}
-				ImGui::Text("Exporting settings");
-				ImGui::InputInt("Start frame", &solver.EXPORT_START_FRAME);
-				ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
-				ImGui::InputText("Cache Folder",solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
-				if (ImGui::Button("Export VDB")) {
-					solver.ClearCache();
-					solver.EXPORT_VDB = true;
-					UpdateSolver();
-					progress = 0.0;
-				}
-				if (solver.EXPORT_VDB) {
-					ImGui::ProgressBar(progress, ImVec2(-1,0));
-					progress += 1.0/((float)solver.EXPORT_END_FRAME);
-
-				}
-				if (solver.EXPORT_VDB)
-					if (ImGui::Button("Stop")) {
-						progress = 0.0;
-						solver.EXPORT_VDB = false;
-					}
-			}
-			ImGui::End();
-			ImGui::Begin("Properties Panel");
-			{
-				ImGui::Text("Domain Resolution");
-				ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, 490);
-				ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, 490);
-				ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, 490);
-
-
-
-				ImGui::Text("Simulation Settings");
-				ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
-				ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-				ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 64);
-				if (ImGui::Button("Simulate")) {
-					if (solver.SIMULATE == false)
-						solver.SIMULATE = true;
-					else
-						solver.SIMULATE = false;
-				}
-				//ImGui::SliderFloat("Simulation speed", &solver.speed, 0.0f, 3.0f);//bugs
-				//ImGui::ColorEdit3("clear color", (float*)&clear_color);
-
-
-				ImGui::Text("Render Settings:");
-				ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
-				ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 1, 100);
-				ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
-
-				if (ImGui::Button("Reset")) {
-					UpdateSolver();
-				}
-				ImGui::SameLine();
-				ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
-				ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
-			}
-			ImGui::End();
-			/////////////////////////////
-
-			ImGui::Begin("Objects Panel");
-			{
-				ImGui::Text("Emitter type");
-				const char* items[] = { "emitter", "force" };// , "vdb", "vdbs" };
-				static const char* current_item = "emitter";
-
-				if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
-				{
-					for (int n = 0; n < IM_ARRAYSIZE(items); n++)
-					{
-						bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-						if (ImGui::Selectable(items[n], is_selected)) {
-							current_item = items[n];
-						}
-						if (is_selected)
-							ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
-					}
-					ImGui::EndCombo();
-				}
-				if (ImGui::Button("Delete selected")) {
-					REPEAT:
-					for (int object = 0; object < solver.object_list.size(); object++) {
-						if (solver.object_list[object].selected) {
-							if (solver.object_list[object].get_type() == "vdb" ||
-								solver.object_list[object].get_type() == "vdbs")
-							solver.object_list[object].cudaFree();
-							solver.object_list[object].free();
-							solver.object_list.erase(solver.object_list.begin() + object);
-							goto REPEAT;
-						}
-					}
-				}
-				if (ImGui::Button("Add Emitter")) {
-					solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 0.9, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
-				}
-
-				ImGui::Text("Object list:");
-				ImGui::BeginChild("Scrolling");
-
-				for (int object = 0; object < solver.object_list.size(); object++) {
-					std::string name = ("  -> " + solver.object_list[object].get_name());
-					ImGui::Text(name.c_str());
-					ImGui::SameLine();
-					ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
-					ImGui::SliderFloat3(("position-"+std::to_string(object)).c_str(), solver.object_list[object].Location, 0, 600);
-					ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 100.0);
-					if (solver.object_list[object].type >= 5)
-						ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
-					solver.object_list[object].UpdateLocation();
-				}
-				ImGui::EndChild();
-				
-			}
-			ImGui::End();
-			/////////////////////////////
+			//std::thread GUI_THR( RenderGUI ,std::ref(SAVE_FILE_TAB), std::ref(OPEN_FILE_TAB), std::ref(fps), std::ref(progress), std::ref(save_panel));
+			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel);
+			//New Frame//////////////////
+			
 
 			renderer.Draw(va, ib, shader);
 

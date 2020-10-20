@@ -69,6 +69,7 @@ public:
     char OPEN_FOLDER[100] = { 0 };
     bool EXPORT_VDB;
     bool SIMULATE;
+    bool DONE_FRAME;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -355,6 +356,7 @@ public:
 
     void Initialize() {
         openvdb::initialize();
+        DONE_FRAME = true;
 
         srand(0);
         //simulation settings
@@ -451,6 +453,7 @@ public:
         full_block = dim3(8, 8, 8);
 
         img = new uint8_t[3 * img_d.x * img_d.y];
+        DONE_FRAME = true;
     }
 
     void Clear_Simulation_Data() {
@@ -472,7 +475,8 @@ public:
         cudaThreadExit();
     }
 
-    void Simulation_Frame(unsigned int frame = 0) {
+    void Simulation_Frame() {
+        DONE_FRAME = false;
         unsigned int f = frame;
         std::cout << "\rFrame " << f + 1 << "  -  ";
         for (int st = 0; st < 1; st++) {
@@ -507,6 +511,14 @@ public:
             if (frame >= EXPORT_END_FRAME)
                 EXPORT_VDB = false;
         }
+        frame++;
+        DONE_FRAME = true;
+    }
+    std::thread* spawn() {
+        if (SIMULATE)
+            return new std::thread([this] { this->Simulation_Frame(); });
+        else
+            return new std::thread();
     }
     unsigned char* loadImgData() {
         return img;
