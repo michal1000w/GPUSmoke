@@ -311,6 +311,8 @@ public:
         FOLDER = trim(FOLDER);
         //std::system("rm ./output/cache/*");
         std::system(("rm ./" + FOLDER + "*").c_str());
+
+        std::experimental::filesystem::create_directory(FOLDER);
         std::cout << "Done";
     }
 

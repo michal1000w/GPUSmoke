@@ -159,6 +159,7 @@ int Window(float* Img_res) {
 		bool save_panel = true;
 		bool SAVE_FILE_TAB = false;
 		bool OPEN_FILE_TAB = false;
+		float progress = 0.0f;
 		/////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
@@ -300,7 +301,18 @@ int Window(float* Img_res) {
 					solver.ClearCache();
 					solver.EXPORT_VDB = true;
 					UpdateSolver();
+					progress = 0.0;
 				}
+				if (solver.EXPORT_VDB) {
+					ImGui::ProgressBar(progress, ImVec2(-1,0));
+					progress += 1.0/((float)solver.EXPORT_END_FRAME);
+
+				}
+				if (solver.EXPORT_VDB)
+					if (ImGui::Button("Stop")) {
+						progress = 0.0;
+						solver.EXPORT_VDB = false;
+					}
 			}
 			ImGui::End();
 			ImGui::Begin("Properties Panel");
