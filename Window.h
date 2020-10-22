@@ -308,7 +308,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					ImGui::SliderFloat3(("wind direction-" + std::to_string(object)).c_str(), solver.object_list[object].force_direction, -1, 1);
 			}
 			else if (solver.object_list[object].type == EMITTER) {
-				ImGui::SliderFloat(("initial velocity-" + std::to_string(object)).c_str(), &solver.object_list[object].initial_velocity, 0.0, 150.0);
+				ImGui::SliderFloat(("initial temperature-" + std::to_string(object)).c_str(), &solver.object_list[object].impulseTemp, -50.0, 50.0);
 				ImGui::SliderFloat(("velocity frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, solver.object_list[object].max_vel_freq);
 				//solver.object_list[object].set_vel_freq = solver.object_list[object].velocity_frequence;
 			}

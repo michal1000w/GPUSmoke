@@ -76,8 +76,8 @@ public:
 	float set_vel_freq;
 	float max_vel_freq = 20.0;
 	float vel_freq_step = 0.4;
-private:
 	float impulseTemp;
+private:
 	float impulseDensity;
 	float3 location;
     GRID3D vdb_object;

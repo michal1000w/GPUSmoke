@@ -493,8 +493,8 @@ __global__ void wavey_impulse_temperature(T* target, float3 c,
     }
 }
 
-template <typename T>
-__global__ void wavey_impulse_temperature_new(T* target, float3 c,
+template <typename T, typename V>
+__global__ void wavey_impulse_temperature_new(T* target,V* velocity, float3 c,
     float3 size, T base, float amp, float freq, int3 vd, int frame)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -513,10 +513,51 @@ __global__ void wavey_impulse_temperature_new(T* target, float3 c,
         p.x < maxC.x && p.y < maxC.y && p.z < maxC.z) {
         float random = float((frame * frame) % 100) / 100.0;
         float v = 0.5 * (sin(freq * freq + random) + sin(freq * freq + random) + 0.0);
-        if (base + amp * v > 0)
-            target[get_voxel(x, y, z, vd)] = base + amp * 0.05;
-        else
-            target[get_voxel(x, y, z, vd)] = base;
+        v = 0.05;
+        if (base >= 0)
+            if (base + amp * v > 0)
+                target[get_voxel(x, y, z, vd)] = base + amp * v;
+            else
+                target[get_voxel(x, y, z, vd)] = base;
+        else {
+            target[get_voxel(x, y, z, vd)] = base - amp * v;
+            velocity[get_voxel(x, y, z, vd)].y = base;
+        }
+    }
+}
+
+template <typename T>
+__global__ void wavey_impulse_temperature_new_old(T* target, float3 c,
+    float3 size, T base, float amp, float freq, int3 vd, int frame)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    //float dist = length(p-c);
+    float3 minC = c - size;
+    float3 maxC = c + size;
+
+    if (p.x > minC.x && p.y > minC.y && p.z > minC.z &&
+        p.x < maxC.x && p.y < maxC.y && p.z < maxC.z) {
+        float random = float((frame * frame) % 100) / 100.0;
+        float v = 0.5 * (sin(freq * freq + random) + sin(freq * freq + random) + 0.0);
+        v = 0.05;
+        if (base >= 0)
+            if (base + amp * v > 0)
+                target[get_voxel(x, y, z, vd)] = base + amp * v;
+            else
+                target[get_voxel(x, y, z, vd)] = base;
+        else {
+            if (base - amp * v < 0)
+                target[get_voxel(x, y, z, vd)] = base - amp * v;
+            else
+                target[get_voxel(x, y, z, vd)] = base;
+        }
     }
 }
 
