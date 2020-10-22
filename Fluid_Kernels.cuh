@@ -360,7 +360,7 @@ __global__ void collision_sphere(T* target, float3 c,
 
 template <typename V, typename T, typename Z>
 __global__ void collision_sphere2(V* v_src, T* temperature, Z* density,
-    int3 vd, float3 c, float radius, float viscosity)
+    int3 vd, float3 c, float radius, float ambient_temp)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -378,11 +378,17 @@ __global__ void collision_sphere2(V* v_src, T* temperature, Z* density,
         T temp = temperature[get_voxel(x, y, z, vd)];
         float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
 
+        float direction = vel.y;
+
         //v_src[get_voxel(x, y, z, vd)] = (-1.0*(vel*grad_scale)*vel) + (viscosity*grad_scale*grad_scale) - ((1.0/press) * grad_scale*press);
 
-        density[get_voxel(x, y, z, vd)] *= 0.9; //zanikanie density
+        density[get_voxel(x, y, z, vd)] *= 0.95; //zanikanie density
         v_src[get_voxel(x, y, z, vd)] = (vel + vector * -1.0f)*0.1; //zanikanie momentu
-        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * (1.0 / (dist*dist)));
+        if (temp <= 0.2 && direction >= 0)
+            temp += 0.1;
+        else if (temp >= -0.2 && direction < 0)
+            temp -= 0.1;
+        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * 2.0 * (1.0 / (dist*dist)));
     }
 }
 

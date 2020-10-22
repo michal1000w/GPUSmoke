@@ -260,7 +260,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 state.temperature->readTarget(),
                 state.density->readTarget(),
                 state.dim, current.get_location(), current.size,
-                1.0f);
+                AMBIENT_TEMPERATURE);
         }
 
         //if (false)
