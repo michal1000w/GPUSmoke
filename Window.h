@@ -14,6 +14,7 @@ extern Solver solver;
 #include "third_party/imgui/imgui_impl_opengl3.h"
 #include "third_party/imgui/imgui_impl_glfw.h"
 
+
 #include <thread>
 
 
@@ -221,6 +222,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Text("Simulation Settings");
 		ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 		ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
+		ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 64);
 		if (ImGui::Button("Simulate")) {
 			if (solver.SIMULATE == false)
@@ -251,7 +253,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::Begin("Objects Panel");
 	{
 		ImGui::Text("Emitter type");
-		const char* items[] = { "emitter", "force", "power", "turbulance", "wind" };// , "vdb", "vdbs" };
+		const char* items[] = { "emitter", "force", "power", 
+			"turbulance", "wind", "sphere" };// , "vdb", "vdbs" };
 		static const char* current_item = "emitter";
 
 		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
@@ -295,7 +298,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			float maximum = max(max(solver.New_DOMAIN_RESOLUTION.x, solver.New_DOMAIN_RESOLUTION.y), solver.New_DOMAIN_RESOLUTION.z);
 			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, maximum);
 			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
-			if (solver.object_list[object].type >= 5) {
+			if (solver.object_list[object].type >= 5 && solver.object_list[object].type < 9) {
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
 				ImGui::SameLine();
 				ImGui::Checkbox(("Square-" + std::to_string(object)).c_str(), &solver.object_list[object].square);

@@ -55,6 +55,8 @@ std::string OBJECT::get_type() {
 		return "fft";
 	else if (this->type == FORCE_FIELD_WIND)
 		return "ffw";
+	else if (this->type == COLLISION_SPHERE)
+		return "cols";
 }
 
 void OBJECT::set_type(std::string type) {
@@ -74,6 +76,8 @@ void OBJECT::set_type(std::string type) {
 		this->type = FORCE_FIELD_TURBULANCE;
 	else if (type == "FFieldWIND" || type == "wind" || type == "ffw")
 		this->type = FORCE_FIELD_WIND;
+	else if (type == "CollisionSPHERE" || type == "sphere" || type == "cols")
+		this->type = COLLISION_SPHERE;
 	else {
 		std::cout << "Type: " << type << " not known!!!" << std::endl;
 		exit(1);
@@ -83,7 +87,8 @@ void OBJECT::set_type(std::string type) {
 std::string OBJECT::get_object() {
 	std::string namee = "";
 	if (this->type < 5) namee += "OBJ-";
-	else if (this->type >= 5) namee += "FF-";
+	else if (this->type >= 5 && this->type < 9) namee += "FF-";
+	else if (this->type >= 9) namee += "COL-";
 	namee += get_type();
 	return namee;
 }

@@ -33,6 +33,7 @@
 #include <nanovdb/util/GridBuilder.h>
 #include <nanovdb/util/NanoToOpenVDB.h>
 #include <nanovdb/util/OpenToNanoVDB.h>
+#include <openvdb/tools/ValueTransformer.h>
 ////////////////////////////////////////////
 
 #define EXAMPLE__ 2

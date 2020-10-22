@@ -336,6 +336,77 @@ __global__ void force_field_force(T* target, float3 c,
 }
 
 template <typename T>
+__global__ void collision_sphere(T* target, float3 c,
+    float radius, int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    T cur = target[get_voxel(x, y, z, vd)];
+
+    if (dist >= radius * 1.0 && dist <= radius * 1.2) {
+        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+
+        target[get_voxel(x, y, z, vd)] = cur + vector * -1.0f;
+    }
+}
+
+template <typename V, typename T, typename Z>
+__global__ void collision_sphere2(V* v_src, T* temperature, Z* density,
+    int3 vd, float3 c, float radius, float viscosity)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+
+    if (dist <= radius) {
+        V vel = v_src[get_voxel(x, y, z, vd)];
+        T temp = temperature[get_voxel(x, y, z, vd)];
+        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+
+        //v_src[get_voxel(x, y, z, vd)] = (-1.0*(vel*grad_scale)*vel) + (viscosity*grad_scale*grad_scale) - ((1.0/press) * grad_scale*press);
+
+        density[get_voxel(x, y, z, vd)] *= 0.9; //zanikanie density
+        v_src[get_voxel(x, y, z, vd)] = (vel + vector * -1.0f)*0.1; //zanikanie momentu
+        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * (1.0 / (dist*dist)));
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+template <typename T>
 __global__ void force_field_wind(T* target, float3 c,
     float radius, float force, float3 direction, int3 vd)
 {

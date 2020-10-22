@@ -70,6 +70,7 @@ public:
     bool EXPORT_VDB;
     bool SIMULATE;
     bool DONE_FRAME;
+    float DIVERGE_RATE = 0.5f;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -495,7 +496,9 @@ public:
         unsigned int f = frame;
         std::cout << "\rFrame " << f + 1 << "  -  ";
         for (int st = 0; st < 1; st++) {
-            simulate_fluid(*state, object_list, ACCURACY_STEPS, false, f, Smoke_Dissolve, Ambient_Temperature);
+            simulate_fluid(*state, object_list, ACCURACY_STEPS, 
+                false, f, Smoke_Dissolve, Ambient_Temperature,
+                DIVERGE_RATE);
             state->step++;
         }
 

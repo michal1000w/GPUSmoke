@@ -6,7 +6,10 @@
 
 
 // Runs a single iteration of the simulation
-void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0, float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f)
+void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, 
+    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0, 
+    float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
+    float Diverge_Rate = 0.5f)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -233,16 +236,31 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
                     state.dim
                     );
             }
+            else {
+                float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
+                force_field_wind << < grid, block >> > (
+                    state.velocity->readTarget(),
+                    current.get_location(), current.size,
+                    current.force_strength,
+                    direction,
+                    state.dim
+                    );
+            }
         }
-        else {
-            float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
-            force_field_wind << < grid, block >> > (
+        else if (current.get_type() == "cols") {
+            /*
+            collision_sphere << < grid, block >> > (
                 state.velocity->readTarget(),
                 current.get_location(), current.size,
-                current.force_strength,
-                direction,
                 state.dim
                 );
+            */
+            collision_sphere2 << <grid, block >> > (
+                state.velocity->readTarget(),
+                state.temperature->readTarget(),
+                state.density->readTarget(),
+                state.dim, current.get_location(), current.size,
+                1.0f);
         }
 
         //if (false)
@@ -253,10 +271,10 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, int AC
     }
 
 
-
+    //environment turbulance
     divergence << <grid, block >> > (
         state.velocity->readTarget(),
-        state.diverge, state.dim, 0.5);//0.5
+        state.diverge, state.dim, Diverge_Rate);//0.5
 
 // clear pressure
     impulse << <grid, block >> > (
