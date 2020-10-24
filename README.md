@@ -55,6 +55,8 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [x] Preset creator (LOAD/SAVE)
 * [x] Fix Density over 1.0 issue
 * [ ] Volume upsampling - In the research phaze
+    * [ ] Wavelet noise upsampling
+    * [ ] Custom Neural Network upsampling
 
 ### Medium-Long Term
 * [ ] Smoke Colors
