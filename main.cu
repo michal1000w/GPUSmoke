@@ -8,6 +8,14 @@ extern Solver solver;
 
 
 
+/////////////////////////////////
+//section experimental
+
+
+/////////////////////////////////
+
+
+
 int main(int argc, char* args[]) {
     int devicesCount;
     cudaGetDeviceCount(&devicesCount);
