@@ -20,7 +20,7 @@ int main(int argc, char* args[]) {
         std::cout << deviceProperties.name << "   ->  " << deviceProperties.totalGlobalMem << std::endl;
     }
     int Best_Device_Index = 0;
-    int Memory = 0;
+    long long Memory = 0;
     for (int deviceIndex = 0; deviceIndex < devicesCount; deviceIndex++) {
         cudaDeviceProp deviceProperties;
         cudaGetDeviceProperties(&deviceProperties, deviceIndex);

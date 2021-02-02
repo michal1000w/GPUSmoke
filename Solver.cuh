@@ -87,6 +87,9 @@ private:
     fluid_state* state;
     dim3 full_grid;
     dim3 full_block;
+
+    //volume upscaling
+    int SEED = 2;
 public:
     bool what_it_is(std::string in) {
         if (in == "true" || in == "True") {
@@ -521,9 +524,17 @@ public:
             arr_temp->set_pointer(state->temperature->readToGrid());
             std::string FOLDER = EXPORT_FOLDER;
             FOLDER = trim(FOLDER);
-            export_openvdb(FOLDER,"frame." + std::to_string(f), vol_d, arr, arr_temp, false);
-            //arr->free();
-            //arr_temp->free();
+
+            if (false) {
+                int Upscale_Rate = 1;
+                arr->UpScale(Upscale_Rate, SEED, frame);
+                arr_temp->UpScale(Upscale_Rate, SEED, frame);
+            }
+            export_openvdb(FOLDER,"frame." + std::to_string(f), arr->get_resolution(), arr, arr_temp, true);
+            arr->free();
+            arr->free_noise();
+            arr_temp->free();
+            arr_temp->free_noise();
             delete arr;
             delete arr_temp;
             if (frame >= EXPORT_END_FRAME)

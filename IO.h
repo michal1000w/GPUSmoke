@@ -160,47 +160,6 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 
 
 
-void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
-    bool DEBUG = false;
-    
-    using ValueT = typename openvdb::FloatGrid::ValueType;
-    const ValueT outside = grid_dst.background();
-    int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
-
-    //get bounding box
-    int3 dim = grid_src->get_resolution();
-
-    if (DEBUG)
-    std::cout << dim.x << ";" << dim.y << ";" << dim.z << std::endl;
-
-    // Get a voxel accessor.
-
-    float* grid_src_arr = grid_src->get_grid();
-    if (DEBUG)
-    std::cout << "Copying..." << std::endl;
-
-    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
-    for (int x = 0; x < dim.x; x++) {
-        for (int y = 0; y < dim.y; y++) {
-            for (int z = 0; z < dim.z; z++) {
-                accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
-            }
-        }
-    }
-    if (DEBUG)
-    std::cout << "Clearing\n";
-delete[] grid_src_arr;
-//grid_src->free();
-if (DEBUG)
-std::cout << "Cleared\n";
-auto tree = grid_dst.tree();
-tree.clearAllAccessors();
-if (DEBUG)
-std::cout << "Transforming\n";
-openvdb::tools::signedFloodFill(tree);
-grid_dst.setTransform(
-    openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
-}
 
 
 
@@ -334,6 +293,71 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, bool DEBUG = false) {
+
+
+    using ValueT = typename openvdb::FloatGrid::ValueType;
+    const ValueT outside = grid_dst.background();
+    int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
+
+    //get bounding box
+    int3 dim = grid_src->get_resolution();
+
+    if (DEBUG)
+        std::cout << dim.x << ";" << dim.y << ";" << dim.z << std::endl;
+
+    // Get a voxel accessor.
+
+    float* grid_src_arr = grid_src->get_grid();
+    if (DEBUG)
+        std::cout << "Copying..." << std::endl;
+
+    typename openvdb::FloatGrid::Accessor accessor = grid_dst.getAccessor();
+    for (int x = 0; x < dim.x; x++) {
+        for (int y = 0; y < dim.y; y++) {
+            for (int z = 0; z < dim.z; z++) {
+                accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+            }
+        }
+    }
+    if (DEBUG)
+        std::cout << "Clearing\n";
+    //delete[] grid_src_arr;  //to poprzednio by³o
+    //grid_src->free();
+    if (DEBUG)
+        std::cout << "Cleared\n";
+    auto tree = grid_dst.tree();
+    tree.clearAllAccessors();
+    if (DEBUG)
+        std::cout << "Transforming\n";
+    openvdb::tools::signedFloodFill(tree);
+    grid_dst.setTransform(
+        openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
+}
+
+
+
 int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = true) {
     filename = folder + filename + ".vdb";
     
@@ -371,7 +395,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     concurrency::parallel_for(0, 2, [&](int i) {
     //for (int i = 0; i < 2; i++){
 #ifndef THREADED_SAVE
-        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
+        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
 #else
         create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #endif
