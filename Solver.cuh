@@ -149,7 +149,8 @@ public:
             current += std::to_string(object_list[i].force_direction[0]) + ";";
             current += std::to_string(object_list[i].force_direction[1]) + ";";
             current += std::to_string(object_list[i].force_direction[2]) + ";";
-            current += std::to_string(object_list[i].square) + "";
+            current += std::to_string(object_list[i].square) + ";";
+            current += std::to_string(object_list[i].impulseTemp) + "";
             current += "}";
 
             lines.push_back(current);
@@ -287,7 +288,7 @@ public:
                 object_list[object_list.size() - 1].force_direction[1] = stof(attributes[8]);
                 object_list[object_list.size() - 1].force_direction[2] = stof(attributes[9]);
                 object_list[object_list.size() - 1].square = stoi(attributes[10]);
-
+                object_list[object_list.size() - 1].impulseTemp = stof(attributes[11]);
             }
 
         }
