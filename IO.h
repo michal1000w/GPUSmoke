@@ -358,7 +358,8 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
 
 
 
-int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = true) {
+int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, 
+                    GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = true) {
     filename = folder + filename + ".vdb";
     
     std::cout << "\n || Saving OpenVDB:  ";
@@ -401,6 +402,9 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
 #endif
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
+
+
+
 
         //sparse it up
         //0 -> lossles
