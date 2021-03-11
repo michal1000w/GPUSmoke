@@ -402,6 +402,14 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
 
+        //sparse it up
+        //0 -> lossles
+        //more is smaller
+        grids_dst[i]->pruneGrid(0.1); //beta
+
+
+
+
         std::lock_guard<std::mutex> lock(mtx1);
         grids->push_back(grids_dst[i]);
         });
