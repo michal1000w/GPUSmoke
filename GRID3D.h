@@ -2,6 +2,7 @@
 //VDB
 
 #define _USE_MATH_DEFINES
+#include <nanovdb/NanoVDB.h>
 #include <cmath>
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/LevelSetSphere.h>
@@ -71,6 +72,11 @@ public:
         grid_temp[0] = 0.0;
     }
 
+    void convert_to_vdb() {
+        openvdb::Vec3SGrid arr;
+        
+    }
+
     GRID3D(int x, int y, int z, float* vdb) {
         resolution.x = x;
         resolution.y = y;
@@ -100,6 +106,30 @@ public:
     float operator()(openvdb::Coord ijk) {
         float output = 0.0;
         long long iter = ijk[2] * resolution.y * resolution.x + ijk[1] * resolution.x + ijk[0];
+        if (iter <= size())
+            output = grid[iter];
+        else {
+            std::cout << "GRID READ ERROR:\n";
+            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+        }
+        return output;
+    }
+
+    float get(openvdb::Coord ijk) {
+        float output = 0.0;
+        long long iter = ijk[2] * resolution.y * resolution.x + ijk[1] * resolution.x + ijk[0];
+        if (iter <= size())
+            output = grid[iter];
+        else {
+            std::cout << "GRID READ ERROR:\n";
+            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+        }
+        return output;
+    }
+
+    float get(nanovdb::Coord ijk) {
+        float output = 0.0;
+        long long iter = ijk.z() * resolution.y * resolution.x + ijk.y() * resolution.x + ijk.x();
         if (iter <= size())
             output = grid[iter];
         else {

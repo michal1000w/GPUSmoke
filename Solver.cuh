@@ -531,7 +531,7 @@ public:
                 arr->UpScale(Upscale_Rate, SEED, frame);
                 arr_temp->UpScale(Upscale_Rate, SEED, frame);
             }
-            export_openvdb(FOLDER,"frame." + std::to_string(f), arr->get_resolution(), arr, arr_temp, true);
+            export_openvdb(FOLDER,"frame." + std::to_string(f), arr->get_resolution(), arr, arr_temp, false);
             arr->free();
             arr->free_noise();
             arr_temp->free();

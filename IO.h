@@ -171,7 +171,7 @@ void save_image(uint8_t* pixels, int3 img_dims, std::string name) {
 
 
 
-//#define THREADED_SAVE
+#define THREADED_SAVE
 
 int copy(openvdb::FloatGrid::Accessor& accessor,
     float* grid_src_arr, int3 dim, int sizee, int n) {
@@ -223,12 +223,6 @@ void create_grid_mt_old(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const op
     //tworzenie w¹tków
     std::vector<std::thread> pool;
 
-    /*
-    for (int i = 0; i < THREADS; i++) {
-        copy(accessors[i], grid_src_arr, dim, sizee, i);
-    }
-    */
-
     for (int i = 0; i < THREADS; i++) {
         std::thread T(copy, accessors[i], grid_src_arr, dim, sizee, i);
         pool.push_back(move(T));
@@ -269,31 +263,103 @@ struct Local {
         //iter.setValue(M[iter]);
         iter.setValue(2.5);
     }
+    static inline void add(const float& a, const float& b, float& result) {
+        result = a + b;
+    }
+    static inline void maks(const float& a, const float& b, float& result) {
+        result = max(a,b);
+    }
 };
 
 
+
+
+
+
 void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
-    using ValueT = typename openvdb::FloatGrid::ValueType;   
+    using ValueT = typename openvdb::FloatGrid::ValueType;
+    const ValueT outside = grid_dst.background();
+    int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
+
+    //get bounding box
+    int3 dim = grid_src->get_resolution();
+
+    grid_dst.tree().clearAllAccessors();
+
+
+    //std::cout << "Initialize...\n";
+
+    const auto processor_count = std::thread::hardware_concurrency();
+
+    int THREADS = 4; //4
 
     // Get a voxel accessor.
-
     float* grid_src_arr = grid_src->get_grid();
-    
-    //openvdb::tools::foreach(grid_dst.beginValueAll(), Local(grid_src_arr));
-    openvdb::tools::signedFloodFillWithValues(grid_dst.tree(), 0.0, *grid_src_arr);
-  
 
-    delete[] grid_src_arr;
+    //std::cout << "Grid gotten...\n";
+
+    int sizee = ceil((double)dim.x / (double)THREADS);
+
+    //////////////////////
+    std::vector<openvdb::FloatGrid::Ptr> grids;
+    std::vector<openvdb::FloatGrid::Accessor> accessors;
+
+    /*
+    for (int i = 0; i < THREADS; i++) {
+        //grids.push_back(grid_dst.deepCopy());
+        grids.push_back(grid_dst.copyWithNewTree());
+        accessors.push_back(grids[i]->getAccessor());
+    }
+    */
+    //std::cout << "Starting...\n";
+
+
+
+
+    //////////////////////
+    std::mutex mtx2;
+    concurrency::parallel_for(0, THREADS, [&](int i) {
+        auto gd = grid_dst.deepCopy();
+        //grid_dst.saveFloatAsHalf();
+        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
+
+
+        int end = (i * sizee) + (sizee);
+        if (end > dim.x) {
+            end = dim.x;
+        }
+        for (int x = i * sizee; x < end; x++)
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    accessors.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+                }
+            }
+
+
+
+        gd->pruneGrid(0); //beta
+
+        std::lock_guard<std::mutex> lock(mtx2);
+        grid_dst.tree().combine(gd->tree(), Local::add);
+        grid_dst.pruneGrid(0);
+        //gd->tree().clearAllAccessors();
+    });
+    
+    /*
+    for (int i = 0; i < THREADS; i++) {
+        //grid_dst.tree().combine(grids[i]->tree(), Local::add);
+        grids[i]->tree().clearAllAccessors();
+    }
+    */
+    
     grid_src->free();
 
+    //std::cout << "In the eeeend\n";
     openvdb::tools::signedFloodFill(grid_dst.tree());
     grid_dst.setTransform(
-            openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
+        openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
+
 }
-
-
-
-
 
 
 
@@ -359,13 +425,13 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
 
 
 int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, 
-                    GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = true) {
+                    GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
     filename = folder + filename + ".vdb";
     
-    std::cout << "\n || Saving OpenVDB:  ";
+    std::cout << "|| Saving OpenVDB: ";
     clock_t startTime = clock();
     
-    std::cout << "\n" << filename << std::endl;
+    std::cout << "" << filename ;//<< std::endl;
 
     std::vector < GRID3D* > grids_src;
     std::vector <openvdb::FloatGrid::Ptr> grids_dst;
@@ -397,6 +463,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     //for (int i = 0; i < 2; i++){
 #ifndef THREADED_SAVE
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
+        //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
         create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #endif
@@ -409,7 +476,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         //sparse it up
         //0 -> lossles
         //more is smaller
-        grids_dst[i]->pruneGrid(0.1); //beta
+        grids_dst[i]->pruneGrid(0.1); //beta 0.1
 
 
 
@@ -421,20 +488,25 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     if (DEBUG)
         std::cout << "Grids copied" << std::endl;
 
-    std::cout << (clock() - startTime);
-    startTime = clock();
+    //std::cout << (clock() - startTime);
+    //startTime = clock();
 
     ////////////////////////////////////////////////////////
     
-    /*
+
+
+
+    //kolejnoœæ
     openvdb::io::File file(filename);
     file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION);
     file.write({ grid, grid_temp2 });
     file.close();
+    /*
     */
-    
+    /*
     std::ofstream ofile(filename, std::ios_base::binary);
     openvdb::io::Stream(ofile).write(*grids);
+    */
     if (DEBUG)
         std::cout << "Grids saved" << std::endl;
     
