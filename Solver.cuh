@@ -73,6 +73,10 @@ public:
     bool SIMULATE;
     bool DONE_FRAME;
     float DIVERGE_RATE = 0.5f;
+    bool Upsampling;
+    bool TUpsampling;
+    float OFFSET;
+    float SCALE;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -83,6 +87,8 @@ private:
     uint8_t* img;
     float time_step;
     float rotation;
+
+    GRID3D* GRID;
 
     float3 Camera;
     float3 Light;
@@ -392,6 +398,8 @@ public:
         New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
         object_list;
+        Upsampling = false;
+        TUpsampling = Upsampling;
 
         Smoke_Dissolve = 0.995f; //0.995f
         Ambient_Temperature = 0.0f; //0.0f
@@ -403,7 +411,10 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
+        OFFSET = 0.5;
+        SCALE = 0.1;
 
+        GRID = new GRID3D();
         //rendering settings
         
         FRAMES = 500;
@@ -521,17 +532,41 @@ public:
             state->step++;
         }
 
-        if (false) {
+
+        if (Upsampling)
+            TUpsampling = true;
+
+
+        if (EXPORT_VDB && frame < EXPORT_START_FRAME)
+            TUpsampling = false;
+        else if (EXPORT_VDB && frame >= EXPORT_START_FRAME)
+            TUpsampling = true;
+
+
+
+        if (Upsampling && TUpsampling) {
             //Apply Wavelet Noise
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
+
+
+
+            if (GRID->size() != grid->size()) {
+                GRID = state->density->readToGrid();
+                GRID->free();
+                GRID->generateTile(128);
+            }
+
+            grid->LoadNoise(GRID);
+            gridt->LoadNoise(GRID);
+
 
             //std::cout << "Upsampling";
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame);
-            gridt->UpScale(Upscale_Rate, SEED, frame);
+            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE);
+            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE);
 
 
 
@@ -547,8 +582,8 @@ public:
             //std::cout << "Cuda Freed";
             grid->copyToDevice(false);
             //std::cout << "Copied";
-            auto* wt = grid->get_grid_device();
-            auto* wt2 = grid->get_grid_device_temp();
+            //auto* wt = grid->get_grid_device();
+            //auto* wt2 = grid->get_grid_device_temp();
 
         
 
@@ -583,6 +618,10 @@ public:
 
 
             }
+            
+            
+            
+            
         
 
             if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
@@ -597,9 +636,9 @@ public:
 
 
             grid->free();
-            grid->free_noise();
+            //grid->free_noise();
             grid->freeCuda();
-            delete grid;
+            //delete grid;
         }
         else {
 

@@ -325,7 +325,7 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
 
     //////////////////////
     std::mutex mtx2;
-    concurrency::parallel_for(0, THREADS, [&](int i) {
+    tbb::parallel_for(0, THREADS, [&](int i) {
         auto gd = grid_dst.deepCopy();
         //grid_dst.saveFloatAsHalf();
         openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
@@ -475,7 +475,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     
     //for (int i = 0; i < grids_src.size(); i++) {
     std::mutex mtx1;
-    concurrency::parallel_for(0, 2, [&](int i) {
+    tbb::parallel_for(0, 2, [&](int i) {
     //for (int i = 0; i < 2; i++){
 #ifndef THREADED_SAVE
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
