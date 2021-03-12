@@ -412,7 +412,7 @@ public:
         speed = 1.0; //1.0
 
         OFFSET = 0.5;
-        SCALE = 0.1;
+        SCALE = 0.2;
 
         GRID = new GRID3D();
         //rendering settings
@@ -549,12 +549,12 @@ public:
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
 
-
+            int NOISE_SC = 128;
 
             if (GRID->size() != grid->size()) {
                 GRID = state->density->readToGrid();
                 GRID->free();
-                GRID->generateTile(128);
+                GRID->generateTile(NOISE_SC);
             }
 
             grid->LoadNoise(GRID);
@@ -565,8 +565,8 @@ public:
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE);
-            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE);
+            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC);
+            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC);
 
 
 

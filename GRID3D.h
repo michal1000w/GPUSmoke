@@ -291,18 +291,18 @@ public:
     float* get_grid_device_temp() {
         return this->vdb_temp;
     }
-    void UpScale(int power, int SEED = 2, int frame = 0, float offset = 0.5, float scale = 0.1) {
+    void UpScale(int power, int SEED = 2, int frame = 0, float offset = 0.5, float scale = 0.1, int noise_scale = 128) {
         int noise_tile_size = power * min(min(resolution.x, resolution.y) //max max
             , resolution.z);
 
-        noise_tile_size = 128;
+        noise_tile_size = noise_scale;
 
         srand(SEED);
         if (this->grid_noise[0] < -1)
             generateTile(noise_tile_size);
 
 
-        applyNoise(1, noise_tile_size, offset, scale);
+        applyNoise(1, noise_tile_size, offset, scale, frame);
     }
 
     void LoadNoise(GRID3D* rhs) {
@@ -335,7 +335,7 @@ public:
         return v;
     }
 
-    void applyNoise(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1) {
+    void applyNoise(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0) {
         if (NTS == 0)
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         int NTS2 = NTS * NTS;
@@ -362,7 +362,7 @@ public:
                         if (*position >= 0.025) {
                             //*position += this->grid_noise[(z * (resolution.x * resolution.y)%NTS2) +
                             //(y * (resolution.x % NTS)) + (x % NTS)] * intensity;
-                            *position += evaluate(make_float3(x, y, z), x % NTS, resolution, NTS, offset, scale);
+                            *position += evaluate(make_float3(x, y, z), frame, resolution, NTS, offset, scale);
                         }
 
                     }
