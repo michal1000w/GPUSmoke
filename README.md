@@ -46,7 +46,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [x] Camera and light rotation
 
 ### Short-Medium Term
-* [ ] Convert internal data structure to NanoVDB for faster conversion and saving
+* [x] Sparse and Multi-Threaded vdb saving
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
 * [ ] Adaptive Domain - probably won't be faster in case of smoke simulation, however I'll need to do more research
 * [ ] Object Collision

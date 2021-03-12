@@ -198,6 +198,12 @@ public:
             return;
         }
 
+        //save version check
+        if (lines[1].find(VERSION) == -1) {
+            std::cout << "File saved with different JFlow version. May not be compatible!!!" << std::endl;
+            return;
+        }
+
         Clear_Simulation_Data();
 
         int zrobione = 0;
