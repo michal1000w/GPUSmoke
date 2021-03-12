@@ -292,7 +292,7 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
 
     const auto processor_count = std::thread::hardware_concurrency();
 
-    int THREADS = 4; //4
+    int THREADS = 4 ; //4
 
     // Get a voxel accessor.
     float* grid_src_arr = grid_src->get_grid();
@@ -333,7 +333,7 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
                     float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
-                    if (val < 0.05) continue; //beta
+                    if (val < 0.025) continue; //beta
                     accessors.setValue(openvdb::Coord(x, y, z), val);
                 }
             }

@@ -506,16 +506,21 @@ public:
             state->step++;
         }
 
-        render_fluid(
-            img, img_d,
-            state->density->readTarget(),
-            state->temperature->readTarget(),
-            vol_d, 1.0, Light, Camera, rotation,
-            STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+        if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) {
 
-        
-        
-        generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+            render_fluid(
+                img, img_d,
+                state->density->readTarget(),
+                state->temperature->readTarget(),
+                vol_d, 1.0, Light, Camera, rotation,
+                STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+
+
+
+            generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+
+
+        }
         
 
         if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
