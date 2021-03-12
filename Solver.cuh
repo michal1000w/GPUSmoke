@@ -53,8 +53,10 @@ class Solver {
 public:
     int ACCURACY_STEPS;//
     float Smoke_Dissolve;//
+    float Smoke_Buoyancy;
     float Ambient_Temperature;//
     float Fire_Max_Temperature;//
+    float Pressure;
     int STEPS;//
     bool Smoke_And_Fire;//
     int3 New_DOMAIN_RESOLUTION;//
@@ -393,6 +395,12 @@ public:
 
         Smoke_Dissolve = 0.995f; //0.995f
         Ambient_Temperature = 0.0f; //0.0f
+
+        //NEW
+        Smoke_Buoyancy = 1.0f;//1.0f
+        DIVERGE_RATE = 0.490f; //0.5f
+        Pressure = -1.02f;//1.0f
+        /////////////////////////////
         speed = 1.0; //1.0
 
 
@@ -502,56 +510,139 @@ public:
     }
 
     void Simulation_Frame() {
+        state->time_step = speed * 0.1; //beta
         DONE_FRAME = false;
         unsigned int f = frame;
         std::cout << "\rFrame " << f + 1 << "  -  ";
         for (int st = 0; st < 1; st++) {
             simulate_fluid(*state, object_list, ACCURACY_STEPS, 
                 false, f, Smoke_Dissolve, Ambient_Temperature,
-                DIVERGE_RATE);
+                DIVERGE_RATE, Smoke_Buoyancy, Pressure);
             state->step++;
         }
 
-        if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) {
+        if (false) {
+            //Apply Wavelet Noise
+            auto grid = state->density->readToGrid();
+            auto gridt = state->temperature->readToGrid();
 
-            render_fluid(
-                img, img_d,
-                state->density->readTarget(),
-                state->temperature->readTarget(),
-                vol_d, 1.0, Light, Camera, rotation,
-                STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+            //std::cout << "Upsampling";
+            int Upscale_Rate = 1;
+
+            //Upsampling
+            grid->UpScale(Upscale_Rate, SEED, frame);
+            gridt->UpScale(Upscale_Rate, SEED, frame);
 
 
 
-            generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+            //std::cout << "Combine grids";
+            grid->combine_with_temp_grid(gridt);
 
 
-        }
+            delete gridt;
+
+            //std::cout << "Uploading";
+
+            grid->freeCuda();
+            //std::cout << "Cuda Freed";
+            grid->copyToDevice(false);
+            //std::cout << "Copied";
+            auto* wt = grid->get_grid_device();
+            auto* wt2 = grid->get_grid_device_temp();
+
         
 
-        if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
-            GRID3D* arr = new GRID3D();
-            GRID3D* arr_temp = new GRID3D();
-            arr->set_pointer(state->density->readToGrid());
-            arr_temp->set_pointer(state->temperature->readToGrid());
-            std::string FOLDER = EXPORT_FOLDER;
-            FOLDER = trim(FOLDER);
+            /*
+            cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+            state->density->swap();
+            cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+            state->temperature->swap();
 
-            if (false) {
-                int Upscale_Rate = 1;
-                arr->UpScale(Upscale_Rate, SEED, frame);
-                arr_temp->UpScale(Upscale_Rate, SEED, frame);
-            }
-            export_openvdb(FOLDER,"frame." + std::to_string(f), arr->get_resolution(), arr, arr_temp, false);
-            arr->free();
-            arr->free_noise();
-            arr_temp->free();
-            arr_temp->free_noise();
-            delete arr;
-            delete arr_temp;
-            if (frame >= EXPORT_END_FRAME)
-                EXPORT_VDB = false;
+            grid->freeCuda();
+            grid->free_noise();
+            grid->free();
         }
+            */
+
+
+
+            if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
+
+                render_fluid(
+                    img, img_d,
+                    grid->get_grid_device(),
+                    grid->get_grid_device_temp(),
+                    //state->density->readTarget(),
+                    //state->temperature->readTarget(),
+                    vol_d, 1.0, Light, Camera, rotation,
+                    STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+
+
+
+                generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+
+
+            }
+        
+
+            if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
+                std::string FOLDER = EXPORT_FOLDER;
+                FOLDER = trim(FOLDER);
+            
+                export_openvdb(FOLDER,"frame." + std::to_string(f), grid->get_resolution(), grid, /*DEBUG*/ false);
+            
+                if (frame >= EXPORT_END_FRAME)
+                    EXPORT_VDB = false;
+            }
+
+
+            grid->free();
+            grid->free_noise();
+            grid->freeCuda();
+            delete grid;
+        }
+        else {
+
+            if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
+
+                render_fluid(
+                    img, img_d,
+                    state->density->readTarget(),
+                    state->temperature->readTarget(),
+                    vol_d, 1.0, Light, Camera, rotation,
+                    STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+
+
+
+                generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
+
+
+            }
+
+
+            if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
+                auto grid = state->density->readToGrid();
+                auto gridt = state->temperature->readToGrid();
+                grid->combine_with_temp_grid(gridt);
+
+
+                std::string FOLDER = EXPORT_FOLDER;
+                FOLDER = trim(FOLDER);
+
+                export_openvdb(FOLDER, "frame." + std::to_string(f), grid->get_resolution(), grid, /*DEBUG*/ false);
+
+                if (frame >= EXPORT_END_FRAME)
+                    EXPORT_VDB = false;
+
+                delete gridt;
+                grid->free();
+                grid->free_noise();
+                grid->freeCuda();
+                delete grid;
+            }
+        }
+
+
         frame++;
         DONE_FRAME = true;
     }

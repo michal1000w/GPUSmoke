@@ -222,15 +222,17 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Text("Simulation Settings");
 		ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 		ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-		//ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
-		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 64);
+		ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
+		ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
+		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
+		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 96);
 		if (ImGui::Button("Simulate")) {
 			if (solver.SIMULATE == false)
 				solver.SIMULATE = true;
 			else
 				solver.SIMULATE = false;
 		}
-		//ImGui::SliderFloat("Simulation speed", &solver.speed, 0.0f, 3.0f);//bugs
+		ImGui::SliderFloat("Simulation speed", &solver.speed, 0.1f, 1.5f);
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
 

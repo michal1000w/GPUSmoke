@@ -28,6 +28,9 @@ public:
     int byteCount();
     void setDim(int3 dim);
     ~DoubleBuffer();
+    void freeWriteTarget() {
+        cudaFree(B);
+    }
 private:
     int nbytes;
     T* A;

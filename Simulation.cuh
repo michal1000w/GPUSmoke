@@ -9,10 +9,22 @@
 void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, 
     int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0, 
     float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
-    float Diverge_Rate = 0.5f)
+    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
+
+
+    
+    /////////////GLOBAL EVALUATE//////////////////////
+    Smoke_Buoyancy += 5.0f * cosf(-0.4f * float(state.step));
+    //////////////////////////////////////////////////
+
+
+
+
+
+
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -53,7 +65,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.temperature->readTarget(),
         state.density->readTarget(),
         state.velocity->writeTarget(),
-        AMBIENT_TEMPERATURE, state.time_step, 1.0f, state.f_weight, state.dim);
+        AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight, state.dim); //1.0f
     state.velocity->swap();
 
     float3 location = state.impulseLoc;
@@ -65,6 +77,10 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     float MOVEMENT_SIZE = 3.0;//9
     float MOVEMENT_SPEED = 20;//10
     bool MOVEMENT = true;
+
+
+
+    
 
 
     if (DEBUG || true)
@@ -289,15 +305,29 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             state.diverge,
             state.pressure->readTarget(),
             state.pressure->writeTarget(),
-            state.dim, -1.0);
+            state.dim, Pressure); //-1.0
         state.pressure->swap();
     }
 
+
+
+    /*
+    for (int i = 0; i < ACCURACY_STEPS; i++) {
+        subtract_pressure << <grid, block >> > (
+            state.velocity->readTarget(),
+            state.velocity->writeTarget(),
+            state.pressure->readTarget(),
+            state.dim, -1.0f * Pressure / (ACCURACY_STEPS * 1.5f));//1.0
+            //state.dim, 1.0f);//1.0
+        state.velocity->swap();
+    }
+    */
     subtract_pressure << <grid, block >> > (
         state.velocity->readTarget(),
         state.velocity->writeTarget(),
         state.pressure->readTarget(),
-        state.dim, 1.0);
+        state.dim, -1.0f * Pressure);//1.0
+        //state.dim, 1.0f);//1.0
     state.velocity->swap();
 
     cudaEventRecord(stop, 0);
@@ -307,7 +337,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     cudaEventDestroy(start);
     cudaEventDestroy(stop);
 
-    std::cout << "Simulation Time: " << measured_time << "  ||";
+    std::cout << "Simulation Time: " << measured_time << " ||";
 }
 
 

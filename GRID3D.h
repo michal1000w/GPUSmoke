@@ -176,6 +176,10 @@ public:
         grid_noise[0] = 0.0;
     }
 
+    void combine_with_temp_grid(const GRID3D* rhs) {
+        grid_temp = rhs->grid;
+    }
+
     void normalizeData() {
         for (int i = 0; i < size(); i++) {
             if (grid[i] < 0.01)
@@ -199,8 +203,9 @@ public:
         }
     }
 
-    void copyToDevice() {
-        addNoise();
+    void copyToDevice(bool addNoise = true) {
+        if (addNoise)
+            this->addNoise();
         cudaMalloc((void**)&vdb_temp, sizeof(float) * size());
         cudaMemcpy(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice);
 
@@ -221,6 +226,9 @@ public:
     }
     int get_max_resolution() {
         return max(max(resolution.x, resolution.y), resolution.z);
+    }
+    void freeOnlyGrid() {
+        deletep(grid);
     }
     void free() {
         //std::cout << "Free grid memory" << std::endl;
@@ -252,19 +260,23 @@ public:
         return this->vdb_temp;
     }
     void UpScale(int power, int SEED = 2, int frame = 0) {
-        int noise_tile_size = power * max(max(resolution.x, resolution.y)
+        int noise_tile_size = power * min(min(resolution.x, resolution.y) //max max
             , resolution.z);
+
+        noise_tile_size = 32;
+
         srand(SEED);
         generateTile(noise_tile_size);
-        SEED += evaluate(make_float3(0.0, 0.0, (float)frame*0.1), 0, resolution);
-        applyNoise(0.2);
+        //generateTile(noise_tile_size);
+        //SEED += evaluate(make_float3(0.0, 0.0, (float)frame*0.1), 0, resolution);
+        applyNoise(0.4, noise_tile_size);
         //resolution = make_int3(resolution.x * power, resolution.y * power,
         //    resolution.z * power);
     }
 
     inline float evaluate(float3 pos, int tile, int3 resolution)
     {
-        int NOISE_TILE_SIZE = max(max(resolution.x,resolution.y),resolution.z);
+        int NOISE_TILE_SIZE = min(min(resolution.x,resolution.y),resolution.z);
         pos.x *= resolution.x;
         pos.y *= resolution.y;
         pos.z *= resolution.z;
@@ -285,16 +297,22 @@ public:
         return v;
     }
 
-    void applyNoise(float intensity = 0.2f) {
-        std::cout << "Applying noise" << std::endl;
+    void applyNoise(float intensity = 0.2f, int NTS = 0) {
+        if (NTS == 0)
+            NTS = min(min(resolution.x, resolution.y), resolution.z);
+        int NTS2 = NTS * NTS;
+        int NTS3 = NTS2 * NTS;
+        //std::cout << "Applying noise" << std::endl;
         for (int x = 0; x < resolution.x; x++)
             for (int y = 0; y < resolution.y; y++)
                 for (int z = 0; z < resolution.z; z++) {
                     float* position = &this->grid[z * resolution.x * resolution.y +
                         y * resolution.x + x];
-                    if (*position >= 0.1)
-                        *position += this->grid_noise[z * resolution.x * resolution.y +
-                        y * resolution.x + x] * intensity;
+                    
+                    if (*position >= 0.01)
+                        *position += this->grid_noise[(z * (resolution.x * resolution.y)%NTS2) +
+                        (y * (resolution.x % NTS)) + (x % NTS)] * intensity;
+                    
                 }
     }
 
@@ -304,7 +322,7 @@ public:
 
         float* noise3 = new float[n3d];
 
-        std::cout << "Generating 3x " << n << "^3 noise tile" << std::endl;
+        //std::cout << "Generating 3x " << n << "^3 noise tile" << std::endl;
         float* temp13 = new float[n3d];
         float* temp23 = new float[n3d];
 
@@ -443,10 +461,10 @@ public:
         return result;
     }
 
-private:
     long long size() {
         return (long long)resolution.x * (long long)resolution.y * (long long)resolution.z;
     }
+private:
     float* grid;
     float* grid_temp;
     float* grid_noise;

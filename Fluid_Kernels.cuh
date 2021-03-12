@@ -143,6 +143,8 @@ __global__ void pressure_solve(T* div, T* p_src, T* p_dst,
     p_dst[get_voxel(x, y, z, vd)] = (p_sum + amount * d) * 0.166667;//o + avg*amount;
 }
 
+
+
 template <typename V, typename T>
 __global__ void divergence(V* velocity, T* div, int3 vd, float half_cell)
 {

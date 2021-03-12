@@ -276,7 +276,7 @@ struct Local {
 
 
 
-void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
+void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst.background();
     const ValueT inside = -outside;
@@ -287,15 +287,20 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
 
     grid_dst.tree().clearAllAccessors();
 
-
-    //std::cout << "Initialize...\n";
+    if (DEBUG)
+        std::cout << "Initialize...\n";
 
     const auto processor_count = std::thread::hardware_concurrency();
 
     int THREADS = 4 ; //4
 
     // Get a voxel accessor.
-    float* grid_src_arr = grid_src->get_grid();
+    float* grid_src_arr = nullptr;
+    if (INDEX == 0)
+        grid_src_arr = grid_src->get_grid();
+    else
+        grid_src_arr = grid_src->get_grid_temp();
+
 
     //std::cout << "Grid gotten...\n";
 
@@ -312,7 +317,8 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
         accessors.push_back(grids[i]->getAccessor());
     }
     */
-    //std::cout << "Starting...\n";
+    if (DEBUG)
+        std::cout << "Starting...\n";
 
     
 
@@ -354,8 +360,9 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
         grids[i]->tree().clearAllAccessors();
     }
     */
-    
-    grid_src->free();
+    if (DEBUG)
+        std::cout << "Free memory" << std::endl;
+    //grid_src->free();
 
     //std::cout << "In the eeeend\n";
     openvdb::tools::signedFloodFill(grid_dst.tree());
@@ -428,7 +435,7 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
 
 
 int export_openvdb(std::string folder,std::string filename, int3 domain_resolution, 
-                    GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
+                    GRID3D* grid_dst, bool DEBUG = false) {
     filename = folder + filename + ".vdb";
     
     std::cout << "|| Saving OpenVDB: ";
@@ -451,8 +458,14 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     grid->setName("density");
     grid_temp2->setName("temperature");
     ////////////////////////////////////////////////////////
+    GRID3D* grid_temp = new GRID3D();
+    //grid_temp->set_pointer(grid_dst);
+    //grid_temp = grid_dst;
+
+
+
     grids_src.push_back(grid_dst);
-    grids_src.push_back(grid_temp);
+    grids_src.push_back(grid_dst);
     grids_dst.push_back(grid);
     grids_dst.push_back(grid_temp2);
     ////////////////////////////////////////////////////////
@@ -468,7 +481,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
+        create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
 #endif
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();
@@ -514,6 +527,9 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     */
     if (DEBUG)
         std::cout << "Grids saved" << std::endl;
+
+    grid_temp->free();
+    grid_dst->free();
     
     grids_dst.clear();
     grids_src.clear();
