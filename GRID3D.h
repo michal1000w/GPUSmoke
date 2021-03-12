@@ -72,10 +72,6 @@ public:
         grid_temp[0] = 0.0;
     }
 
-    void convert_to_vdb() {
-        openvdb::Vec3SGrid arr;
-        
-    }
 
     GRID3D(int x, int y, int z, float* vdb) {
         resolution.x = x;

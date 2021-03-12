@@ -279,6 +279,7 @@ struct Local {
 void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst.background();
+    const ValueT inside = -outside;
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
 
     //get bounding box
@@ -313,7 +314,7 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
     */
     //std::cout << "Starting...\n";
 
-
+    
 
 
     //////////////////////
@@ -331,7 +332,9 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
         for (int x = i * sizee; x < end; x++)
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
-                    accessors.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
+                    float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
+                    if (val < 0.05) continue; //beta
+                    accessors.setValue(openvdb::Coord(x, y, z), val);
                 }
             }
 
@@ -472,12 +475,12 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
 
 
 
+        
 
         //sparse it up
         //0 -> lossles
         //more is smaller
-        grids_dst[i]->pruneGrid(0.1); //beta 0.1
-
+        grids_dst[i]->pruneGrid(0); //beta 0.1
 
 
 
@@ -498,7 +501,9 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
 
     //kolejnoœæ
     openvdb::io::File file(filename);
-    file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION);
+    file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION //     9.6 ->  600
+                        //openvdb::OPENVDB_FILE_VERSION_BOOL_LEAF_OPTIMIZATION //9 -> 1400
+                        );
     file.write({ grid, grid_temp2 });
     file.close();
     /*
