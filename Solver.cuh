@@ -145,6 +145,17 @@ public:
         lines.push_back("#end_frame=" + std::to_string(EXPORT_END_FRAME));
         lines.push_back("#start_frame=" + std::to_string(EXPORT_START_FRAME));
 
+        //0.0.21 ALPHA
+        lines.push_back("#diverge_rate=" + std::to_string(DIVERGE_RATE));
+        lines.push_back("#buoyancy=" + std::to_string(Smoke_Buoyancy));
+        lines.push_back("#pressure=" + std::to_string(Pressure));
+
+        lines.push_back("#simulation_speed=" + std::to_string(speed));
+        lines.push_back("#simulation_upsampling=" + std::to_string(Upsampling));
+        lines.push_back("#wn_offset=" + std::to_string(OFFSET));
+        lines.push_back("#wn_scale=" + std::to_string(SCALE));
+        lines.push_back("#simulation_influence=" + std::to_string(INFLUENCE_SIM));
+
         for (int i = 0; i < object_list.size(); i++) {
             std::string current = "#object={";
 
@@ -159,7 +170,9 @@ public:
             current += std::to_string(object_list[i].force_direction[1]) + ";";
             current += std::to_string(object_list[i].force_direction[2]) + ";";
             current += std::to_string(object_list[i].square) + ";";
-            current += std::to_string(object_list[i].impulseTemp) + "";
+            current += std::to_string(object_list[i].impulseTemp) + ";";
+            current += std::to_string(object_list[i].frame_range_min) + ";";
+            current += std::to_string(object_list[i].frame_range_max) + "";
             current += "}";
 
             lines.push_back(current);
@@ -210,7 +223,7 @@ public:
         //save version check
         if (lines[1].find(VERSION) == -1) {
             std::cout << "File saved with different JFlow version. May not be compatible!!!" << std::endl;
-            return;
+            //return;
         }
 
         Clear_Simulation_Data();
@@ -275,6 +288,45 @@ public:
                 EXPORT_START_FRAME = stoi(podzial[line * 2 + 1]);
             }
 
+            //0.0.21 ALPHA
+            try {
+                if (podzial[line * 2] == "diverge_rate") {
+                    DIVERGE_RATE = stof(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "buoyancy") {
+                    Smoke_Buoyancy = stof(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "pressure") {
+                    Pressure = stof(podzial[line * 2 + 1]);
+                }
+                //
+                if (podzial[line * 2] == "simulation_speed") {
+                    speed = stof(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "simulation_upsampling") {
+                    Upsampling = what_it_is(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "wn_offset") {
+                    OFFSET = stof(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "wn_scale") {
+                    SCALE = stof(podzial[line * 2 + 1]);
+                }
+                if (podzial[line * 2] == "simulation_influence") {
+                    INFLUENCE_SIM = what_it_is(podzial[line * 2 + 1]);
+                }
+            }
+            catch (std::exception e) {
+                std::cout << "Old save -> not all features can be read" << std::endl;
+            }
+
+
+
+
+
+
+
+
             if (podzial[line * 2] == "object") {
                 int i1 = 1;
                 std::vector<std::string> attributes;
@@ -304,6 +356,13 @@ public:
                 object_list[object_list.size() - 1].force_direction[2] = stof(attributes[9]);
                 object_list[object_list.size() - 1].square = stoi(attributes[10]);
                 object_list[object_list.size() - 1].impulseTemp = stof(attributes[11]);
+                try {
+                    object_list[object_list.size() - 1].frame_range_min = stoi(attributes[12]);
+                    object_list[object_list.size() - 1].frame_range_max = stoi(attributes[13]);
+                }
+                catch (std::exception e) {
+                    std::cout << "Missing framerange values, setting up default once" << std::endl;
+                }
             }
 
         }
@@ -382,11 +441,28 @@ public:
 
     void ExampleScene(bool force = false) {
         //adding emitters
+
+        float temp = 5;
+        float positionx = vol_d.x * 0.5;
+        float positionz = vol_d.z * 0.5;
+        for (int i = 0; i < 500; i++) {
+            temp += cosf(1.2123123f * float(i));
+            positionx += (vol_d.x*0.25) * sinf(3.312313f * float(i));
+            positionz += (vol_d.z * 0.25) * cosf(2.1998443f * float(i));
+            OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
+                positionx, 5, positionz), object_list.size());
+            temp2.frame_range_min = i;
+            temp2.frame_range_max = i + 20;
+            object_list.push_back(temp2);
+        }
+
+        /*
         if (!preserve_object_list || force) {
             object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
             //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
             object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, vol_d.z / 2.0), object_list.size()));
         }
+        */
     }
 
     void Initialize() {

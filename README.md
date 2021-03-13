@@ -50,13 +50,13 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
 * [ ] Adaptive Domain - probably won't be faster in case of smoke simulation, however I'll need to do more research
 * [ ] Object Collision
-    *[x] Initial sphere collision
-    *[ ] More complex geometry
+    * [x] Initial sphere collision
+    * [ ] More complex geometry
 * [x] Simple Forces --> (Wind, Turbulance, Noise)
 * [x] Preset creator (LOAD/SAVE)
 * [x] Fix Density over 1.0 issue
 * [ ] Volume upsampling - In the research phaze
-    * [ ] Wavelet noise upsampling
+    * [x] Wavelet noise upsampling
     * [ ] Custom Neural Network upsampling
 
 ### Medium-Long Term
