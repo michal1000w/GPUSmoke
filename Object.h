@@ -8,7 +8,8 @@
 #include "double_buffer.cpp"
 
 #define EMITTER 1
-#define SMOKE 2
+#define SMOKE -1 //depricated
+#define EXPLOSION 2
 #define VDBOBJECT 3
 #define VDBSINGLE 4
 #define FORCE_FIELD_FORCE 5
@@ -77,6 +78,8 @@ public:
 	float max_vel_freq = 20.0;
 	float vel_freq_step = 0.4;
 	float impulseTemp;
+	int frame_range_min = 0;
+	int frame_range_max = 30;
 private:
 	float impulseDensity;
 	float3 location;

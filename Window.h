@@ -259,7 +259,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::Begin("Objects Panel");
 	{
 		ImGui::Text("Emitter type");
-		const char* items[] = { "emitter", "force", "power", 
+		const char* items[] = { "emitter", "explosion" , "force", "power", 
 			"turbulance", "wind", "sphere" };// , "vdb", "vdbs" };
 		static const char* current_item = "emitter";
 
@@ -317,6 +317,12 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::SliderFloat(("initial temperature-" + std::to_string(object)).c_str(), &solver.object_list[object].impulseTemp, -50.0, 50.0);
 				ImGui::SliderFloat(("velocity frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, solver.object_list[object].max_vel_freq);
 				//solver.object_list[object].set_vel_freq = solver.object_list[object].velocity_frequence;
+			}
+			else if (solver.object_list[object].type == EXPLOSION) {
+				ImGui::SliderFloat(("initial temperature-" + std::to_string(object)).c_str(), &solver.object_list[object].impulseTemp, -50.0, 50.0);
+				ImGui::SliderFloat(("velocity frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, solver.object_list[object].max_vel_freq);
+				ImGui::InputInt(("start frame-" + std::to_string(object)).c_str(), &solver.object_list[object].frame_range_min);
+				ImGui::InputInt(("end frame-" + std::to_string(object)).c_str(), &solver.object_list[object].frame_range_max);
 			}
 			solver.object_list[object].UpdateLocation();
 		}

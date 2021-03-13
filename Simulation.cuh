@@ -87,9 +87,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     for (int i = 0; i < object_list.size(); i++) {
         OBJECT current = object_list[i];
         
-
-
-        if (MOVEMENT) {
+        
+        //INITIAL ANIMATION
+        if (MOVEMENT && current.get_type() != "explosion") {
             if (EXAMPLE__ == 1) {
                 object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
                     current.get_location().y + cosf(-0.03f * float(state.step)),
@@ -108,6 +108,19 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
+
+
+        //REAL ANIMATION
+        if (current.get_type() == "explosion") {
+
+        }
+
+
+
+
+
+
+        //GIVING THE FLOW
         float3 SIZEE = make_float3(current.get_size(), current.get_size(), current.get_size());
 
 
@@ -141,6 +154,22 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 current.get_impulseDensity(),
                 state.dim
                 );
+        }
+        else if (current.get_type() == "explosion") {
+            if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                impulse << <grid, block >> > (
+                    state.temperature->readTarget(),
+                    current.get_location(), current.get_size(),
+                    current.get_impulseTemp(),
+                    state.dim
+                    );
+                impulse << <grid, block >> > (
+                    state.density->readTarget(),
+                    current.get_location(), current.get_size(),
+                    current.get_impulseDensity(),
+                    state.dim
+                    );
+            }
         }
         else if (current.get_type() == "vdb") {
             impulse_vdb << <grid, block >> > (

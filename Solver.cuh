@@ -383,9 +383,9 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
         if (!preserve_object_list || force) {
-            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
+            object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
             //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
-            object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, vol_d.z / 2.0), object_list.size()));
+            object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, vol_d.z / 2.0), object_list.size()));
         }
     }
 
@@ -413,7 +413,7 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.061; //0.0001
+        OFFSET = 0.0061; //0.0001
         SCALE = 0.25; //0.12
 
         GRID = new GRID3D();
