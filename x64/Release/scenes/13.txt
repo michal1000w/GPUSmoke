@@ -2,9 +2,9 @@
 #version=0.0.20
 #type=Alpha
 #scene_type=0
-#domain_resolution_x=152
-#domain_resolution_y=490
-#domain_resolution_z=162
+#domain_resolution_x=52
+#domain_resolution_y=125
+#domain_resolution_z=54
 #ambient_temperature=0.000000
 #smoke_dissolve=0.995000
 #simulation_accuracy=96
@@ -15,5 +15,5 @@
 #output_cache=output/cache/
 #end_frame=500
 #start_frame=0
-#object={emitter;79.830093;9.903546;45.190811;2.062000;0.300000;0.000000;1.000000;0.000000;0.000000;0;9.450000}
-#object={fft;82.771095;17.197546;37.543812;18.000000;11.340000;10.653000;1.000000;0.000000;0.000000;0;5.000000}
+#object={emitter;16.625343;10.074056;14.753099;2.062000;0.300000;0.000000;1.000000;0.000000;0.000000;0;9.450000}
+#object={fft;19.566343;17.464512;14.753099;19.931000;3.711000;5.155000;1.000000;0.000000;0.000000;0;5.000000}

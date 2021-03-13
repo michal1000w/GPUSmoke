@@ -414,7 +414,7 @@ public:
         speed = 1.0; //1.0
 
         OFFSET = 0.0001; //0.5
-        SCALE = 0.20; //0.2
+        SCALE = 0.12; //0.2
 
         GRID = new GRID3D();
         //rendering settings

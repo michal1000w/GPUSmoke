@@ -343,7 +343,7 @@ public:
         //std::cout << "Applying noise" << std::endl;
 
 
-        int THREADS = 4;
+        int THREADS = 32;
         int sizee = ceil((double)resolution.x / (double)THREADS);
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
@@ -359,10 +359,10 @@ public:
                         float* position = &this->grid[z * resolution.x * resolution.y +
                             y * resolution.x + x];
 
-                        if (*position >= 0.025) {
+                        if (*position >= 0.01) {
                             //*position += this->grid_noise[(z * (resolution.x * resolution.y)%NTS2) +
                             //(y * (resolution.x % NTS)) + (x % NTS)] * intensity;
-                            *position += evaluate(make_float3(x, y, z), frame, resolution, NTS, offset, scale);
+                            *position += evaluate(make_float3(x, y, z), frame%512, resolution, NTS, offset, scale);
                         }
 
                     }
