@@ -236,6 +236,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Checkbox("Simulation Upsampling", &solver.Upsampling);
 		ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 1.0f);
 		ImGui::SliderFloat("Scale", &solver.SCALE, 0.001f, 1.0f);
+		ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
 

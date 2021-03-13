@@ -77,6 +77,7 @@ public:
     bool TUpsampling;
     float OFFSET;
     float SCALE;
+    bool INFLUENCE_SIM;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -400,6 +401,7 @@ public:
         object_list;
         Upsampling = false;
         TUpsampling = Upsampling;
+        INFLUENCE_SIM = true;
 
         Smoke_Dissolve = 0.995f; //0.995f
         Ambient_Temperature = 0.0f; //0.0f
@@ -580,13 +582,10 @@ public:
 
 
 
-
-            bool INFLUENCE_SIM = true;
+            grid->freeCuda();
+            grid->copyToDevice(false);
+            
             if (INFLUENCE_SIM) {
-                grid->freeCuda();
-                grid->copyToDevice(false);
-
-
                 auto* wt = grid->get_grid_device();
                 auto* wt2 = grid->get_grid_device_temp();
 
