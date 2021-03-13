@@ -292,7 +292,7 @@ public:
         return this->vdb_temp;
     }
     void UpScale(int power, int SEED = 2, int frame = 0, float offset = 0.5, float scale = 0.1, int noise_scale = 128,
-                int apply_method = 0) {
+                int apply_method = 0, float intensity = 1) {
         int noise_tile_size = power * min(min(resolution.x, resolution.y) //max max
             , resolution.z);
 
@@ -303,9 +303,9 @@ public:
             generateTile(noise_tile_size);
 
         if (apply_method == 0)
-            applyNoise(1, noise_tile_size, offset, scale, frame);
+            applyNoise(intensity, noise_tile_size, offset, scale, frame);
         else if (apply_method == 1)
-            applyNoise2(1, noise_tile_size, offset, scale, frame);
+            applyNoise2(intensity, noise_tile_size, offset, scale, frame);
     }
 
     void LoadNoise(GRID3D* rhs) {
@@ -345,7 +345,7 @@ public:
         int NTS3 = NTS2 * NTS;
         //std::cout << "Applying noise" << std::endl;
 
-
+        float tempp = 0.0;
         int THREADS = 32;
         int sizee = ceil((double)resolution.x / (double)THREADS);
         tbb::parallel_for(0, THREADS, [&](int i) {
@@ -362,10 +362,9 @@ public:
                         float* position = &this->grid[z * resolution.x * resolution.y +
                             y * resolution.x + x];
 
-                        if (*position >= 0.01) {
-                            //*position += evaluate(make_float3(x, y, z), frame%512, resolution, NTS, offset, scale);
-                            intensity = *position; // 1.0f
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale) * intensity;
+                        //if (*position >= 0.01) {
+                        if (*position != 0.0) {
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale) * intensity * min((*position),1.0);
                         }
 
                     }

@@ -78,6 +78,7 @@ public:
     float OFFSET;
     float SCALE;
     bool INFLUENCE_SIM;
+    float noise_intensity;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -357,6 +358,8 @@ public:
                 object_list[object_list.size() - 1].square = stoi(attributes[10]);
                 object_list[object_list.size() - 1].impulseTemp = stof(attributes[11]);
                 try {
+                    if (attributes.size() < 12)
+                        throw "Missing framerange values";
                     object_list[object_list.size() - 1].frame_range_min = stoi(attributes[12]);
                     object_list[object_list.size() - 1].frame_range_max = stoi(attributes[13]);
                 }
@@ -442,20 +445,21 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
 
-        float temp = 5;
-        float positionx = vol_d.x * 0.5;
-        float positionz = vol_d.z * 0.5;
-        for (int i = 0; i < 500; i++) {
-            temp += cosf(1.2123123f * float(i));
-            positionx += (vol_d.x*0.25) * sinf(3.312313f * float(i));
-            positionz += (vol_d.z * 0.25) * cosf(2.1998443f * float(i));
-            OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
-                positionx, 5, positionz), object_list.size());
-            temp2.frame_range_min = i;
-            temp2.frame_range_max = i + 20;
-            object_list.push_back(temp2);
+        if (!preserve_object_list || force) {
+            float temp = 5;
+            float positionx = vol_d.x * 0.5;
+            float positionz = vol_d.z * 0.5;
+            for (int i = 0; i < 500; i++) {
+                temp += cosf(1.2123123f * float(i));
+                positionx += (vol_d.x * 0.25) * sinf(3.312313f * float(i));
+                positionz += (vol_d.z * 0.25) * cosf(2.1998443f * float(i));
+                OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
+                    positionx, 5, positionz), object_list.size());
+                temp2.frame_range_min = i;
+                temp2.frame_range_max = i + 20;
+                object_list.push_back(temp2);
+            }
         }
-
         /*
         if (!preserve_object_list || force) {
             object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
@@ -489,8 +493,9 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.0061; //0.0001
-        SCALE = 0.25; //0.12
+        OFFSET = 0.02; //0.0001
+        SCALE = 2.0f; //0.12
+        noise_intensity = 0.4f;
 
         GRID = new GRID3D();
         //rendering settings
@@ -627,7 +632,7 @@ public:
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
 
-            int NOISE_SC = 128;
+            int NOISE_SC = 64;
 
             if (GRID->size() != grid->size()) {
                 GRID = state->density->readToGrid();
@@ -643,8 +648,8 @@ public:
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0); //normal grid
-            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1); //temperature grid
+            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity); //normal grid
+            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity); //temperature grid -> 1
 
 
 

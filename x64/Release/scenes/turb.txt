@@ -1,5 +1,5 @@
 #name=JFLOW
-#version=0.0.20
+#version=0.0.21
 #type=Alpha
 #scene_type=0
 #domain_resolution_x=96
@@ -7,7 +7,7 @@
 #domain_resolution_z=96
 #ambient_temperature=0.000000
 #smoke_dissolve=0.995000
-#simulation_accuracy=64
+#simulation_accuracy=96
 #fire_and_smoke_render=1
 #fire_emmision_rate=50.000000
 #render_samples=100
@@ -15,6 +15,13 @@
 #output_cache=output/huge3/
 #end_frame=500
 #start_frame=0
-#object={emitter;80.934181;9.977867;39.257797;18.000000;0.345000;0.000000;1.000000;0.000000;0.000000;0;0.690000}
-#object={fft;78.934181;17.477867;31.141796;37.241001;5.200000;54.483002;1.000000;0.000000;0.000000;0;5.000000}
-#object={fft;78.934181;104.977867;36.838799;33.792999;2.552000;25.517000;1.000000;0.000000;0.000000;1;5.000000}
+#diverge_rate=0.508000
+#buoyancy=0.884000
+#pressure=-0.988000
+#simulation_speed=1.000000
+#simulation_upsampling=0
+#wn_offset=0.020000
+#wn_scale=2.000000
+#simulation_influence=1
+#object={emitter;73.862442;10.307127;41.287083;18.000000;0.345000;0.000000;1.000000;0.000000;0.000000;0;0.690000;0;30}
+#object={fft;80.188263;27.178261;42.303284;31.372999;5.200000;63.137001;1.000000;0.000000;0.000000;0;5.000000;0;30}
