@@ -411,8 +411,8 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.5;
-        SCALE = 0.2;
+        OFFSET = 0.0001; //0.5
+        SCALE = 0.20; //0.2
 
         GRID = new GRID3D();
         //rendering settings
@@ -578,26 +578,26 @@ public:
 
             //std::cout << "Uploading";
 
-            grid->freeCuda();
-            //std::cout << "Cuda Freed";
-            grid->copyToDevice(false);
-            //std::cout << "Copied";
-            //auto* wt = grid->get_grid_device();
-            //auto* wt2 = grid->get_grid_device_temp();
 
-        
 
-            /*
-            cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-            state->density->swap();
-            cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-            state->temperature->swap();
 
-            grid->freeCuda();
-            grid->free_noise();
-            grid->free();
-        }
-            */
+            bool INFLUENCE_SIM = true;
+            if (INFLUENCE_SIM) {
+                grid->freeCuda();
+                grid->copyToDevice(false);
+
+
+                auto* wt = grid->get_grid_device();
+                auto* wt2 = grid->get_grid_device_temp();
+
+
+
+
+                cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+                state->density->swap();
+                cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+                state->temperature->swap();
+            }
 
 
 
