@@ -413,8 +413,8 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.0001; //0.5
-        SCALE = 0.12; //0.2
+        OFFSET = 0.061; //0.0001
+        SCALE = 0.25; //0.12
 
         GRID = new GRID3D();
         //rendering settings
@@ -567,8 +567,8 @@ public:
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC);
-            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC);
+            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0); //normal grid
+            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1); //temperature grid
 
 
 

@@ -17,7 +17,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     
     /////////////GLOBAL EVALUATE//////////////////////
-    Smoke_Buoyancy += 1.0f * cosf(-0.8f * float(state.step));
+    Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
     //////////////////////////////////////////////////
 
 
