@@ -80,6 +80,10 @@ public:
     bool INFLUENCE_SIM;
     float noise_intensity;
     float time_anim = 0.1;
+
+    bool UpsamplingVelocity = true;
+    bool UpsamplingTemperature = true;
+    bool UpsamplingDensity = true;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -640,7 +644,7 @@ public:
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
             
-            if (INFLUENCE_SIM) {
+            if (INFLUENCE_SIM && UpsamplingVelocity) {
                 //std::cout << "Reading grid";
                 auto velvel = state->velocity->readToGrid3D();
                 //std::cout << "Copied";
@@ -671,13 +675,13 @@ public:
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
-            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
+            if (UpsamplingDensity)
+                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
+            if (UpsamplingTemperature)
+                gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
             
-            if (INFLUENCE_SIM) {
-                //std::cout << "Upsampling velocity\n";
-                //tutaj bug
+            if (INFLUENCE_SIM && UpsamplingVelocity) {
                 grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 2, noise_intensity, time_anim); //velocity grid
             }
             
@@ -700,19 +704,24 @@ public:
                 auto wt2 = grid->get_grid_device_temp();
                 
                 
-                grid->freeCudaVel();
-                grid->copyToDeviceVel();
-                grid->free_velocity(); //new
-                auto wt3 = grid->get_grid_device_vel();
-                cudaMemcpy(state->velocity->writeTarget(), wt3, SIZEOF_FLOAT3 * grid->size(), cudaMemcpyDeviceToDevice);
-                state->velocity->swap();
+                if (UpsamplingVelocity) {
+                    grid->freeCudaVel();
+                    grid->copyToDeviceVel();
+                    grid->free_velocity(); //new
+                    auto wt3 = grid->get_grid_device_vel();
+                    cudaMemcpy(state->velocity->writeTarget(), wt3, SIZEOF_FLOAT3 * grid->size(), cudaMemcpyDeviceToDevice);
+                    state->velocity->swap();
+                }
 
                 
-
-                cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-                state->density->swap();
-                cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-                state->temperature->swap();
+                if (UpsamplingDensity) {
+                    cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+                    state->density->swap();
+                }
+                if (UpsamplingTemperature) {
+                    cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
+                    state->temperature->swap();
+                }
                 //std::cout << "\DOONE\n";
 
                 //std::cout << "Free wt, wt2, wt3" << std::endl;

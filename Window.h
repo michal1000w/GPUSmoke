@@ -233,12 +233,23 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				solver.SIMULATE = false;
 		}
 		ImGui::SliderFloat("Simulation speed", &solver.speed, 0.1f, 1.5f);
+
+
 		ImGui::Checkbox("Simulation Upsampling", &solver.Upsampling);
-		ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 1.0f);
-		ImGui::SliderFloat("Scale", &solver.SCALE, 0.01f, 4.0f);
-		ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);
-		ImGui::SliderFloat("Strength", &solver.noise_intensity, 0.01f, 3.0f);
-		ImGui::SliderFloat("Time", &solver.time_anim, 0.0f, 1.0f);
+		if (solver.Upsampling) {
+			ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 1.0f);
+			ImGui::SliderFloat("Scale", &solver.SCALE, 0.01f, 4.0f);
+			ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);
+			ImGui::SliderFloat("Strength", &solver.noise_intensity, 0.01f, 3.0f);
+			ImGui::SliderFloat("Time", &solver.time_anim, 0.0f, 1.0f);
+			if (solver.INFLUENCE_SIM) {
+				ImGui::Checkbox("Velocity", &solver.UpsamplingVelocity);
+				ImGui::SameLine();
+			}
+			ImGui::Checkbox("Density", &solver.UpsamplingDensity);
+			ImGui::SameLine();
+			ImGui::Checkbox("Temperature", &solver.UpsamplingTemperature);
+		}
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
 
