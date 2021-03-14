@@ -82,8 +82,8 @@ public:
     float time_anim = 0.1;
 
     bool UpsamplingVelocity = true;
-    bool UpsamplingTemperature = true;
-    bool UpsamplingDensity = true;
+    bool UpsamplingTemperature = false;
+    bool UpsamplingDensity = false;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
