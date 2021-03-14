@@ -26,11 +26,13 @@ struct fluid_state {
         dim = dims;
         nelems = dims.x * dims.y * dims.z;
         velocity = new DoubleBuffer<float3>((int)nelems);
+        velocity->setDim(dims);
         density = new DoubleBuffer<float>((int)nelems);
         density->setDim(dims);
         temperature = new DoubleBuffer<float>((int)nelems);
         temperature->setDim(dims);
         pressure = new DoubleBuffer<float>((int)nelems);
+        pressure->setDim(dims);
         cudaMalloc((void**)&diverge, sizeof(float) * nelems);
     }
 

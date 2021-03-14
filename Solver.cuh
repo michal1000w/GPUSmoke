@@ -494,9 +494,9 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.02; //0.0001
-        SCALE = 2.0f; //0.12
-        noise_intensity = 0.4f;
+        OFFSET = 0.015; //0.0001
+        SCALE = 0.7f; //0.12
+        noise_intensity = 0.46f;
 
         GRID = new GRID3D();
         //rendering settings
@@ -638,10 +638,18 @@ public:
             auto gridt = state->temperature->readToGrid();
             
             if (INFLUENCE_SIM) {
-                //grid->LoadVelocity(state->velocity->readToGrid3D());
+                //std::cout << "Reading grid";
+                auto velvel = state->velocity->readToGrid3D();
+                //std::cout << "Copied";
+                grid->LoadVelocity(velvel);
+
+                //std::cout << "Deleting velvel";
+                velvel->free();
+                velvel->freeCuda();
+                velvel->freeCudaVel();
             }
 
-            std::cout << "Loaded";
+            //std::cout << "Loaded";
 
             int NOISE_SC = 64;
 
@@ -655,28 +663,29 @@ public:
             grid->LoadNoise(GRID);
             gridt->LoadNoise(GRID);
 
-
-            std::cout << "Upsampling";
+            
+            //std::cout << "Upsampling";
             int Upscale_Rate = 1;
 
             //Upsampling
             grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
             gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
-            /*
+            
             if (INFLUENCE_SIM) {
-                std::cout << "Upsampling velocity\n";
+                //std::cout << "Upsampling velocity\n";
+                //tutaj bug
                 grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 2, noise_intensity, time_anim); //velocity grid
             }
-            */
+            
 
-            std::cout << "Combine grids";
+            //std::cout << "Combine grids";
             grid->combine_with_temp_grid(gridt);
 
 
             delete gridt;
 
-            std::cout << "Uploading";
+            //std::cout << "Uploading";
 
 
 
@@ -684,22 +693,28 @@ public:
             grid->copyToDevice(false);
             
             if (INFLUENCE_SIM) {
-                auto* wt = grid->get_grid_device();
-                auto* wt2 = grid->get_grid_device_temp();
+                auto wt = grid->get_grid_device();
+                auto wt2 = grid->get_grid_device_temp();
                 
-                /*
+                
                 grid->freeCudaVel();
                 grid->copyToDeviceVel();
-                auto* wt3 = grid->get_grid_device_vel();
-                cudaMemcpy(state->velocity->writeTarget(), wt3, sizeof(float) * 3 * grid->size(), cudaMemcpyDeviceToDevice);
+                grid->free_velocity(); //new
+                auto wt3 = grid->get_grid_device_vel();
+                cudaMemcpy(state->velocity->writeTarget(), wt3, SIZEOF_FLOAT3 * grid->size(), cudaMemcpyDeviceToDevice);
                 state->velocity->swap();
-                */
 
+                
 
                 cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
                 state->density->swap();
                 cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
                 state->temperature->swap();
+                //std::cout << "\DOONE\n";
+
+                //std::cout << "Free wt, wt2, wt3" << std::endl;
+                //grid->freeCudaVel();
+                //delete wt, wt2, wt3;
             }
 
 
@@ -740,6 +755,8 @@ public:
 
             grid->free();
             grid->freeCuda();
+            grid->freeCudaVel();
+            std::cout << "Freedom";
         }
         else {
 

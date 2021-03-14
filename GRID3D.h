@@ -1,6 +1,7 @@
 ﻿#pragma once
 //VDB
 
+#include "cutil_math.h"
 
 #define _USE_MATH_DEFINES
 #include <nanovdb/NanoVDB.h>
@@ -13,8 +14,17 @@
 #include <tbb/parallel_for.h>
 #include <tbb/atomic.h>
 
+#define SIZEOF_FLOAT3 (sizeof(float) * 3)
+//#define SIZEOF_FLOAT3 (sizeof(float3))
+
 #define SUPER_NULL -122.1123123
 #define VELOCITY_NOISE
+
+
+
+
+
+
 class GRID3D {
 
 
@@ -28,16 +38,16 @@ class GRID3D {
         delete[] ptr;
         ptr = nullptr;
     }
-    void initNoiseGrid(bool vell = false) {
+    void initNoiseGrid(bool vell = true) {
         grid_noise = new float[1];
         grid_noise[0] = SUPER_NULL;
 
         if (vell) {
-            grid_vel = new float3[1];
+            grid_vel = new float3[size()];
             grid_vel[0] = make_float3(SUPER_NULL,SUPER_NULL,SUPER_NULL);
         }
         if (!cuda_velocity_initialized) {
-            cudaMalloc((void**)&grid_vel_gpu, sizeof(float) * 3 * size());
+            cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size());
             cuda_velocity_initialized = true;
         }
     }
@@ -62,6 +72,21 @@ public:
         //grid_noise[0] = 0.0;
         grid = new float[(long long)x * (long long)y * (long long)z];
         grid_temp = new float[(long long)x * (long long)y * (long long)z];
+        for (long long i = 0; i < size(); i++) {
+            grid[i] = 0.0;
+            grid_temp[i] = 0.0;
+        }
+        initNoiseGrid();
+    }
+    GRID3D(int3 dim) {
+        resolution.x = dim.x;
+        resolution.y = dim.y;
+        resolution.z = dim.z;
+
+        //grid_noise = new float[1];
+        //grid_noise[0] = 0.0;
+        grid = new float[size()];
+        grid_temp = new float[size()];
         for (long long i = 0; i < size(); i++) {
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
@@ -106,11 +131,20 @@ public:
 #ifdef VELOCITY_NOISE
     void load_from_device3D(int3 dim, float3* grid_src) {
 
-        free_velocity();
-        this->resolution = dim;
-        grid_vel = new float3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        cudaMemcpy(grid_vel, grid_src, sizeof(float) * 3 * size(), cudaMemcpyDeviceToHost);
-        std::cout << "Copied from device" << std::endl;
+        if (this->resolution.x == dim.x && this->resolution.y == dim.y && this->resolution.z == dim.z) {
+            //std::cout << "Copying";
+            cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost);
+        }
+        else {
+            //std::cout << "Free data";
+            this->free_velocity();
+            this->resolution = dim;
+            //std::cout << "Allocating memory";
+            grid_vel = new float3[size()];
+            //std::cout << "Copying";
+            cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost);
+        }
+        //std::cout << "Copied from device" << std::endl;
     }
 #endif
 
@@ -279,8 +313,8 @@ public:
     }
 #ifdef VELOCITY_NOISE
     void copyToDeviceVel() {
-        cudaMalloc((void**)&grid_vel_gpu, sizeof(float) * 3 * size());
-        cudaMemcpy(grid_vel_gpu, grid_vel, sizeof(float) * 3 * size(), cudaMemcpyHostToDevice);
+        cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size());
+        cudaMemcpy(grid_vel_gpu, grid_vel, SIZEOF_FLOAT3 * size(), cudaMemcpyHostToDevice);
     }
 #endif
 
@@ -364,7 +398,7 @@ public:
         else if (apply_method == 1)
             applyNoise2(intensity, noise_tile_size, offset, scale, frame);
         else if (apply_method == 2)
-            applyCurl(intensity, offset, scale, frame);
+            applyCurl(intensity, noise_tile_size, offset, scale, frame,time_anim);
 
     }
 
@@ -392,9 +426,6 @@ public:
     inline float evaluate(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
         float time_anim = 0.1)
     {
-        int NOISE_TILE_SIZE = min(min(resolution.x, resolution.y), resolution.z);
-        if (NTS != 0)
-            NOISE_TILE_SIZE = NTS;
 
         pos.x *= resolution.x;
         pos.y *= resolution.y;
@@ -409,8 +440,8 @@ public:
         pos.z *= scale;
 
 
-        const int n3 = NOISE_TILE_SIZE * NOISE_TILE_SIZE * NOISE_TILE_SIZE;
-        float v = WNoiseDx(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
+        const int n3 = NTS * NTS * NTS;
+        float v = WNoiseDx(pos, &this->grid_noise[int(tile * NTS) % n3], NTS);
         //float v = WNoise(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
 
         v += offset;//offset //0.5
@@ -491,35 +522,35 @@ public:
 #ifdef VELOCITY_NOISE
     void applyCurl(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
         float time_anim = 0.1) {
+
+        //std::cout << resolution.x << "x" << resolution.y << "x" << resolution.z << std::endl;
+
         if (NTS == 0)
             NTS = min(min(resolution.x, resolution.y), resolution.z);
-        int NTS2 = NTS * NTS;
-        int NTS3 = NTS2 * NTS;
         //std::cout << "Applying noise" << std::endl;
 
-        float tempp = 0.0;
         int THREADS = 16;
         int sizee = ceil((double)resolution.x / (double)THREADS);
+
+        
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
             if (end > resolution.x) {
                 end = resolution.x;
             }
             for (int x = i * sizee; x < end; x++)
-
-
-
+        /*
+        for (int x = 0; x < resolution.x; x++){
+            */
                 for (int y = 0; y < resolution.y; y++)
                     for (int z = 0; z < resolution.z; z++) {
-                        float3* position = &this->grid_vel[z * resolution.x * resolution.y +
-                            y * resolution.x + x];
-
-                        float3 change = evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim);
-                        position->x += change.x * intensity;
-                        position->y += change.y * intensity;
-                        position->z += change.z * intensity;
+                        this->grid_vel[z * resolution.x * resolution.y + y * resolution.x + x]
+                            +=
+                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim) * intensity;
                     }
-            });
+            }
+        );
+        //std::cout << "Done";
     }
 #else
     void applyCurl(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
@@ -737,7 +768,7 @@ public:
   result += weight * neighbors[x + 1][y + 1][z + 1];
 
 
-    float3 WNoiseVec(float3& p, float* data, int max_dim = 128) {
+    static inline float3 WNoiseVec(float3& p, float* data, int max_dim = 128) {
 
         float3 final = make_float3(0, 0, 0);
         const int NOISE_TILE_SIZE = max_dim;
@@ -845,7 +876,7 @@ public:
         ADD_WEIGHTEDZ(-1, 1, 1);  ADD_WEIGHTEDZ(0, 1, 1);  ADD_WEIGHTEDZ(1, 1, 1);
         final.z = result;
 
-        //debMsg("FINAL","at "<<p<<" = "<<final); // DEBUG
+        //std::cout << "FINAL at = " << final.x <<";"<< final.y << ";" << final.z << std::endl; // DEBUG
         return final;
     }
 
@@ -853,13 +884,10 @@ public:
 #undef ADD_WEIGHTEDY
 #undef ADD_WEIGHTEDZ
 
-    inline float3 evaluateVec(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
-        float time_anim = 0.1)
-    {
-        int NOISE_TILE_SIZE = min(min(resolution.x, resolution.y), resolution.z);
-        if (NTS != 0)
-            NOISE_TILE_SIZE = NTS;
-
+    inline float3 evaluateVec(float3 pos, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
+        float time_anim = 0.1, int tile = 0) const {
+        //std::cout << "\nTILE: ";
+        //std::cout << tile << ";";
         pos.x *= resolution.x;
         pos.y *= resolution.y;
         pos.z *= resolution.z;
@@ -872,10 +900,8 @@ public:
         pos.y *= scale;
         pos.z *= scale;
 
-
-        const int n3 = NOISE_TILE_SIZE * NOISE_TILE_SIZE * NOISE_TILE_SIZE;
-        float3 v = WNoiseVec(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
-
+        const int n3 = NTS * NTS * NTS;
+        float3 v = WNoiseVec(pos, &this->grid_noise[int(tile * NTS) % n3], NTS);
 
         v.x += offset; v.y += offset; v.z += offset;
         //v *= scale;//scale //0.1
@@ -883,15 +909,13 @@ public:
     }
 
     inline float3 evaluateCurl(float3 pos, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
-        float time_anim = 0.1) {
-        int NOISE_TILE_SIZE = min(min(resolution.x, resolution.y), resolution.z);
-        if (NTS != 0)
-            NOISE_TILE_SIZE = NTS;
+        float time_anim = 0.1) const {
 
+        float3 d0 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 0);
+        float3 d1 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 1);
+        float3 d2 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim,2);
 
-        float3 d0 = evaluateVec(pos, 0, resolution, NTS, offset, scale, time_anim),
-            d1 = evaluateVec(pos, 1, resolution, NTS, offset, scale, time_anim),
-            d2 = evaluateVec(pos, 2, resolution, NTS, offset, scale, time_anim);
+        //std::cout << d0.y - d1.z << ";" << d2.z - d0.x << ";" << d1.x - d2.y << std::endl;
 
         return make_float3(d0.y - d1.z, d2.z - d0.x, d1.x - d2.y);
     }
@@ -929,7 +953,7 @@ private:
     
 
 
-    int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }
+    static inline int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }
 
     float _aCoeffs[32] = {
         0.000334,  -0.001528, 0.000410,  0.003545,  -0.000938, -0.008233, 0.002172,  0.019120,

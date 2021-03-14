@@ -35,6 +35,9 @@ typedef unsigned short ushort;
 #define M_2_PI     0.636619772367581343076  // 2/pi
 
 
+
+
+
 inline float fminf(float a, float b)
 {
   return a < b ? a : b;
@@ -257,6 +260,7 @@ inline __host__ __device__ float2 fabs(float2 v)
 
 // float3 functions
 ////////////////////////////////////////////////////////////////////////////////
+
 
 // additional constructors
 inline __host__ __device__ float3 make_float3(float s)
