@@ -541,8 +541,11 @@ public:
         for (int i = 0; i < folder.length(); i++)
             EXPORT_FOLDER[i] = folder[i];
         EXPORT_VDB = false;
-        Initialize();
-        ExampleScene(true);
+
+
+        //ExampleScene(true);
+        //Initialize();
+        
         preserve_object_list = true;
         SIMULATE = true;
     }

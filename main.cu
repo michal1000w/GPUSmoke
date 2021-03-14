@@ -44,13 +44,13 @@ int main(int argc, char* args[]) {
     solver.Initialize();
     //solver.ClearCache();
 #ifdef OBJECTS_EXPERIMENTAL
-    solver.ExampleScene();
+    solver.ExampleScene(true);
 #else
     solver.ExportVDBScene();
 #endif
     //solver.ExampleScene();
-    float Window_Resolution[2] = { 1600, 640 };
-    float Image_Resolution[2] = { 640, 640 };
+    float Window_Resolution[2] = { 1600, 800 };
+    float Image_Resolution[2] = { 700, 700 };
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 
     solver.Initialize_Simulation();

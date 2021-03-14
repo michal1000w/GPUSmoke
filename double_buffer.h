@@ -25,7 +25,7 @@ public:
         return output;
     }
     
-    GRID3D* readToGrid3D(bool debug = false) {
+    inline GRID3D* readToGrid3D(bool debug = false) {
         if (debug)
             std::cout << "  Reading Grid:";
         //std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
