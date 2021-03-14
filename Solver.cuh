@@ -615,6 +615,8 @@ public:
         cudaThreadExit();
     }
 
+
+
     void Simulation_Frame() {
         state->time_step = speed * 0.1; //beta
         DONE_FRAME = false;
@@ -639,6 +641,11 @@ public:
 
 
 
+
+
+
+
+        
         if (Upsampling && TUpsampling) {
             //Apply Wavelet Noise
             auto grid = state->density->readToGrid();
