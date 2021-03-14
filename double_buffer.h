@@ -24,6 +24,19 @@ public:
             std::cout << (clock() - startTime);
         return output;
     }
+    
+    GRID3D* readToGrid3D(bool debug = false) {
+        if (debug)
+            std::cout << "  Reading Grid: ";
+        clock_t startTime = clock();
+        GRID3D* output = new GRID3D();
+        output->load_from_device3D(dim, readTarget());
+        //output->set_pointer(new GRID3D(dim, readTarget()));
+        if (debug)
+            std::cout << (clock() - startTime);
+        return output;
+    }
+    
     void swap();
     int byteCount();
     void setDim(int3 dim);

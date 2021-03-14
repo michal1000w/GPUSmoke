@@ -636,6 +636,10 @@ public:
             //Apply Wavelet Noise
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
+            
+            //grid->LoadVelocity(state->velocity->readToGrid3D());
+
+            std::cout << "Loaded";
 
             int NOISE_SC = 64;
 

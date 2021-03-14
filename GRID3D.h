@@ -49,14 +49,12 @@ class GRID3D {
     void initNoiseGrid(bool vell = false) {
         grid_noise = new float[1];
         grid_noise[0] = SUPER_NULL;
-        
-#ifdef VELOCITY_NOISE
+
         if (vell) {
             grid_vel = new Vec3[1];
             grid_vel[0] = Vec3();
         }
-#endif
-        
+
     }
 public:
     GRID3D() {
@@ -118,21 +116,29 @@ public:
         grid_temp = new float[1];
         grid_temp[0] = 0.0;
     }
-    
-#ifdef VELOCITY_NOISE
+
     void load_from_device3D(int3 dim, Vec3* grid_src) {
-        
+
         free_velocity();
         this->resolution = dim;
         grid_vel = new Vec3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        cudaMemcpy(grid_vel, grid_src, sizeof(Vec3) * size(), cudaMemcpyDeviceToHost);
-        //grid_noise = new float[1];
-        //grid_noise[0] = 0.0;
+        float3* temp = new float3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+        cudaMemcpy(temp, grid_src, sizeof(float3) * size(), cudaMemcpyDeviceToHost);
+        
+        for (int i = 0; i < size(); i++) {
+            grid_vel[i].x = temp[i].x;
+            grid_vel[i].y = temp[i].y;
+            grid_vel[i].z = temp[i].z;
+        }
+
+        delete[] temp;
+        
         initNoiseGrid(false);
         grid_temp = new float[1];
         grid_temp[0] = 0.0;
-        
+
     }
+#ifdef VELOCITY_NOISE
 #endif
 
     GRID3D(int x, int y, int z, float* vdb) {
@@ -325,13 +331,13 @@ public:
         deletep(grid_temp);
         //deletep(grid_noise);
     }
-    
-#ifdef VELOCITY_NOISE
+
     void free_velocity() {
         deletec(grid_vel);
     }
+#ifdef VELOCITY_NOISE
 #endif
-    
+
     void free_noise() {
         deletep(grid_noise);
     }
@@ -360,13 +366,13 @@ public:
     float* get_grid_device_temp() {
         return this->vdb_temp;
     }
-    
+
 #ifdef VELOCITY_NOISE
     Vec3* get_grid_device_vel() {
         return this->vdb_vel;
     }
 #endif
-    
+
     void UpScale(int power, int SEED = 2, int frame = 0, float offset = 0.5, float scale = 0.1, int noise_scale = 128,
         int apply_method = 0, float intensity = 1, float time_anim = 0.1) {
         int noise_tile_size = power * min(min(resolution.x, resolution.y) //max max
@@ -384,19 +390,19 @@ public:
             applyNoise2(intensity, noise_tile_size, offset, scale, frame);
         else if (apply_method == 2)
             applyCurl(intensity, offset, scale, frame);
-            
+
     }
 
     void LoadNoise(GRID3D* rhs) {
         this->grid_noise = rhs->grid_noise;
     }
-    
+
 #ifdef VELOCITY_NOISE
     void LoadVelocity(GRID3D* rhs) {
         this->grid_vel = rhs->grid_vel;
     }
 #endif
-    
+
     bool is_noise_grid() {
         if (this->grid_noise[0] < -100)
             return false;
@@ -625,7 +631,7 @@ public:
         delete[] temp23;
     }
 
-//#define modFast128(x)  ((x) & 127)
+    //#define modFast128(x)  ((x) & 127)
 
 #define ADD_WEIGHTED(x, y, z) \
   weight = 1.0f; \
@@ -697,7 +703,7 @@ public:
         return result;
     }
 
-    
+
     float WNoiseDx(float3& p, float* data, int max_dim = 128) {
         float w[3][3], t, result = 0;
         const int NOISE_TILE_SIZE = max_dim;
@@ -742,7 +748,7 @@ public:
         return result;
 
     }
-    
+
 #define ADD_WEIGHTEDX(x,y,z)\
   weight = dw[0][(x) + 1] * w[1][(y) + 1] * w[2][(z) + 1];\
   result += weight * neighbors[x + 1][y + 1][z + 1];
@@ -939,8 +945,8 @@ private:
     float* grid;
     float* grid_temp;
     float* grid_noise;
-    //Vec3* grid_vel;
-    
+    Vec3* grid_vel;
+
     int3 resolution;
     float* vdb;
     float* vdb_temp;
