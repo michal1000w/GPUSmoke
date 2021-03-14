@@ -637,7 +637,9 @@ public:
             auto grid = state->density->readToGrid();
             auto gridt = state->temperature->readToGrid();
             
-            //grid->LoadVelocity(state->velocity->readToGrid3D());
+            if (INFLUENCE_SIM) {
+                //grid->LoadVelocity(state->velocity->readToGrid3D());
+            }
 
             std::cout << "Loaded";
 
@@ -654,22 +656,27 @@ public:
             gridt->LoadNoise(GRID);
 
 
-            //std::cout << "Upsampling";
+            std::cout << "Upsampling";
             int Upscale_Rate = 1;
 
             //Upsampling
             grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
             gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
+            /*
+            if (INFLUENCE_SIM) {
+                std::cout << "Upsampling velocity\n";
+                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 2, noise_intensity, time_anim); //velocity grid
+            }
+            */
 
-
-            //std::cout << "Combine grids";
+            std::cout << "Combine grids";
             grid->combine_with_temp_grid(gridt);
 
 
             delete gridt;
 
-            //std::cout << "Uploading";
+            std::cout << "Uploading";
 
 
 
@@ -679,8 +686,14 @@ public:
             if (INFLUENCE_SIM) {
                 auto* wt = grid->get_grid_device();
                 auto* wt2 = grid->get_grid_device_temp();
-
-
+                
+                /*
+                grid->freeCudaVel();
+                grid->copyToDeviceVel();
+                auto* wt3 = grid->get_grid_device_vel();
+                cudaMemcpy(state->velocity->writeTarget(), wt3, sizeof(float) * 3 * grid->size(), cudaMemcpyDeviceToDevice);
+                state->velocity->swap();
+                */
 
 
                 cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);

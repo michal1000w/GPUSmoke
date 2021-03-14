@@ -14,26 +14,8 @@
 #include <tbb/atomic.h>
 
 #define SUPER_NULL -122.1123123
-//#define VELOCITY_NOISE
+#define VELOCITY_NOISE
 class GRID3D {
-    class Vec3 {
-    public:
-        float x;
-        float y;
-        float z;
-
-        Vec3() {
-            x = SUPER_NULL; y = SUPER_NULL; z = SUPER_NULL;
-        }
-
-        Vec3(float x, float y, float z) {
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
-    };
-
-
 
 
     void deletep(float&) {}
@@ -41,8 +23,8 @@ class GRID3D {
         delete[] ptr;
         ptr = nullptr;
     }
-    void deletec(Vec3&) {}
-    void deletec(Vec3*& ptr) {
+    void deletec(float3&) {}
+    void deletec(float3*& ptr) {
         delete[] ptr;
         ptr = nullptr;
     }
@@ -51,11 +33,15 @@ class GRID3D {
         grid_noise[0] = SUPER_NULL;
 
         if (vell) {
-            grid_vel = new Vec3[1];
-            grid_vel[0] = Vec3();
+            grid_vel = new float3[1];
+            grid_vel[0] = make_float3(SUPER_NULL,SUPER_NULL,SUPER_NULL);
         }
-
+        if (!cuda_velocity_initialized) {
+            cudaMalloc((void**)&grid_vel_gpu, sizeof(float) * 3 * size());
+            cuda_velocity_initialized = true;
+        }
     }
+    bool cuda_velocity_initialized = false;
 public:
     GRID3D() {
         resolution.x = resolution.y = resolution.z = 1;
@@ -72,7 +58,6 @@ public:
         resolution.y = y;
         resolution.z = z;
 
-        initNoiseGrid();
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
         grid = new float[(long long)x * (long long)y * (long long)z];
@@ -81,6 +66,7 @@ public:
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
         }
+        initNoiseGrid();
     }
     GRID3D(int elem, float* grid) {
         grid = new float[elem];
@@ -117,28 +103,15 @@ public:
         grid_temp[0] = 0.0;
     }
 
-    void load_from_device3D(int3 dim, Vec3* grid_src) {
+#ifdef VELOCITY_NOISE
+    void load_from_device3D(int3 dim, float3* grid_src) {
 
         free_velocity();
         this->resolution = dim;
-        grid_vel = new Vec3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        float3* temp = new float3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        cudaMemcpy(temp, grid_src, sizeof(float3) * size(), cudaMemcpyDeviceToHost);
-        
-        for (int i = 0; i < size(); i++) {
-            grid_vel[i].x = temp[i].x;
-            grid_vel[i].y = temp[i].y;
-            grid_vel[i].z = temp[i].z;
-        }
-
-        delete[] temp;
-        
-        initNoiseGrid(false);
-        grid_temp = new float[1];
-        grid_temp[0] = 0.0;
-
+        grid_vel = new float3[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+        cudaMemcpy(grid_vel, grid_src, sizeof(float) * 3 * size(), cudaMemcpyDeviceToHost);
+        std::cout << "Copied from device" << std::endl;
     }
-#ifdef VELOCITY_NOISE
 #endif
 
     GRID3D(int x, int y, int z, float* vdb) {
@@ -218,7 +191,7 @@ public:
         }
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        initNoiseGrid();
+        //initNoiseGrid();
         return *this;
     }
     GRID3D operator=(const GRID3D* rhs) {
@@ -229,9 +202,10 @@ public:
 
         grid = rhs->grid;
         grid_temp = rhs->grid_temp;
+        
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        initNoiseGrid();
+        //initNoiseGrid();
         return *this;
     }
 
@@ -244,7 +218,7 @@ public:
         grid = rhs->grid;
         grid_temp = rhs->grid_temp;
         //grid_noise = new float[1];
-        initNoiseGrid();
+        //initNoiseGrid();
     }
 
     GRID3D load(const GRID3D* rhs) {
@@ -305,8 +279,8 @@ public:
     }
 #ifdef VELOCITY_NOISE
     void copyToDeviceVel() {
-        cudaMalloc((void**)&vdb_vel, sizeof(Vec3) * size());
-        cudaMemcpy(vdb_vel, grid_vel, sizeof(Vec3) * size(), cudaMemcpyHostToDevice);
+        cudaMalloc((void**)&grid_vel_gpu, sizeof(float) * 3 * size());
+        cudaMemcpy(grid_vel_gpu, grid_vel, sizeof(float) * 3 * size(), cudaMemcpyHostToDevice);
     }
 #endif
 
@@ -332,10 +306,10 @@ public:
         //deletep(grid_noise);
     }
 
+#ifdef VELOCITY_NOISE
     void free_velocity() {
         deletec(grid_vel);
     }
-#ifdef VELOCITY_NOISE
 #endif
 
     void free_noise() {
@@ -347,7 +321,8 @@ public:
     }
 #ifdef VELOCITY_NOISE
     void freeCudaVel() {
-        cudaFree(vdb_vel);
+        cudaFree(grid_vel_gpu);
+        this->cuda_velocity_initialized = false;
     }
 #endif
     ~GRID3D() {
@@ -368,8 +343,8 @@ public:
     }
 
 #ifdef VELOCITY_NOISE
-    Vec3* get_grid_device_vel() {
-        return this->vdb_vel;
+    float3* get_grid_device_vel() {
+        return this->grid_vel_gpu;
     }
 #endif
 
@@ -435,8 +410,8 @@ public:
 
 
         const int n3 = NOISE_TILE_SIZE * NOISE_TILE_SIZE * NOISE_TILE_SIZE;
-        //float v = WNoiseDx(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
-        float v = WNoise(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
+        float v = WNoiseDx(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
+        //float v = WNoise(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
 
         v += offset;//offset //0.5
         //v *= scale;//scale //0.1
@@ -536,7 +511,7 @@ public:
 
                 for (int y = 0; y < resolution.y; y++)
                     for (int z = 0; z < resolution.z; z++) {
-                        Vec3* position = &this->grid_vel[z * resolution.x * resolution.y +
+                        float3* position = &this->grid_vel[z * resolution.x * resolution.y +
                             y * resolution.x + x];
 
                         float3 change = evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim);
@@ -762,9 +737,9 @@ public:
   result += weight * neighbors[x + 1][y + 1][z + 1];
 
 
-    Vec3 WNoiseVec(float3& p, float* data, int max_dim = 128) {
+    float3 WNoiseVec(float3& p, float* data, int max_dim = 128) {
 
-        Vec3 final(0, 0, 0);
+        float3 final = make_float3(0, 0, 0);
         const int NOISE_TILE_SIZE = max_dim;
         float w[3][3];
         float dw[3][3];
@@ -878,7 +853,7 @@ public:
 #undef ADD_WEIGHTEDY
 #undef ADD_WEIGHTEDZ
 
-    inline Vec3 evaluateVec(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
+    inline float3 evaluateVec(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
         float time_anim = 0.1)
     {
         int NOISE_TILE_SIZE = min(min(resolution.x, resolution.y), resolution.z);
@@ -899,7 +874,7 @@ public:
 
 
         const int n3 = NOISE_TILE_SIZE * NOISE_TILE_SIZE * NOISE_TILE_SIZE;
-        Vec3 v = WNoiseVec(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
+        float3 v = WNoiseVec(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
 
 
         v.x += offset; v.y += offset; v.z += offset;
@@ -914,7 +889,7 @@ public:
             NOISE_TILE_SIZE = NTS;
 
 
-        Vec3 d0 = evaluateVec(pos, 0, resolution, NTS, offset, scale, time_anim),
+        float3 d0 = evaluateVec(pos, 0, resolution, NTS, offset, scale, time_anim),
             d1 = evaluateVec(pos, 1, resolution, NTS, offset, scale, time_anim),
             d2 = evaluateVec(pos, 2, resolution, NTS, offset, scale, time_anim);
 
@@ -945,12 +920,13 @@ private:
     float* grid;
     float* grid_temp;
     float* grid_noise;
-    Vec3* grid_vel;
+    float3* grid_vel;
+    float3* grid_vel_gpu;
 
     int3 resolution;
     float* vdb;
     float* vdb_temp;
-    //Vec3* vdb_vel;
+    
 
 
     int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }

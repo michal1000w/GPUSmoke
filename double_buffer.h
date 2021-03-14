@@ -25,7 +25,7 @@ public:
         return output;
     }
     
-    GRID3D* readToGrid3D(bool debug = false) {
+    inline GRID3D* readToGrid3D(bool debug = true) {
         if (debug)
             std::cout << "  Reading Grid: ";
         clock_t startTime = clock();
