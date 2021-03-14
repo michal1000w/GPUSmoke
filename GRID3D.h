@@ -292,18 +292,18 @@ public:
         return this->vdb_temp;
     }
     void UpScale(int power, int SEED = 2, int frame = 0, float offset = 0.5, float scale = 0.1, int noise_scale = 128,
-                int apply_method = 0, float intensity = 1) {
+                int apply_method = 0, float intensity = 1, float time_anim = 0.1) {
         int noise_tile_size = power * min(min(resolution.x, resolution.y) //max max
             , resolution.z);
 
         noise_tile_size = noise_scale;
 
         srand(SEED);
-        if (this->grid_noise[0] < -1)
+        if (this->grid_noise[0] < -100)
             generateTile(noise_tile_size);
 
         if (apply_method == 0)
-            applyNoise(intensity, noise_tile_size, offset, scale, frame);
+            applyNoise(intensity, noise_tile_size, offset, scale, frame, time_anim);
         else if (apply_method == 1)
             applyNoise2(intensity, noise_tile_size, offset, scale, frame);
     }
@@ -312,7 +312,19 @@ public:
         this->grid_noise = rhs->grid_noise;
     }
 
-    inline float evaluate(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1)
+    bool is_noise_grid() {
+        if (this->grid_noise[0] < -100)
+            return false;
+        else
+            return true;
+    }
+
+    float get_noise_status() {
+        return this->grid_noise[0];
+    }
+
+    inline float evaluate(float3 pos, int tile, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
+                            float time_anim = 0.1)
     {
         int NOISE_TILE_SIZE = min(min(resolution.x,resolution.y),resolution.z);
         if (NTS != 0)
@@ -324,21 +336,23 @@ public:
         pos.x += 1; pos.y += 1; pos.z += 1;
 
         // time anim
-        pos.x += 0.1; pos.y += 0.1; pos.z += 0.1;
+        pos.x += time_anim; pos.y += time_anim; pos.z += time_anim;
 
-        pos.x *= 1;
-        pos.y *= 1;
-        pos.z *= 1;
+        pos.x *= scale;
+        pos.y *= scale;
+        pos.z *= scale;
+        
 
         const int n3 = NOISE_TILE_SIZE * NOISE_TILE_SIZE * NOISE_TILE_SIZE;
         float v = WNoise(pos, &this->grid_noise[int(tile * n3 * 0.01)%n3], NOISE_TILE_SIZE); //0.01
 
         v += offset;//offset //0.5
-        v *= scale;//scale //0.1
+        //v *= scale;//scale //0.1
         return v;
     }
 
-    void applyNoise(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0) {
+    void applyNoise(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
+                    float time_anim = 0.1) {
         if (NTS == 0)
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         int NTS2 = NTS * NTS;
@@ -364,7 +378,7 @@ public:
 
                         //if (*position >= 0.01) {
                         if (*position != 0.0) {
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale) * intensity * min((*position),1.0);
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * min((*position),1.0);
                         }
 
                     }

@@ -79,6 +79,7 @@ public:
     float SCALE;
     bool INFLUENCE_SIM;
     float noise_intensity;
+    float time_anim = 0.1;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -573,6 +574,7 @@ public:
     void Initialize_Simulation() {
         state = new fluid_state(vol_d);
 
+        GRID = new GRID3D();
 
         state->f_weight = 0.05;
         state->time_step = time_step;// 0.1;
@@ -585,8 +587,10 @@ public:
     }
 
     void Clear_Simulation_Data() {
+        GRID->free_noise();
         delete state;
         delete[] img;
+        delete GRID;
 
         if (!preserve_object_list || /*SAMPLE_SCENE == 1 || */SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
@@ -597,6 +601,7 @@ public:
             }
             object_list.clear();
         }
+
 
         printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
@@ -634,9 +639,10 @@ public:
 
             int NOISE_SC = 64;
 
-            if (GRID->size() != grid->size()) {
+            if (!GRID->is_noise_grid()) {
                 GRID = state->density->readToGrid();
                 GRID->free();
+                //std::cout << GRID->get_noise_status() << std::endl;
                 GRID->generateTile(NOISE_SC);
             }
 
@@ -648,8 +654,8 @@ public:
             int Upscale_Rate = 1;
 
             //Upsampling
-            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity); //normal grid
-            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity); //temperature grid -> 1
+            grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
+            gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
 
 
@@ -716,9 +722,7 @@ public:
 
 
             grid->free();
-            //grid->free_noise();
             grid->freeCuda();
-            //delete grid;
         }
         else {
 
