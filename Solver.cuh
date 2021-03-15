@@ -498,9 +498,9 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.015; //0.0001
+        OFFSET = 0.02; //0.0001
         SCALE = 0.7f; //0.12
-        noise_intensity = 0.31f;
+        noise_intensity = 0.45f;
 
         GRID = new GRID3D();
         //rendering settings
