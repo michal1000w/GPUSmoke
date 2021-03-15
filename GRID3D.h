@@ -457,6 +457,9 @@ public:
         int NTS3 = NTS2 * NTS;
         //std::cout << "Applying noise" << std::endl;
 
+
+        offset *= 1.4; //1.2
+
         float tempp = 0.0;
         int THREADS = 16;
         int sizee = ceil((double)resolution.x / (double)THREADS);
@@ -476,7 +479,7 @@ public:
 
                         //if (*position >= 0.01) {
                         if (*position != 0.0) {
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * min((*position), 1.0);
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.05, min((*position), 1.0));
                         }
 
                     }
@@ -509,7 +512,7 @@ public:
                             y * resolution.x + x];
 
                         //if (*position >= 0.01) {
-                        if (*position != 0.0) {
+                        if (*position >= 0.01) {
                             *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01,min((*position), 1.0));
                         }
 
@@ -544,7 +547,7 @@ public:
 
                         this->grid_vel[z * resolution.x * resolution.y + y * resolution.x + x]
                                 +=
-                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128) * (intensity * 2.0f);
+                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128) * (intensity);
 
                     }
             }
@@ -909,6 +912,8 @@ public:
 
     inline float3 evaluateCurl(float3 pos, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
         float time_anim = 0.1, int frame = 0) const {
+
+        offset *= 25;
 
         float3 d0 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 0);
         float3 d1 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 1);
