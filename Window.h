@@ -222,7 +222,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Text("Simulation Settings");
 		ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
 		ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-		ImGui::SliderFloat("Flame Dissolve", &solver.Flame_Dissolve, 0.93f, 1.0f);
+		ImGui::SliderFloat("Flame Dissolve", &solver.Flame_Dissolve, 0.9f, 1.0f);
 		ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
 		ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
 		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
@@ -238,11 +238,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 		ImGui::Checkbox("Simulation Upsampling", &solver.Upsampling);
 		if (solver.Upsampling) {
-			ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 1.0f);
+			ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 0.3f);
 			ImGui::SliderFloat("Scale", &solver.SCALE, 0.01f, 4.0f);
 			ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);
 			ImGui::SliderFloat("Strength", &solver.noise_intensity, 0.01f, 3.0f);
-			ImGui::SliderFloat("Time", &solver.time_anim, 0.0f, 1.0f);
+			ImGui::SliderFloat("Time", &solver.time_anim, 0.0f, 2.0f);
 			if (solver.INFLUENCE_SIM) {
 				ImGui::Checkbox("Velocity", &solver.UpsamplingVelocity);
 				ImGui::SameLine();

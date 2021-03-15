@@ -459,7 +459,7 @@ public:
         //std::cout << "Applying noise" << std::endl;
 
 
-        offset *= 1.4; //1.2
+        //offset *= 1.4; //1.2
 
         float tempp = 0.0;
         int THREADS = 16;
