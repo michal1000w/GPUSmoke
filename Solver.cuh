@@ -82,8 +82,8 @@ public:
     float time_anim = 0.1;
 
     bool UpsamplingVelocity = true;
+    bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
-    bool UpsamplingDensity = false;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -500,7 +500,7 @@ public:
 
         OFFSET = 0.015; //0.0001
         SCALE = 0.7f; //0.12
-        noise_intensity = 0.46f;
+        noise_intensity = 0.31f;
 
         GRID = new GRID3D();
         //rendering settings

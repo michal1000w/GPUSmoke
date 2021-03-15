@@ -529,7 +529,7 @@ public:
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         //std::cout << "Applying noise" << std::endl;
 
-        int THREADS = 16;
+        int THREADS = 32;
         int sizee = ceil((double)resolution.x / (double)THREADS);
 
         
