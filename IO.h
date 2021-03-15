@@ -456,7 +456,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         std::cout << "Grids prepared" << std::endl;
     ////////////////////////////////////////////////////////
     grid->setName("density");
-    grid_temp2->setName("temperature");
+    grid_temp2->setName("flame");
     ////////////////////////////////////////////////////////
     GRID3D* grid_temp = new GRID3D();
     //grid_temp->set_pointer(grid_dst);
@@ -527,6 +527,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     */
     if (DEBUG)
         std::cout << "Grids saved" << std::endl;
+    
 
     grid_temp->free();
     grid_dst->free();

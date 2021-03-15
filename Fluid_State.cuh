@@ -16,6 +16,7 @@ struct fluid_state {
     DoubleBuffer<float3>* velocity;
     DoubleBuffer<float>* density;
     DoubleBuffer<float>* temperature;
+    DoubleBuffer<float>* flame;
     DoubleBuffer<float>* pressure;
     float* diverge;
 
@@ -33,6 +34,8 @@ struct fluid_state {
         temperature->setDim(dims);
         pressure = new DoubleBuffer<float>((int)nelems);
         pressure->setDim(dims);
+        flame = new DoubleBuffer<float>((int)nelems);
+        flame->setDim(dims);
         cudaMalloc((void**)&diverge, sizeof(float) * nelems);
     }
 
@@ -45,6 +48,7 @@ struct fluid_state {
         delete density;
         delete temperature;
         delete pressure;
+        delete flame;
         cudaFree(diverge);
     }
 };

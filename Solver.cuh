@@ -53,6 +53,7 @@ class Solver {
 public:
     int ACCURACY_STEPS;//
     float Smoke_Dissolve;//
+    float Flame_Dissolve;
     float Smoke_Buoyancy;
     float Ambient_Temperature;//
     float Fire_Max_Temperature;//
@@ -489,6 +490,7 @@ public:
         INFLUENCE_SIM = true;
 
         Smoke_Dissolve = 0.995f; //0.995f
+        Flame_Dissolve = 0.955f;
         Ambient_Temperature = 0.0f; //0.0f
 
         //NEW
@@ -498,7 +500,7 @@ public:
         /////////////////////////////
         speed = 1.0; //1.0
 
-        OFFSET = 0.02; //0.0001
+        OFFSET = 0.022; //0.0001
         SCALE = 0.7f; //0.12
         noise_intensity = 0.45f;
 
@@ -625,7 +627,7 @@ public:
         for (int st = 0; st < 1; st++) {
             simulate_fluid(*state, object_list, ACCURACY_STEPS, 
                 false, f, Smoke_Dissolve, Ambient_Temperature,
-                DIVERGE_RATE, Smoke_Buoyancy, Pressure);
+                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve);
             state->step++;
         }
 
@@ -743,7 +745,8 @@ public:
                 render_fluid(
                     img, img_d,
                     grid->get_grid_device(),
-                    grid->get_grid_device_temp(),
+                    //grid->get_grid_device_temp(),
+                    state->flame->readTarget(),
                     //state->density->readTarget(),
                     //state->temperature->readTarget(),
                     vol_d, 1.0, Light, Camera, rotation,
@@ -764,8 +767,11 @@ public:
             if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
                 std::string FOLDER = EXPORT_FOLDER;
                 FOLDER = trim(FOLDER);
+
+                grid->combine_with_temp_grid(state->flame->readToGrid());
             
-                export_openvdb(FOLDER,"frame." + std::to_string(f), grid->get_resolution(), grid, /*DEBUG*/ false);
+                export_openvdb(FOLDER,"frame." + std::to_string(f), grid->get_resolution(), 
+                                grid, /*DEBUG*/ false);
             
                 if (frame >= EXPORT_END_FRAME)
                     EXPORT_VDB = false;
@@ -784,7 +790,7 @@ public:
                 render_fluid(
                     img, img_d,
                     state->density->readTarget(),
-                    state->temperature->readTarget(),
+                    state->flame->readTarget(),
                     vol_d, 1.0, Light, Camera, rotation,
                     STEPS, Fire_Max_Temperature, Smoke_And_Fire);
 
@@ -798,7 +804,7 @@ public:
 
             if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
                 auto grid = state->density->readToGrid();
-                auto gridt = state->temperature->readToGrid();
+                auto gridt = state->flame->readToGrid();
                 grid->combine_with_temp_grid(gridt);
 
 

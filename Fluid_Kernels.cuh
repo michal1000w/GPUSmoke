@@ -653,7 +653,7 @@ __global__ void wavey_impulse(T* target, float3 c,
 
 
 template <typename V, typename T>
-__global__ void buoyancy(V* v_src, T* t_src, T* d_src, V* v_dest,
+__global__ void buoyancy(V* v_src, T* t_src, T* d_src, V* v_dest, 
     float amb_temp, float time_step, float buoy, float weight, int3 vd)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;

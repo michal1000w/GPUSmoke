@@ -6,10 +6,10 @@
 
 
 // Runs a single iteration of the simulation
-void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list, 
-    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0, 
+void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
+    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
     float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
-    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f)
+    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -53,6 +53,13 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, 0.998);//0.998
     state.temperature->swap();
 
+    advection << <grid, block >> > (
+        state.velocity->readTarget(),
+        state.flame->readTarget(),
+        state.flame->writeTarget(),
+        state.dim, state.time_step, Flame_Dissolve);
+    state.flame->swap();
+
     advection << <grid, block >> > (  //zanikanie
         state.velocity->readTarget(),
         state.density->readTarget(),
@@ -60,6 +67,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, Dissolve_rate);//0.995
     state.density->swap();
 
+    //wznoszenie siê dymu
     buoyancy << <grid, block >> > (
         state.velocity->readTarget(),
         state.temperature->readTarget(),
@@ -157,6 +165,12 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         }
         else if (current.get_type() == "explosion") {
             if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                impulse << <grid, block >> > (
+                    state.flame->readTarget(),
+                    current.get_location(), current.get_size(),
+                    current.get_impulseTemp(),
+                    state.dim
+                    );
                 impulse << <grid, block >> > (
                     state.temperature->readTarget(),
                     current.get_location(), current.get_size(),

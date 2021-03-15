@@ -274,6 +274,7 @@ public:
     }
 
     void combine_with_temp_grid(const GRID3D* rhs) {
+        deletep(grid_temp);
         grid_temp = rhs->grid;
     }
 
