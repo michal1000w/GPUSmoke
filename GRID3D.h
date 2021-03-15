@@ -396,7 +396,7 @@ public:
         if (apply_method == 0)
             applyNoise(intensity, noise_tile_size, offset, scale, frame, time_anim);
         else if (apply_method == 1)
-            applyNoise2(intensity, noise_tile_size, offset, scale, frame);
+            applyNoise2(intensity, noise_tile_size, offset, scale, frame, time_anim);
         else if (apply_method == 2)
             applyCurl(intensity, noise_tile_size, offset, scale, frame,time_anim);
 
@@ -483,20 +483,16 @@ public:
             });
     }
 
-    void applyNoise2(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0) {
+    void applyNoise2(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
+        float time_anim = 0.1) {
         if (NTS == 0)
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         int NTS2 = NTS * NTS;
         int NTS3 = NTS2 * NTS;
         //std::cout << "Applying noise" << std::endl;
 
-
-        /////KOREKTA USTAWIE�
-        offset /= 100.0f;
-        scale /= 2.0f;
-
-
-        int THREADS = 32;
+        float tempp = 0.0;
+        int THREADS = 16;
         int sizee = ceil((double)resolution.x / (double)THREADS);
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
@@ -512,8 +508,9 @@ public:
                         float* position = &this->grid[z * resolution.x * resolution.y +
                             y * resolution.x + x];
 
-                        if (*position >= 0.01) {
-                            *position += evaluate(make_float3(x, y, z), 0/*frame%512*/, resolution, NTS, offset, scale);
+                        //if (*position >= 0.01) {
+                        if (*position != 0.0) {
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01,min((*position), 1.0));
                         }
 
                     }
@@ -544,9 +541,11 @@ public:
             */
                 for (int y = 0; y < resolution.y; y++)
                     for (int z = 0; z < resolution.z; z++) {
+
                         this->grid_vel[z * resolution.x * resolution.y + y * resolution.x + x]
-                            +=
-                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim) * intensity;
+                                +=
+                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128) * (intensity * 2.0f);
+
                     }
             }
         );
@@ -909,11 +908,11 @@ public:
     }
 
     inline float3 evaluateCurl(float3 pos, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
-        float time_anim = 0.1) const {
+        float time_anim = 0.1, int frame = 0) const {
 
         float3 d0 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 0);
         float3 d1 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 1);
-        float3 d2 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim,2);
+        float3 d2 = evaluateVec(pos, resolution, NTS, offset, scale, time_anim, 2);
 
         //std::cout << d0.y - d1.z << ";" << d2.z - d0.x << ";" << d1.x - d2.y << std::endl;
 

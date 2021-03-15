@@ -683,7 +683,7 @@ public:
 
             //Upsampling
             if (UpsamplingDensity)
-                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //normal grid
+                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1, noise_intensity, time_anim); //normal grid
             if (UpsamplingTemperature)
                 gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
