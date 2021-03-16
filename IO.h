@@ -366,8 +366,15 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
 
     //std::cout << "In the eeeend\n";
     openvdb::tools::signedFloodFill(grid_dst.tree());
+
+    float voxel_size = 0.1;
+    auto transform = openvdb::math::Transform::createLinearTransform(/*voxel size=*/voxel_size); //Skala œwiatowa
+    const openvdb::math::Vec3d offset(float(-dim.x) / 2., 0, float(-dim.z) / 2.);
+    transform->preTranslate(offset); //center the grid
+    transform->postRotate(1.571, openvdb::math::X_AXIS); // poprawa rotacji dla blendera
     grid_dst.setTransform(
-        openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
+        transform
+        ); 
 
 }
 
