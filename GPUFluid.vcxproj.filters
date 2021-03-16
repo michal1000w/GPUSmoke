@@ -123,6 +123,12 @@
     <Filter Include="Headers">
       <UniqueIdentifier>{7c1ccf3e-4ce9-4d16-9937-8ef1d784ae4c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ImageConverters">
+      <UniqueIdentifier>{18f084c9-eb83-4c3e-97a5-372c59e0a5b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{e6f43cb3-a0fd-4321-9555-3d8a7c58b999}</UniqueIdentifier>
+    </Filter>
     <Filter Include="OpenGL">
       <UniqueIdentifier>{5d1389bd-b4de-461c-9e0d-367897204c7e}</UniqueIdentifier>
     </Filter>
@@ -143,12 +149,6 @@
     </Filter>
     <Filter Include="OpenGL\Textures">
       <UniqueIdentifier>{a1f19660-5e7e-47f4-ad63-56722b0fb0f1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImageConverters">
-      <UniqueIdentifier>{18f084c9-eb83-4c3e-97a5-372c59e0a5b3}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ImGui">
-      <UniqueIdentifier>{e6f43cb3-a0fd-4321-9555-3d8a7c58b999}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

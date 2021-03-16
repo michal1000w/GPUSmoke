@@ -84,7 +84,7 @@ public:
 
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
-    bool UpsamplingTemperature = false;
+    bool UpsamplingTemperature = true;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -691,7 +691,7 @@ public:
 
             
             if (INFLUENCE_SIM && UpsamplingVelocity) {
-                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 2, noise_intensity * 1.4f, time_anim); //velocity grid
+                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET * 10, SCALE * 2, NOISE_SC, 2, noise_intensity * 1.5f, time_anim); //velocity grid
             }
             
 

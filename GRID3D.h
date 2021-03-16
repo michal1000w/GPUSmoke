@@ -498,6 +498,12 @@ public:
         float tempp = 0.0;
         int THREADS = 16;
         int sizee = ceil((double)resolution.x / (double)THREADS);
+
+        //weights
+        //float* weights = new float[size()];
+        //computeCoeff(grid_noise,NTS);
+        //std::cout << "Computed" << std::endl;
+
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
             if (end > resolution.x) {
@@ -514,11 +520,13 @@ public:
 
                         //if (*position >= 0.01) {
                         if (*position >= 0.01) {
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01,min((*position), 1.0));
+                            //*position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01,min((*position), 1.0));
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01, min((*position), 1.0));
                         }
 
                     }
             });
+        //delete[] weights;
     }
 #ifdef VELOCITY_NOISE
     void applyCurl(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
@@ -548,7 +556,9 @@ public:
 
                         this->grid_vel[z * resolution.x * resolution.y + y * resolution.x + x]
                                 +=
-                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128) * (intensity);
+                            evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128)
+                                * 
+                            (intensity);
 
                     }
             }
@@ -562,6 +572,75 @@ public:
 
 
 
+    void computeCoeff(float* input, int DIMS, float* tempIn1 = nullptr, float* tempIn2 = nullptr) {
+        // generate tile
+        
+        const int sx = resolution.x;
+        const int sy = resolution.y;
+        const int sz = resolution.z;
+        
+        /*
+        const int sx = DIMS;
+        const int sy = DIMS;
+        const int sz = DIMS;
+        */
+
+        const int n3 = sx * sy * sz;
+        // just for compatibility with wavelet turb code
+        //float* temp13 = &tempIn1[0];
+        //float* temp23 = &tempIn2[0];
+        float* noise3 = input;
+        float* temp13 = new float[size()];
+        float* temp23 = new float[size()];
+        //initialize
+        for (int i = 0; i < n3; i++) {
+            temp13[i] = temp23[i] = 0.0f;
+        }
+
+        // Steps 2 and 3. Downsample and upsample the tile
+        for (int iz = 0; iz < sz; iz++)
+            for (int iy = 0; iy < sy; iy++)
+            {
+                const int i = iz * sx * sy + iy * sx;
+                downsample_neumann(&noise3[i], &temp13[i], sx, 1);
+                upsample_neumann(&temp13[i], &temp23[i], sx, 1);
+            }
+        for (int iz = 0; iz < sz; iz++)
+            for (int ix = 0; ix < sx; ix++)
+            {
+                const int i = iz * sx * sy + ix;
+                downsample_neumann(&temp23[i], &temp13[i], sy, sx);
+                upsample_neumann(&temp13[i], &temp23[i], sy, sx);
+            }
+        if (true) {
+            for (int iy = 0; iy < sy; iy++)
+                for (int ix = 0; ix < sx; ix++)
+                {
+                    const int i = iy * sx + ix;
+                    downsample_neumann(&temp23[i], &temp13[i], sz, sy * sx);
+                    upsample_neumann(&temp13[i], &temp23[i], sz, sy * sx);
+                }
+        }
+
+        // Step 4. Subtract out the coarse-scale contribution
+        for (int i = 0; i < n3; i++) {
+            float residual = noise3[i] - temp23[i];
+            temp13[i] = sqrtf(fabs(residual));
+        }
+        // copy back, and compute actual weight for wavelet turbulence...
+        float smoothingFactor = 1. / 6.;
+        if (true) smoothingFactor = 1. / 4.;
+        for (int i = 1; i < sx - 1; i++)
+            for (int j = 1; j < sy - 1; j++)
+                for (int k = 1; k < sz - 1; k++) {
+                    // apply some brute force smoothing
+                    float res = temp13[k * sx * sy + j * sx + i - 1] + temp13[k * sx * sy + j * sx + i + 1];
+                    res += temp13[k * sx * sy + j * sx + i - sx] + temp13[k * sx * sy + j * sx + i + sx];
+                    if (true) res += temp13[k * sx * sy + j * sx + i - sx * sy] + temp13[k * sx * sy + j * sx + i + sx * sy];
+                    input[k * sy * sx + j * sx + i] = res * smoothingFactor;
+                }
+        
+    }
 
     void generateTile(int NOISE_TILE_SIZE) {
         const int n = NOISE_TILE_SIZE;
@@ -986,6 +1065,50 @@ private:
             to[i * stride] = 0;
             for (int k = i / 2 - 1; k < i / 2 + 3; k++) {
                 to[i * stride] += 0.5 * pp[k - i / 2] * from[Mod(k, n / 2) * stride];
+            }
+        }
+    }
+
+
+
+
+    void downsample_neumann(float* from, float* to, int n, int stride) {
+        static const float* const aCoCenter = &_aCoeffs[16];
+        for (int i = 0; i < n / 2; i++) {
+            to[i * stride] = 0;
+            for (int k = 2 * i - 16; k < 2 * i + 16; k++) {
+                // handle boundary
+                float fromval;
+                if (k < 0) {
+                    fromval = from[0];
+                }
+                else if (k > n - 1) {
+                    fromval = from[(n - 1) * stride];
+                }
+                else {
+                    fromval = from[k * stride];
+                }
+                to[i * stride] += aCoCenter[k - 2 * i] * fromval;
+            }
+        }
+    }
+
+    void upsample_neumann(float* from, float* to, int n, int stride) {
+        static const float* const pp = &_pCoeffs[1];
+        for (int i = 0; i < n; i++) {
+            to[i * stride] = 0;
+            for (int k = i / 2 - 1; k < i / 2 + 3; k++) {
+                float fromval;
+                if (k > n / 2 - 1) {
+                    fromval = from[(n / 2 - 1) * stride];
+                }
+                else if (k < 0) {
+                    fromval = from[0];
+                }
+                else {
+                    fromval = from[k * stride];
+                }
+                to[i * stride] += 0.5 * pp[k - i / 2] * fromval;
             }
         }
     }
