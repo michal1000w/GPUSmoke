@@ -50,7 +50,7 @@ void UpdateSolver() {
 
 
 void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
-	float& progress, bool& save_panel, bool& helper_window) {
+	float& progress, bool& save_panel, bool& helper_window, bool& confirm_button) {
 
 	if (helper_window) {
 		ImGui::Begin("Helper Panel");
@@ -290,6 +290,19 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			}
 			ImGui::EndCombo();
 		}
+		if (ImGui::Button("Delete All")) {
+			confirm_button = true;
+		}
+		if (confirm_button) {
+			ImGui::SameLine();
+			if (ImGui::Button("Confirm")) {
+				for (int object = 0; object < solver.object_list.size(); object++) {
+					solver.object_list[object].free();
+				}
+				solver.object_list.clear();
+				confirm_button = false;
+			}
+		}
 		if (ImGui::Button("Delete selected")) {
 		REPEAT:
 			for (int object = 0; object < solver.object_list.size(); object++) {
@@ -491,6 +504,7 @@ int Window(float* Img_res) {
 		bool OPEN_FILE_TAB = false;
 		float progress = 0.0f;
 		bool helper_window = true;
+		bool confirm_button = false;
 		//std::thread* sim;
 		solver.DONE_FRAME = true;
 		/////////////////////////////////////////////////
@@ -516,7 +530,7 @@ int Window(float* Img_res) {
 			ImGui::NewFrame();
 
 			//std::thread GUI_THR( RenderGUI ,std::ref(SAVE_FILE_TAB), std::ref(OPEN_FILE_TAB), std::ref(fps), std::ref(progress), std::ref(save_panel));
-			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window);
+			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window, confirm_button);
 			//New Frame//////////////////
 			
 
