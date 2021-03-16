@@ -380,29 +380,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         ); 
 
     
-
-    //resample
-
-    /*
-    
-    void resampleToMatch	(	const GridType & 	inGrid,
-                                GridType & 	outGrid,
-                                Interrupter & 	interrupter 
-                            )	
-    */
-    
-    openvdb::FloatGrid::ConstPtr src = grid_dst;
-    openvdb::FloatGrid::Ptr dest = openvdb::FloatGrid::create();
-    dest->setTransform(openvdb::math::Transform::createLinearTransform(0.1/*voxel size*/));
-    // Resample the input grid into the output grid, reproducing
-    // the level-set sphere at a smaller voxel size.
-    openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*src, *dest);
-    
-
-    dest->setTransform(openvdb::math::Transform::createLinearTransform(1)); //100
-
-    return dest;
-    
+    return grid_dst;
 
 }
 
@@ -516,24 +494,25 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        grids_dst[i] = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+        auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
 #endif
-        //grids->at(i)->saveFloatAsHalf();
-        grids_dst[i]->saveFloatAsHalf();
-
-
+        
+        //grids_dst[i]->saveFloatAsHalf();
 
         
+        upgrid->saveFloatAsHalf();
+        upgrid->pruneGrid(0);
 
         //sparse it up
         //0 -> lossles
         //more is smaller
-        grids_dst[i]->pruneGrid(0); //beta 0.1
+        //grids_dst[i]->pruneGrid(0); //beta 0.1
 
 
 
         std::lock_guard<std::mutex> lock(mtx1);
-        grids->push_back(grids_dst[i]);
+        //grids->push_back(grids_dst[i]);
+        grids->push_back(upgrid);
         });
     
     if (DEBUG)
