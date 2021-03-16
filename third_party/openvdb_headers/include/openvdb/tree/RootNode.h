@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 ///
 /// @file RootNode.h
 ///
@@ -35,21 +8,6 @@
 #ifndef OPENVDB_TREE_ROOTNODE_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_ROOTNODE_HAS_BEEN_INCLUDED
 
-#include <map>
-#include <set>
-#include <sstream>
-#include <deque>
-#include <boost/type_traits/remove_const.hpp>
-#include <boost/type_traits/remove_pointer.hpp>
-#include <boost/type_traits/is_pointer.hpp>
-#include <boost/type_traits/is_const.hpp>
-#include <boost/mpl/contains.hpp>
-#include <boost/mpl/if.hpp>
-#include <boost/mpl/vector.hpp>//for boost::mpl::vector
-#include <boost/mpl/at.hpp>
-#include <boost/mpl/push_back.hpp>
-#include <boost/mpl/size.hpp>
-#include <tbb/parallel_for.h>
 #include <openvdb/Exceptions.h>
 #include <openvdb/Types.h>
 #include <openvdb/io/Compression.h> // for truncateRealToHalf()
@@ -57,6 +15,11 @@
 #include <openvdb/math/BBox.h>
 #include <openvdb/util/NodeMasks.h> // for backward compatibility only (see readTopology())
 #include <openvdb/version.h>
+#include <tbb/parallel_for.h>
+#include <map>
+#include <set>
+#include <sstream>
+#include <vector>
 
 
 namespace openvdb {
@@ -75,22 +38,23 @@ template<typename ChildType>
 class RootNode
 {
 public:
-    typedef ChildType                         ChildNodeType;
-    typedef typename ChildType::LeafNodeType  LeafNodeType;
-    typedef typename ChildType::ValueType     ValueType;
-    typedef typename ChildType::BuildType     BuildType;
+    using ChildNodeType = ChildType;
+    using LeafNodeType = typename ChildType::LeafNodeType;
+    using ValueType = typename ChildType::ValueType;
+    using BuildType = typename ChildType::BuildType;
 
     static const Index LEVEL = 1 + ChildType::LEVEL; // level 0 = leaf
 
     /// NodeChainType is a list of this tree's node types, from LeafNodeType to RootNode.
-    typedef typename NodeChain<RootNode, LEVEL>::Type NodeChainType;
-    BOOST_STATIC_ASSERT(boost::mpl::size<NodeChainType>::value == LEVEL + 1);
+    using NodeChainType = typename NodeChain<RootNode, LEVEL>::Type;
+    static_assert(NodeChainType::Size == LEVEL + 1,
+        "wrong number of entries in RootNode node chain");
 
     /// @brief ValueConverter<T>::Type is the type of a RootNode having the same
     /// child hierarchy as this node but a different value type, T.
     template<typename OtherValueType>
     struct ValueConverter {
-        typedef RootNode<typename ChildType::template ValueConverter<OtherValueType>::Type> Type;
+        using Type = RootNode<typename ChildType::template ValueConverter<OtherValueType>::Type>;
     };
 
     /// @brief SameConfiguration<OtherNodeType>::value is @c true if and only if
@@ -188,13 +152,13 @@ private:
         ChildType& steal(const Tile& t) { ChildType* c=child; child=nullptr; tile=t; return *c; }
     };
 
-    typedef std::map<Coord, NodeStruct>      MapType;
-    typedef typename MapType::iterator       MapIter;
-    typedef typename MapType::const_iterator MapCIter;
+    using MapType = std::map<Coord, NodeStruct>;
+    using MapIter = typename MapType::iterator;
+    using MapCIter = typename MapType::const_iterator;
 
-    typedef std::set<Coord>                   CoordSet;
-    typedef typename CoordSet::iterator       CoordSetIter;
-    typedef typename CoordSet::const_iterator CoordSetCIter;
+    using CoordSet = std::set<Coord>;
+    using CoordSetIter = typename CoordSet::iterator;
+    using CoordSetCIter = typename CoordSet::const_iterator;
 
     static void             setTile(const MapIter& i, const Tile& t) { i->second.set(t); }
     static void             setChild(const MapIter& i, ChildType& c) { i->second.set(c); }
@@ -243,8 +207,8 @@ private:
     class BaseIter
     {
     public:
-        typedef _RootNodeT RootNodeT;
-        typedef _MapIterT MapIterT; // either MapIter or MapCIter
+        using RootNodeT = _RootNodeT;
+        using MapIterT = _MapIterT; // either MapIter or MapCIter
 
         bool operator==(const BaseIter& other) const
         {
@@ -263,9 +227,9 @@ private:
         bool test() const { assert(mParentNode); return mIter != mParentNode->mTable.end(); }
         operator bool() const { return this->test(); }
 
-        void increment() { ++mIter; this->skip(); }
+        void increment() { if (this->test()) { ++mIter; } this->skip(); }
         bool next() { this->increment(); return this->test(); }
-        void increment(Index n) { for (int i = 0; i < n && this->next(); ++i) {} }
+        void increment(Index n) { for (Index i = 0; i < n && this->next(); ++i) {} }
 
         /// @brief Return this iterator's position as an offset from
         /// the beginning of the parent node's map.
@@ -298,13 +262,13 @@ private:
     class ChildIter: public BaseIter<RootNodeT, MapIterT, FilterPredT>
     {
     public:
-        typedef BaseIter<RootNodeT, MapIterT, FilterPredT> BaseT;
-        typedef RootNodeT NodeType;
-        typedef NodeType ValueType;
-        typedef ChildNodeT ChildNodeType;
-        typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-        typedef typename boost::remove_const<ValueType>::type NonConstValueType;
-        typedef typename boost::remove_const<ChildNodeType>::type NonConstChildNodeType;
+        using BaseT = BaseIter<RootNodeT, MapIterT, FilterPredT>;
+        using NodeType = RootNodeT;
+        using ValueType = NodeType;
+        using ChildNodeType = ChildNodeT;
+        using NonConstNodeType = typename std::remove_const<NodeType>::type;
+        using NonConstValueType = typename std::remove_const<ValueType>::type;
+        using NonConstChildNodeType = typename std::remove_const<ChildNodeType>::type;
         using BaseT::mIter;
 
         ChildIter() {}
@@ -321,11 +285,11 @@ private:
     class ValueIter: public BaseIter<RootNodeT, MapIterT, FilterPredT>
     {
     public:
-        typedef BaseIter<RootNodeT, MapIterT, FilterPredT> BaseT;
-        typedef RootNodeT NodeType;
-        typedef ValueT ValueType;
-        typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-        typedef typename boost::remove_const<ValueT>::type NonConstValueType;
+        using BaseT = BaseIter<RootNodeT, MapIterT, FilterPredT>;
+        using NodeType = RootNodeT;
+        using ValueType = ValueT;
+        using NonConstNodeType = typename std::remove_const<NodeType>::type;
+        using NonConstValueType = typename std::remove_const<ValueT>::type;
         using BaseT::mIter;
 
         ValueIter() {}
@@ -351,13 +315,13 @@ private:
     class DenseIter: public BaseIter<RootNodeT, MapIterT, NullPred>
     {
     public:
-        typedef BaseIter<RootNodeT, MapIterT, NullPred> BaseT;
-        typedef RootNodeT NodeType;
-        typedef ValueT ValueType;
-        typedef ChildNodeT ChildNodeType;
-        typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-        typedef typename boost::remove_const<ValueT>::type NonConstValueType;
-        typedef typename boost::remove_const<ChildNodeT>::type NonConstChildNodeType;
+        using BaseT = BaseIter<RootNodeT, MapIterT, NullPred>;
+        using NodeType = RootNodeT;
+        using ValueType = ValueT;
+        using ChildNodeType = ChildNodeT;
+        using NonConstNodeType = typename std::remove_const<NodeType>::type;
+        using NonConstValueType = typename std::remove_const<ValueT>::type;
+        using NonConstChildNodeType = typename std::remove_const<ChildNodeT>::type;
         using BaseT::mIter;
 
         DenseIter() {}
@@ -393,19 +357,19 @@ private:
     }; // DenseIter
 
 public:
-    typedef ChildIter<RootNode, MapIter, ChildOnPred, ChildType>                  ChildOnIter;
-    typedef ChildIter<const RootNode, MapCIter, ChildOnPred, const ChildType>     ChildOnCIter;
-    typedef ValueIter<RootNode, MapIter, ChildOffPred, const ValueType>           ChildOffIter;
-    typedef ValueIter<const RootNode, MapCIter, ChildOffPred, ValueType>          ChildOffCIter;
-    typedef DenseIter<RootNode, MapIter, ChildType, ValueType>                    ChildAllIter;
-    typedef DenseIter<const RootNode, MapCIter, const ChildType, const ValueType> ChildAllCIter;
+    using ChildOnIter = ChildIter<RootNode, MapIter, ChildOnPred, ChildType>;
+    using ChildOnCIter = ChildIter<const RootNode, MapCIter, ChildOnPred, const ChildType>;
+    using ChildOffIter = ValueIter<RootNode, MapIter, ChildOffPred, const ValueType>;
+    using ChildOffCIter = ValueIter<const RootNode, MapCIter, ChildOffPred, ValueType>;
+    using ChildAllIter = DenseIter<RootNode, MapIter, ChildType, ValueType>;
+    using ChildAllCIter = DenseIter<const RootNode, MapCIter, const ChildType, const ValueType>;
 
-    typedef ValueIter<RootNode, MapIter, ValueOnPred, ValueType>                  ValueOnIter;
-    typedef ValueIter<const RootNode, MapCIter, ValueOnPred, const ValueType>     ValueOnCIter;
-    typedef ValueIter<RootNode, MapIter, ValueOffPred, ValueType>                 ValueOffIter;
-    typedef ValueIter<const RootNode, MapCIter, ValueOffPred, const ValueType>    ValueOffCIter;
-    typedef ValueIter<RootNode, MapIter, ValueAllPred, ValueType>                 ValueAllIter;
-    typedef ValueIter<const RootNode, MapCIter, ValueAllPred, const ValueType>    ValueAllCIter;
+    using ValueOnIter = ValueIter<RootNode, MapIter, ValueOnPred, ValueType>;
+    using ValueOnCIter = ValueIter<const RootNode, MapCIter, ValueOnPred, const ValueType>;
+    using ValueOffIter = ValueIter<RootNode, MapIter, ValueOffPred, ValueType>;
+    using ValueOffCIter = ValueIter<const RootNode, MapCIter, ValueOffPred, const ValueType>;
+    using ValueAllIter = ValueIter<RootNode, MapIter, ValueAllPred, ValueType>;
+    using ValueAllCIter = ValueIter<const RootNode, MapCIter, ValueAllPred, const ValueType>;
 
 
     ChildOnCIter  cbeginChildOn()  const { return ChildOnCIter(*this, mTable.begin()); }
@@ -515,11 +479,13 @@ public:
 
     Index32 leafCount() const;
     Index32 nonLeafCount() const;
+    Index32 childCount() const;
     Index64 onVoxelCount() const;
     Index64 offVoxelCount() const;
     Index64 onLeafVoxelCount() const;
     Index64 offLeafVoxelCount() const;
     Index64 onTileCount() const;
+    void nodeCount(std::vector<Index32> &vec) const;
 
     bool isValueOn(const Coord& xyz) const;
 
@@ -569,16 +535,24 @@ public:
     }
     //@}
 
-    /// @brief Set all voxels within a given axis-aligned box to a constant value.
+    /// @brief Set all voxels within a given axis-aligned box to a constant value
+    /// and ensure that those voxels are all represented at the leaf level.
     /// @param bbox    inclusive coordinates of opposite corners of an axis-aligned box.
     /// @param value   the value to which to set voxels within the box.
     /// @param active  if true, mark voxels within the box as active,
     ///                otherwise mark them as inactive.
-    ///
-    /// @note This operation generates a dense representation of the
-    ///       filled box. This implies that active tiles are voxelized, i.e. only active
-    ///       voxels are generated from this fill operation.
+    /// @sa voxelizeActiveTiles()
     void denseFill(const CoordBBox& bbox, const ValueType& value, bool active = true);
+
+    /// @brief Densify active tiles, i.e., replace them with leaf-level active voxels.
+    ///
+    /// @param threaded if true, this operation is multi-threaded (over the internal nodes).
+    ///
+    /// @warning This method can explode the tree's memory footprint, especially if it
+    /// contains active tiles at the upper levels (in particular the root level)!
+    ///
+    /// @sa denseFill()
+    void voxelizeActiveTiles(bool threaded = true);
 
     /// @brief Copy into a dense grid the values of all voxels, both active and inactive,
     /// that intersect a given bounding box.
@@ -705,6 +679,13 @@ public:
     template<typename NodeT>
     NodeT* stealNode(const Coord& xyz, const ValueType& value, bool state);
 
+    /// @brief Add the given child node at the root level.
+    /// If a child node with the same origin already exists, delete the old node and add
+    /// the new node in its place (i.e. ownership of the new child node is transferred
+    /// to this RootNode).
+    /// @return @c true (for consistency with InternalNode::addChild)
+    bool addChild(ChildType* child);
+
     /// @brief Add a tile containing voxel (x, y, z) at the root level,
     /// deleting the existing branch if necessary.
     void addTile(const Coord& xyz, const ValueType& value, bool state);
@@ -777,14 +758,14 @@ public:
     /// @brief Adds all nodes of a certain type to a container with the following API:
     /// @code
     /// struct ArrayT {
-    ///    typedef value_type;// defines the type of nodes to be added to the array
+    ///    using value_type = ...;// defines the type of nodes to be added to the array
     ///    void push_back(value_type nodePtr);// method that add nodes to the array
     /// };
     /// @endcode
     /// @details An example of a wrapper around a c-style array is:
     /// @code
     /// struct MyArray {
-    ///    typedef LeafType* value_type;
+    ///    using value_type = LeafType*;
     ///    value_type* ptr;
     ///    MyArray(value_type* array) : ptr(array) {}
     ///    void push_back(value_type leaf) { *ptr++ = leaf; }
@@ -805,14 +786,14 @@ public:
     /// adds them to a container with the following API:
     /// @code
     /// struct ArrayT {
-    ///    typedef value_type;// defines the type of nodes to be added to the array
+    ///    using value_type = ...;// defines the type of nodes to be added to the array
     ///    void push_back(value_type nodePtr);// method that add nodes to the array
     /// };
     /// @endcode
     /// @details An example of a wrapper around a c-style array is:
     /// @code
     /// struct MyArray {
-    ///    typedef LeafType* value_type;
+    ///    using value_type = LeafType*;
     ///    value_type* ptr;
     ///    MyArray(value_type* array) : ptr(array) {}
     ///    void push_back(value_type leaf) { *ptr++ = leaf; }
@@ -829,14 +810,6 @@ public:
     template<typename ArrayT>
     void stealNodes(ArrayT& array) { this->stealNodes(array, mBackground, false); }
     //@}
-
-    /// @brief Densify active tiles, i.e., replace them with leaf-level active voxels.
-    ///
-    /// @param threaded if true, this operation is multi-threaded (over the internal nodes).
-    ///
-    /// @warning This method can explode the tree's memory footprint, especially if it
-    /// contains active tiles at the upper levels, e.g. root level!
-    void voxelizeActiveTiles(bool threaded = true);
 
     /// @brief Efficiently merge another tree into this tree using one of several schemes.
     /// @details This operation is primarily intended to combine trees that are mostly
@@ -860,8 +833,11 @@ public:
     /// Specifically, active tiles and voxels in this tree are not changed, and
     /// tiles or voxels that were inactive in this tree but active in the other tree
     /// are marked as active in this tree but left with their original values.
+    ///
+    /// @note If preserveTiles is true, any active tile in this topology
+    /// will not be densified by overlapping child topology.
     template<typename OtherChildType>
-    void topologyUnion(const RootNode<OtherChildType>& other);
+    void topologyUnion(const RootNode<OtherChildType>& other, const bool preserveTiles = false);
 
     /// @brief Intersects this tree's set of active values with the active values
     /// of the other tree, whose @c ValueType may be different.
@@ -930,7 +906,9 @@ private:
     void resetTable(const MapType&) const {}
     //@}
 
+#if OPENVDB_ABI_VERSION_NUMBER < 8
     Index getChildCount() const;
+#endif
     Index getTileCount() const;
     Index getActiveTileCount() const;
     Index getInactiveTileCount() const;
@@ -994,7 +972,7 @@ private:
 ////////////////////////////////////////
 
 
-/// @brief NodeChain<RootNodeType, RootNodeType::LEVEL>::Type is a boost::mpl::vector
+/// @brief NodeChain<RootNodeType, RootNodeType::LEVEL>::Type is a openvdb::TypeList
 /// that lists the types of the nodes of the tree rooted at RootNodeType in reverse order,
 /// from LeafNode to RootNode.
 /// @details For example, if RootNodeType is
@@ -1003,7 +981,7 @@ private:
 /// @endcode
 /// then NodeChain::Type is
 /// @code
-/// boost::mpl::vector<
+/// openvdb::TypeList<
 ///     LeafNode,
 ///     InternalNode<LeafNode>,
 ///     InternalNode<InternalNode<LeafNode> >,
@@ -1012,18 +990,18 @@ private:
 ///
 /// @note Use the following to get the Nth node type, where N=0 is the LeafNodeType:
 /// @code
-/// boost::mpl::at<NodeChainType, boost::mpl::int_<N> >::type
+/// NodeChainType::Get<N>;
 /// @endcode
 template<typename HeadT, int HeadLevel>
 struct NodeChain {
-    typedef typename NodeChain<typename HeadT::ChildNodeType, HeadLevel-1>::Type SubtreeT;
-    typedef typename boost::mpl::push_back<SubtreeT, HeadT>::type Type;
+    using SubtreeT = typename NodeChain<typename HeadT::ChildNodeType, HeadLevel-1>::Type;
+    using Type = typename SubtreeT::template Append<HeadT>;
 };
 
 /// Specialization to terminate NodeChain
 template<typename HeadT>
 struct NodeChain<HeadT, /*HeadLevel=*/1> {
-    typedef typename boost::mpl::vector<typename HeadT::ChildNodeType, HeadT>::type Type;
+    using Type = TypeList<typename HeadT::ChildNodeType, HeadT>;
 };
 
 
@@ -1071,7 +1049,7 @@ RootNode<ChildT>::RootNode(const RootNode<OtherChildType>& other,
     const ValueType& backgd, const ValueType& foregd, TopologyCopy):
     mBackground(backgd)
 {
-    typedef RootNode<OtherChildType> OtherRootT;
+    using OtherRootT = RootNode<OtherChildType>;
 
     enforceSameConfiguration(other);
 
@@ -1093,7 +1071,7 @@ RootNode<ChildT>::RootNode(const RootNode<OtherChildType>& other,
     const ValueType& backgd, TopologyCopy):
     mBackground(backgd)
 {
-    typedef RootNode<OtherChildType> OtherRootT;
+    using OtherRootT = RootNode<OtherChildType>;
 
     enforceSameConfiguration(other);
 
@@ -1136,13 +1114,13 @@ struct RootNodeCopyHelper<RootT, OtherRootT, /*Compatible=*/true>
 {
     static inline void copyWithValueConversion(RootT& self, const OtherRootT& other)
     {
-        typedef typename RootT::ValueType          ValueT;
-        typedef typename RootT::ChildNodeType      ChildT;
-        typedef typename RootT::NodeStruct         NodeStruct;
-        typedef typename RootT::Tile               Tile;
-        typedef typename OtherRootT::ValueType     OtherValueT;
-        typedef typename OtherRootT::MapCIter      OtherMapCIter;
-        typedef typename OtherRootT::Tile          OtherTile;
+        using ValueT = typename RootT::ValueType;
+        using ChildT = typename RootT::ChildNodeType;
+        using NodeStruct = typename RootT::NodeStruct;
+        using Tile = typename RootT::Tile;
+        using OtherValueT = typename OtherRootT::ValueType;
+        using OtherMapCIter = typename OtherRootT::MapCIter;
+        using OtherTile = typename OtherRootT::Tile;
 
         struct Local {
             /// @todo Consider using a value conversion functor passed as an argument instead.
@@ -1194,8 +1172,8 @@ template<typename OtherChildType>
 inline RootNode<ChildT>&
 RootNode<ChildT>::operator=(const RootNode<OtherChildType>& other)
 {
-    typedef RootNode<OtherChildType>       OtherRootT;
-    typedef typename OtherRootT::ValueType OtherValueT;
+    using OtherRootT = RootNode<OtherChildType>;
+    using OtherValueT = typename OtherRootT::ValueType;
     static const bool compatible = (SameConfiguration<OtherRootT>::value
         && CanConvertType</*from=*/OtherValueT, /*to=*/ValueType>::value);
     RootNodeCopyHelper<RootNode, OtherRootT, compatible>::copyWithValueConversion(*this, other);
@@ -1360,10 +1338,10 @@ template<typename OtherChildType>
 inline bool
 RootNode<ChildT>::hasSameTopology(const RootNode<OtherChildType>& other) const
 {
-    typedef RootNode<OtherChildType> OtherRootT;
-    typedef typename OtherRootT::MapType OtherMapT;
-    typedef typename OtherRootT::MapIter OtherIterT;
-    typedef typename OtherRootT::MapCIter OtherCIterT;
+    using OtherRootT = RootNode<OtherChildType>;
+    using OtherMapT = typename OtherRootT::MapType;
+    using OtherIterT = typename OtherRootT::MapIter;
+    using OtherCIterT = typename OtherRootT::MapCIter;
 
     if (!hasSameConfiguration(other)) return false;
 
@@ -1439,7 +1417,7 @@ template<typename OtherChildType>
 inline bool
 RootNode<ChildT>::hasCompatibleValueType(const RootNode<OtherChildType>&)
 {
-    typedef typename OtherChildType::ValueType OtherValueType;
+    using OtherValueType = typename OtherChildType::ValueType;
     return CanConvertType</*from=*/OtherValueType, /*to=*/ValueType>::value;
 }
 
@@ -1449,7 +1427,7 @@ template<typename OtherChildType>
 inline void
 RootNode<ChildT>::enforceCompatibleValueTypes(const RootNode<OtherChildType>&)
 {
-    typedef typename OtherChildType::ValueType OtherValueType;
+    using OtherValueType = typename OtherChildType::ValueType;
     if (!CanConvertType</*from=*/OtherValueType, /*to=*/ValueType>::value) {
         std::ostringstream ostr;
         ostr << "values of type " << typeNameAsString<OtherValueType>()
@@ -1501,15 +1479,13 @@ RootNode<ChildT>::evalActiveBoundingBox(CoordBBox& bbox, bool visitVoxels) const
 }
 
 
+#if OPENVDB_ABI_VERSION_NUMBER < 8
 template<typename ChildT>
 inline Index
 RootNode<ChildT>::getChildCount() const {
-    Index sum = 0;
-    for (MapCIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
-        if (isChild(i)) ++sum;
-    }
-    return sum;
+    return this->childCount();
 }
+#endif
 
 
 template<typename ChildT>
@@ -1569,6 +1545,18 @@ RootNode<ChildT>::nonLeafCount() const
         for (MapCIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
             if (isChild(i)) sum += getChild(i).nonLeafCount();
         }
+    }
+    return sum;
+}
+
+
+template<typename ChildT>
+inline Index32
+RootNode<ChildT>::childCount() const
+{
+    Index sum = 0;
+    for (MapCIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
+        if (isChild(i)) ++sum;
     }
     return sum;
 }
@@ -1642,6 +1630,22 @@ RootNode<ChildT>::onTileCount() const
         }
     }
     return sum;
+}
+
+template<typename ChildT>
+inline void
+RootNode<ChildT>::nodeCount(std::vector<Index32> &vec) const
+{
+    assert(vec.size() > LEVEL);
+    Index32 sum = 0;
+    for (MapCIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
+        if (isChild(i)) {
+            ++sum;
+            getChild(i).nodeCount(vec);
+        }
+    }
+    vec[LEVEL] = 1;// one root node
+    vec[ChildNodeType::LEVEL] = sum;
 }
 
 ////////////////////////////////////////
@@ -2077,12 +2081,15 @@ RootNode<ChildT>::probeValueAndCache(const Coord& xyz, ValueType& value, Accesso
 
 ////////////////////////////////////////
 
+
 template<typename ChildT>
 inline void
 RootNode<ChildT>::fill(const CoordBBox& bbox, const ValueType& value, bool active)
 {
     if (bbox.empty()) return;
 
+    // Iterate over the fill region in axis-aligned, tile-sized chunks.
+    // (The first and last chunks along each axis might be smaller than a tile.)
     Coord xyz, tileMax;
     for (int x = bbox.min().x(); x <= bbox.max().x(); x = tileMax.x() + 1) {
         xyz.setX(x);
@@ -2107,7 +2114,7 @@ RootNode<ChildT>::fill(const CoordBBox& bbox, const ValueType& value, bool activ
                         child = new ChildT(xyz, mBackground);
                         mTable[tileMin] = NodeStruct(*child);
                     } else if (isTile(iter)) {
-                        // Replace the tile with a newly-created child that is initialized
+                        // Replace the tile with a newly-created child that is filled
                         // with the tile's value and active state.
                         const Tile& tile = getTile(iter);
                         child = new ChildT(xyz, tile.value, tile.active);
@@ -2132,20 +2139,88 @@ RootNode<ChildT>::fill(const CoordBBox& bbox, const ValueType& value, bool activ
     }
 }
 
+
 template<typename ChildT>
 inline void
 RootNode<ChildT>::denseFill(const CoordBBox& bbox, const ValueType& value, bool active)
 {
-    this->sparseFill(bbox, value, active);
-    this->voxelizeActiveTiles(true);//multi-threaded
+    if (bbox.empty()) return;
+
+    if (active && mTable.empty()) {
+        // If this tree is empty, then a sparse fill followed by (threaded)
+        // densification of active tiles is the more efficient approach.
+        sparseFill(bbox, value, active);
+        voxelizeActiveTiles(/*threaded=*/true);
+        return;
+    }
+
+    // Iterate over the fill region in axis-aligned, tile-sized chunks.
+    // (The first and last chunks along each axis might be smaller than a tile.)
+    Coord xyz, tileMin, tileMax;
+    for (int x = bbox.min().x(); x <= bbox.max().x(); x = tileMax.x() + 1) {
+        xyz.setX(x);
+        for (int y = bbox.min().y(); y <= bbox.max().y(); y = tileMax.y() + 1) {
+            xyz.setY(y);
+            for (int z = bbox.min().z(); z <= bbox.max().z(); z = tileMax.z() + 1) {
+                xyz.setZ(z);
+
+                // Get the bounds of the tile that contains voxel (x, y, z).
+                tileMin = coordToKey(xyz);
+                tileMax = tileMin.offsetBy(ChildT::DIM - 1);
+
+                // Retrieve the table entry for the tile that contains xyz,
+                // or, if there is no table entry, add a background tile.
+                const auto iter = findOrAddCoord(tileMin);
+
+                if (isTile(iter)) {
+                    // If the table entry is a tile, replace it with a child node
+                    // that is filled with the tile's value and active state.
+                    const auto& tile = getTile(iter);
+                    auto* child = new ChildT{tileMin, tile.value, tile.active};
+                    setChild(iter, *child);
+                }
+                // Forward the fill request to the child.
+                getChild(iter).denseFill(bbox, value, active);
+            }
+        }
+    }
 }
+
+
+////////////////////////////////////////
+
+
+template<typename ChildT>
+inline void
+RootNode<ChildT>::voxelizeActiveTiles(bool threaded)
+{
+    // There is little point in threading over the root table since each tile
+    // spans a huge index space (by default 4096^3) and hence we expect few
+    // active tiles if any at all.  In fact, you're very likely to run out of
+    // memory if this method is called on a tree with root-level active tiles!
+    for (MapIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
+        if (this->isTileOff(i)) continue;
+        ChildT* child = i->second.child;
+        if (child == nullptr) {
+            // If this table entry is an active tile (i.e., not off and not a child node),
+            // replace it with a child node filled with active tiles of the same value.
+            child = new ChildT{i->first, this->getTile(i).value, true};
+            i->second.child = child;
+        }
+        child->voxelizeActiveTiles(threaded);
+    }
+}
+
+
+////////////////////////////////////////
+
 
 template<typename ChildT>
 template<typename DenseT>
 inline void
 RootNode<ChildT>::copyToDense(const CoordBBox& bbox, DenseT& dense) const
 {
-    typedef typename DenseT::ValueType DenseValueType;
+    using DenseValueType = typename DenseT::ValueType;
 
     const size_t xStride = dense.xStride(), yStride = dense.yStride(), zStride = dense.zStride();
     const Coord& min = dense.bbox().min();
@@ -2197,7 +2272,7 @@ RootNode<ChildT>::writeTopology(std::ostream& os, bool toHalf) const
     }
     io::setGridBackgroundValuePtr(os, &mBackground);
 
-    const Index numTiles = this->getTileCount(), numChildren = this->getChildCount();
+    const Index numTiles = this->getTileCount(), numChildren = this->childCount();
     os.write(reinterpret_cast<const char*>(&numTiles), sizeof(Index));
     os.write(reinterpret_cast<const char*>(&numChildren), sizeof(Index));
 
@@ -2275,11 +2350,7 @@ RootNode<ChildT>::readTopology(std::istream& is, bool fromHalf)
 
             if (childMask.isOn(i)) {
                 // Read in and insert a child node.
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-                ChildT* child = new ChildT(origin, mBackground);
-#else
                 ChildT* child = new ChildT(PartialCreate(), origin, mBackground);
-#endif
                 child->readTopology(is);
                 mTable[origin] = NodeStruct(*child);
             } else {
@@ -2322,11 +2393,7 @@ RootNode<ChildT>::readTopology(std::istream& is, bool fromHalf)
     for (Index n = 0; n < numChildren; ++n) {
         is.read(reinterpret_cast<char*>(vec), 3 * sizeof(Int32));
         Coord origin(vec);
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-        ChildT* child = new ChildT(origin, mBackground);
-#else
         ChildT* child = new ChildT(PartialCreate(), origin, mBackground);
-#endif
         child->readTopology(is, fromHalf);
         mTable[Coord(vec)] = NodeStruct(*child);
     }
@@ -2444,12 +2511,12 @@ template<typename NodeT>
 inline NodeT*
 RootNode<ChildT>::stealNode(const Coord& xyz, const ValueType& value, bool state)
 {
-    if ((NodeT::LEVEL == ChildT::LEVEL && !(boost::is_same<NodeT, ChildT>::value)) ||
+    if ((NodeT::LEVEL == ChildT::LEVEL && !(std::is_same<NodeT, ChildT>::value)) ||
          NodeT::LEVEL >  ChildT::LEVEL) return nullptr;
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
     MapIter iter = this->findCoord(xyz);
     if (iter == mTable.end() || isTile(iter)) return nullptr;
-    return (boost::is_same<NodeT, ChildT>::value)
+    return (std::is_same<NodeT, ChildT>::value)
         ? reinterpret_cast<NodeT*>(&stealChild(iter, Tile(value, state)))
         : getChild(iter).template stealNode<NodeT>(xyz, value, state);
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
@@ -2526,6 +2593,21 @@ RootNode<ChildT>::addLeafAndCache(LeafNodeType* leaf, AccessorT& acc)
     }
     acc.insert(xyz, child);
     child->addLeafAndCache(leaf, acc);
+}
+
+template<typename ChildT>
+inline bool
+RootNode<ChildT>::addChild(ChildT* child)
+{
+    if (!child) return false;
+    const Coord& xyz = child->origin();
+    MapIter iter = this->findCoord(xyz);
+    if (iter == mTable.end()) {//background
+        mTable[this->coordToKey(xyz)] = NodeStruct(*child);
+    } else {//child or tile
+        setChild(iter, *child);//this also deletes the existing child node
+    }
+    return true;
 }
 
 template<typename ChildT>
@@ -2664,13 +2746,13 @@ template<typename NodeT>
 inline NodeT*
 RootNode<ChildT>::probeNode(const Coord& xyz)
 {
-    if ((NodeT::LEVEL == ChildT::LEVEL && !(boost::is_same<NodeT, ChildT>::value)) ||
+    if ((NodeT::LEVEL == ChildT::LEVEL && !(std::is_same<NodeT, ChildT>::value)) ||
          NodeT::LEVEL >  ChildT::LEVEL) return nullptr;
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
     MapIter iter = this->findCoord(xyz);
     if (iter == mTable.end() || isTile(iter)) return nullptr;
     ChildT* child = &getChild(iter);
-    return (boost::is_same<NodeT, ChildT>::value)
+    return (std::is_same<NodeT, ChildT>::value)
         ? reinterpret_cast<NodeT*>(child)
         : child->template probeNode<NodeT>(xyz);
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
@@ -2682,13 +2764,13 @@ template<typename NodeT>
 inline const NodeT*
 RootNode<ChildT>::probeConstNode(const Coord& xyz) const
 {
-    if ((NodeT::LEVEL == ChildT::LEVEL && !(boost::is_same<NodeT, ChildT>::value)) ||
+    if ((NodeT::LEVEL == ChildT::LEVEL && !(std::is_same<NodeT, ChildT>::value)) ||
          NodeT::LEVEL >  ChildT::LEVEL) return nullptr;
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
     MapCIter iter = this->findCoord(xyz);
     if (iter == mTable.end() || isTile(iter)) return nullptr;
     const ChildT* child = &getChild(iter);
-    return (boost::is_same<NodeT, ChildT>::value)
+    return (std::is_same<NodeT, ChildT>::value)
         ? reinterpret_cast<const NodeT*>(child)
         : child->template probeConstNode<NodeT>(xyz);
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
@@ -2743,14 +2825,14 @@ template<typename NodeT, typename AccessorT>
 inline NodeT*
 RootNode<ChildT>::probeNodeAndCache(const Coord& xyz, AccessorT& acc)
 {
-    if ((NodeT::LEVEL == ChildT::LEVEL && !(boost::is_same<NodeT, ChildT>::value)) ||
+    if ((NodeT::LEVEL == ChildT::LEVEL && !(std::is_same<NodeT, ChildT>::value)) ||
          NodeT::LEVEL >  ChildT::LEVEL) return nullptr;
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
     MapIter iter = this->findCoord(xyz);
     if (iter == mTable.end() || isTile(iter)) return nullptr;
     ChildT* child = &getChild(iter);
     acc.insert(xyz, child);
-    return (boost::is_same<NodeT, ChildT>::value)
+    return (std::is_same<NodeT, ChildT>::value)
         ? reinterpret_cast<NodeT*>(child)
         : child->template probeNodeAndCache<NodeT>(xyz, acc);
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
@@ -2762,14 +2844,14 @@ template<typename NodeT,typename AccessorT>
 inline const NodeT*
 RootNode<ChildT>::probeConstNodeAndCache(const Coord& xyz, AccessorT& acc) const
 {
-    if ((NodeT::LEVEL == ChildT::LEVEL && !(boost::is_same<NodeT, ChildT>::value)) ||
+    if ((NodeT::LEVEL == ChildT::LEVEL && !(std::is_same<NodeT, ChildT>::value)) ||
          NodeT::LEVEL >  ChildT::LEVEL) return nullptr;
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
     MapCIter iter = this->findCoord(xyz);
     if (iter == mTable.end() || isTile(iter)) return nullptr;
     const ChildT* child = &getChild(iter);
     acc.insert(xyz, child);
-    return (boost::is_same<NodeT, ChildT>::value)
+    return (std::is_same<NodeT, ChildT>::value)
         ? reinterpret_cast<const NodeT*>(child)
         : child->template probeConstNodeAndCache<NodeT>(xyz, acc);
     OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
@@ -2783,19 +2865,20 @@ template<typename ArrayT>
 inline void
 RootNode<ChildT>::getNodes(ArrayT& array)
 {
-    typedef typename ArrayT::value_type NodePtr;
-    BOOST_STATIC_ASSERT(boost::is_pointer<NodePtr>::value);
-    typedef typename boost::remove_pointer<NodePtr>::type NodeType;
-    typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-    typedef typename boost::mpl::contains<NodeChainType, NonConstNodeType>::type result;
-    BOOST_STATIC_ASSERT(result::value);
-    typedef typename boost::mpl::if_<boost::is_const<NodeType>,
-                                     const ChildT, ChildT>::type ArrayChildT;
+    using NodePtr = typename ArrayT::value_type;
+    static_assert(std::is_pointer<NodePtr>::value,
+        "argument to getNodes() must be a pointer array");
+    using NodeType = typename std::remove_pointer<NodePtr>::type;
+    using NonConstNodeType = typename std::remove_const<NodeType>::type;
+    static_assert(NodeChainType::template Contains<NonConstNodeType>,
+        "can't extract non-const nodes from a const tree");
+    using ArrayChildT = typename std::conditional<
+        std::is_const<NodeType>::value, const ChildT, ChildT>::type;
 
     for (MapIter iter=mTable.begin(); iter!=mTable.end(); ++iter) {
         if (ChildT* child = iter->second.child) {
             OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-            if (boost::is_same<NodePtr, ArrayChildT*>::value) {
+            if (std::is_same<NodePtr, ArrayChildT*>::value) {
                 array.push_back(reinterpret_cast<NodePtr>(iter->second.child));
             } else {
                 child->getNodes(array);//descent
@@ -2810,18 +2893,20 @@ template<typename ArrayT>
 inline void
 RootNode<ChildT>::getNodes(ArrayT& array) const
 {
-    typedef typename ArrayT::value_type NodePtr;
-    BOOST_STATIC_ASSERT(boost::is_pointer<NodePtr>::value);
-    typedef typename boost::remove_pointer<NodePtr>::type NodeType;
-    BOOST_STATIC_ASSERT(boost::is_const<NodeType>::value);
-    typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-    typedef typename boost::mpl::contains<NodeChainType, NonConstNodeType>::type result;
-    BOOST_STATIC_ASSERT(result::value);
+    using NodePtr = typename ArrayT::value_type;
+    static_assert(std::is_pointer<NodePtr>::value,
+        "argument to getNodes() must be a pointer array");
+    using NodeType = typename std::remove_pointer<NodePtr>::type;
+    static_assert(std::is_const<NodeType>::value,
+        "argument to getNodes() must be an array of const node pointers");
+    using NonConstNodeType = typename std::remove_const<NodeType>::type;
+    static_assert(NodeChainType::template Contains<NonConstNodeType>,
+        "can't extract non-const nodes from a const tree");
 
     for (MapCIter iter=mTable.begin(); iter!=mTable.end(); ++iter) {
         if (const ChildNodeType *child = iter->second.child) {
             OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-            if (boost::is_same<NodePtr, const ChildT*>::value) {
+            if (std::is_same<NodePtr, const ChildT*>::value) {
                 array.push_back(reinterpret_cast<NodePtr>(iter->second.child));
             } else {
                 child->getNodes(array);//descent
@@ -2838,49 +2923,26 @@ template<typename ArrayT>
 inline void
 RootNode<ChildT>::stealNodes(ArrayT& array, const ValueType& value, bool state)
 {
-    typedef typename ArrayT::value_type NodePtr;
-    BOOST_STATIC_ASSERT(boost::is_pointer<NodePtr>::value);
-    typedef typename boost::remove_pointer<NodePtr>::type NodeType;
-    typedef typename boost::remove_const<NodeType>::type NonConstNodeType;
-    typedef typename boost::mpl::contains<NodeChainType, NonConstNodeType>::type result;
-    BOOST_STATIC_ASSERT(result::value);
-    typedef typename boost::mpl::if_<boost::is_const<NodeType>,
-                                     const ChildT, ChildT>::type ArrayChildT;
+    using NodePtr = typename ArrayT::value_type;
+    static_assert(std::is_pointer<NodePtr>::value,
+        "argument to stealNodes() must be a pointer array");
+    using NodeType = typename std::remove_pointer<NodePtr>::type;
+    using NonConstNodeType = typename std::remove_const<NodeType>::type;
+    static_assert(NodeChainType::template Contains<NonConstNodeType>,
+        "can't extract non-const nodes from a const tree");
+    using ArrayChildT = typename std::conditional<
+        std::is_const<NodeType>::value, const ChildT, ChildT>::type;
 
     for (MapIter iter=mTable.begin(); iter!=mTable.end(); ++iter) {
         if (ChildT* child = iter->second.child) {
             OPENVDB_NO_UNREACHABLE_CODE_WARNING_BEGIN
-            if (boost::is_same<NodePtr, ArrayChildT*>::value) {
+            if (std::is_same<NodePtr, ArrayChildT*>::value) {
                 array.push_back(reinterpret_cast<NodePtr>(&stealChild(iter, Tile(value, state))));
             } else {
                 child->stealNodes(array, value, state);//descent
             }
             OPENVDB_NO_UNREACHABLE_CODE_WARNING_END
         }
-    }
-}
-
-
-////////////////////////////////////////
-
-
-template<typename ChildT>
-inline void
-RootNode<ChildT>::voxelizeActiveTiles(bool threaded)
-{
-    // These is little point in multi-threaded over the root table since
-    // each tile spans a huge index space (by default 4096^3) and hence we
-    // expect few if any at all. In fact, you're very likeky to run out
-    // of memory if this method is called on a tree with root-level
-    // active tiles!
-    for (MapIter i = mTable.begin(), e = mTable.end(); i != e; ++i) {
-        if (this->isTileOff(i)) continue;
-        ChildT* child = i->second.child;
-        if (child == nullptr) {
-            child = new ChildT(i->first, this->getTile(i).value, true);
-            i->second.child = child;
-        }
-        child->voxelizeActiveTiles(threaded);
     }
 }
 
@@ -3003,10 +3065,10 @@ RootNode<ChildT>::merge(RootNode& other)
 template<typename ChildT>
 template<typename OtherChildType>
 inline void
-RootNode<ChildT>::topologyUnion(const RootNode<OtherChildType>& other)
+RootNode<ChildT>::topologyUnion(const RootNode<OtherChildType>& other, const bool preserveTiles)
 {
-    typedef RootNode<OtherChildType> OtherRootT;
-    typedef typename OtherRootT::MapCIter OtherCIterT;
+    using OtherRootT = RootNode<OtherChildType>;
+    using OtherCIterT = typename OtherRootT::MapCIter;
 
     enforceSameConfiguration(other);
 
@@ -3017,12 +3079,14 @@ RootNode<ChildT>::topologyUnion(const RootNode<OtherChildType>& other)
                 mTable[i->first] = NodeStruct(
                     *(new ChildT(other.getChild(i), mBackground, TopologyCopy())));
             } else if (this->isChild(j)) { // union with child branch
-                this->getChild(j).topologyUnion(other.getChild(i));
+                this->getChild(j).topologyUnion(other.getChild(i), preserveTiles);
             } else {// this is a tile so replace it with a child branch with identical topology
-                ChildT* child = new ChildT(
-                    other.getChild(i), this->getTile(j).value, TopologyCopy());
-                if (this->isTileOn(j)) child->setValuesOn();//this is an active tile
-                this->setChild(j, *child);
+                if (!preserveTiles || this->isTileOff(j)) { // force child topology
+                    ChildT* child = new ChildT(
+                        other.getChild(i), this->getTile(j).value, TopologyCopy());
+                    if (this->isTileOn(j)) child->setValuesOn();//this is an active tile
+                    this->setChild(j, *child);
+                }
             }
         } else if (other.isTileOn(i)) { // other is an active tile
             if (j == mTable.end()) { // insert an active tile
@@ -3041,8 +3105,8 @@ template<typename OtherChildType>
 inline void
 RootNode<ChildT>::topologyIntersection(const RootNode<OtherChildType>& other)
 {
-    typedef RootNode<OtherChildType> OtherRootT;
-    typedef typename OtherRootT::MapCIter OtherCIterT;
+    using OtherRootT = RootNode<OtherChildType>;
+    using OtherCIterT = typename OtherRootT::MapCIter;
 
     enforceSameConfiguration(other);
 
@@ -3077,8 +3141,8 @@ template<typename OtherChildType>
 inline void
 RootNode<ChildT>::topologyDifference(const RootNode<OtherChildType>& other)
 {
-    typedef RootNode<OtherChildType> OtherRootT;
-    typedef typename OtherRootT::MapCIter OtherCIterT;
+    using OtherRootT = RootNode<OtherChildType>;
+    using OtherCIterT = typename OtherRootT::MapCIter;
 
     enforceSameConfiguration(other);
 
@@ -3207,7 +3271,7 @@ inline void
 RootNode<ChildT>::combine2(const RootNode& other0, const OtherRootNode& other1,
     CombineOp& op, bool prune)
 {
-    typedef typename OtherRootNode::ValueType OtherValueType;
+    using OtherValueType = typename OtherRootNode::ValueType;
     static const bool compatible = (SameConfiguration<OtherRootNode>::value
         && CanConvertType</*from=*/OtherValueType, /*to=*/ValueType>::value);
     RootNodeCombineHelper<CombineOp, RootNode, OtherRootNode, compatible>::combine2(
@@ -3223,10 +3287,10 @@ RootNode<ChildT>::doCombine2(const RootNode& other0, const OtherRootNode& other1
 {
     enforceSameConfiguration(other1);
 
-    typedef typename OtherRootNode::ValueType  OtherValueT;
-    typedef typename OtherRootNode::Tile       OtherTileT;
-    typedef typename OtherRootNode::NodeStruct OtherNodeStructT;
-    typedef typename OtherRootNode::MapCIter   OtherMapCIterT;
+    using OtherValueT = typename OtherRootNode::ValueType;
+    using OtherTileT = typename OtherRootNode::Tile;
+    using OtherNodeStructT = typename OtherRootNode::NodeStruct;
+    using OtherMapCIterT = typename OtherRootNode::MapCIter;
 
     CombineArgs<ValueType, OtherValueT> args;
 
@@ -3297,11 +3361,7 @@ RootNode<ChildT>::visitActiveBBox(BBoxOp& op) const
         if (this->isChild(i) && descent) {
             this->getChild(i).visitActiveBBox(op);
         } else {
-#ifdef _MSC_VER
-            op.operator()<LEVEL>(CoordBBox::createCube(i->first, ChildT::DIM));
-#else
             op.template operator()<LEVEL>(CoordBBox::createCube(i->first, ChildT::DIM));
-#endif
         }
     }
 }
@@ -3431,7 +3491,3 @@ RootNode<ChildT>::doVisit2(RootNodeT& self, OtherRootNodeT& other, VisitorOp& op
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_ROOTNODE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

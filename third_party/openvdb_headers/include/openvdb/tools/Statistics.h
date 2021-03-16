@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file Statistics.h
 ///
@@ -170,13 +143,13 @@ statistics(const IterT& iter, const ValueOp& op, bool threaded);
 /// FloatGrid grid = ...;
 ///
 /// // Assume that we know that the grid has a uniform scale map.
-/// typedef math::UniformScaleMap MapType;
+/// using MapType = math::UniformScaleMap;
 /// // Specify a world-space gradient operator that uses first-order differencing.
-/// typedef math::Gradient<MapType, math::FD_1ST> GradientOp;
+/// using GradientOp = math::Gradient<MapType, math::FD_1ST>;
 /// // Wrap the operator with an adapter that computes the magnitude of the gradient.
-/// typedef math::OpMagnitude<GradientOp, MapType> MagnitudeOp;
+/// using MagnitudeOp = math::OpMagnitude<GradientOp, MapType>;
 /// // Wrap the operator with an adapter that associates a map with it.
-/// typedef math::MapAdapter<MapType, GradientOp, double> CompoundOp;
+/// using CompoundOp = math::MapAdapter<MapType, GradientOp, double>;
 ///
 /// if (MapType::Ptr map = grid.constTransform().constMap<MapType>()) {
 ///     math::Stats stats = tools::opStatistics(grid.cbeginValueOn(), CompoundOp(*map));
@@ -189,11 +162,11 @@ statistics(const IterT& iter, const ValueOp& op, bool threaded);
 /// Vec3SGrid grid = ...;
 ///
 /// // Assume that we know that the grid has a uniform scale map.
-/// typedef math::UniformScaleMap MapType;
+/// using MapType = math::UniformScaleMap;
 /// // Specify a world-space divergence operator that uses first-order differencing.
-/// typedef math::Divergence<MapType, math::FD_1ST> DivergenceOp;
+/// using DivergenceOp = math::Divergence<MapType, math::FD_1ST>;
 /// // Wrap the operator with an adapter that associates a map with it.
-/// typedef math::MapAdapter<MapType, DivergenceOp, double> CompoundOp;
+/// using CompoundOp = math::MapAdapter<MapType, DivergenceOp, double>;
 ///
 /// if (MapType::Ptr map = grid.constTransform().constMap<MapType>()) {
 ///     math::Stats stats = tools::opStatistics(grid.cbeginValueOn(), CompoundOp(*map));
@@ -206,7 +179,7 @@ statistics(const IterT& iter, const ValueOp& op, bool threaded);
 /// Vec3SGrid grid = ...;
 ///
 /// // Specify an index-space divergence operator that uses first-order differencing.
-/// typedef math::ISDivergence<math::FD_1ST> DivergenceOp;
+/// using DivergenceOp = math::ISDivergence<math::FD_1ST>;
 ///
 /// math::Stats stats = tools::opStatistics(grid.cbeginValueOn(), DivergenceOp());
 /// @endcode
@@ -229,12 +202,12 @@ namespace stats_internal {
 /// whereas node-level iterators use the name ValueType.
 template<typename IterT, typename AuxT = void>
 struct IterTraits {
-    typedef typename IterT::ValueType ValueType;
+    using ValueType = typename IterT::ValueType;
 };
 
 template<typename TreeT, typename ValueIterT>
 struct IterTraits<tree::TreeValueIteratorBase<TreeT, ValueIterT> > {
-    typedef typename tree::TreeValueIteratorBase<TreeT, ValueIterT>::ValueT ValueType;
+    using ValueType = typename tree::TreeValueIteratorBase<TreeT, ValueIterT>::ValueT;
 };
 
 
@@ -259,8 +232,8 @@ struct GetValImpl<T, /*IsVector=*/true> {
 template<typename IterT, typename StatsT>
 struct GetVal
 {
-    typedef typename IterTraits<IterT>::ValueType ValueT;
-    typedef GetValImpl<ValueT, VecTraits<ValueT>::IsVec> ImplT;
+    using ValueT = typename IterTraits<IterT>::ValueType;
+    using ImplT = GetValImpl<ValueT, VecTraits<ValueT>::IsVec>;
 
     inline void operator()(const IterT& iter, StatsT& stats) const {
         if (iter.isVoxelValue()) stats.add(ImplT::get(*iter));
@@ -312,9 +285,9 @@ struct HistOp
 template<typename IterT, typename OpT, typename StatsT>
 struct MathOp
 {
-    typedef typename IterT::TreeT                     TreeT;
-    typedef typename TreeT::ValueType                 ValueT;
-    typedef typename tree::ValueAccessor<const TreeT> ConstAccessor;
+    using TreeT = typename IterT::TreeT;
+    using ValueT = typename TreeT::ValueType;
+    using ConstAccessor = typename tree::ValueAccessor<const TreeT>;
 
     // Each thread gets its own accessor and its own copy of the operator.
     ConstAccessor mAcc;
@@ -323,7 +296,7 @@ struct MathOp
 
     template<typename TreeT>
     static inline TreeT* THROW_IF_NULL(TreeT* ptr) {
-        if (ptr == NULL) OPENVDB_THROW(ValueError, "iterator references a null tree");
+        if (ptr == nullptr) OPENVDB_THROW(ValueError, "iterator references a null tree");
         return ptr;
     }
 
@@ -367,7 +340,7 @@ template<typename IterT>
 inline math::Histogram
 histogram(const IterT& iter, double vmin, double vmax, size_t numBins, bool threaded)
 {
-    typedef stats_internal::GetVal<IterT, math::Histogram> ValueOp;
+    using ValueOp = stats_internal::GetVal<IterT, math::Histogram>;
     ValueOp valOp;
     stats_internal::HistOp<IterT, ValueOp> op(valOp, vmin, vmax, numBins);
     tools::accumulate(iter, op, threaded);
@@ -432,7 +405,3 @@ opStatistics(const IterT& iter, const OperatorT& op, bool threaded)
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_STATISTICS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

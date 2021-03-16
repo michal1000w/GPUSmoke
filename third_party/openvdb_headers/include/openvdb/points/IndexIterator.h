@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file points/IndexIterator.h
 ///
@@ -58,11 +31,30 @@ inline Index64 iterCount(const IterT& iter);
 ////////////////////////////////////////
 
 
+namespace index {
+// Enum for informing early-exit optimizations
+// PARTIAL - No optimizations are possible
+// NONE - No indices to evaluate, can skip computation
+// ALL - All indices to evaluate, can skip filtering
+enum State
+{
+    PARTIAL=0,
+    NONE,
+    ALL
+};
+}
+
+
 /// @brief A no-op filter that can be used when iterating over all indices
+/// @see points/IndexFilter.h for the documented interface for an index filter
 class NullFilter
 {
 public:
     static bool initialized() { return true; }
+    static index::State state() { return index::ALL; }
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::ALL; }
+
     template <typename LeafT> void reset(const LeafT&) { }
     template <typename IterT> static bool valid(const IterT&) { return true; }
 }; // class NullFilter
@@ -106,13 +98,16 @@ public:
     Index32 offset() { return mOffset; }
     inline bool next() { this->operator++(); return this->test(); }
 
-    /// @brief For efficiency, Coord assumed to be readily available
+    /// @brief For efficiency, Coord and active state assumed to be readily available
     /// when iterating over indices of a single voxel
     Coord getCoord [[noreturn]] () const {
         OPENVDB_THROW(RuntimeError, "ValueVoxelCIter does not provide a valid Coord.");
     }
     void getCoord [[noreturn]] (Coord& /*coord*/) const {
         OPENVDB_THROW(RuntimeError, "ValueVoxelCIter does not provide a valid Coord.");
+    }
+    bool isValueOn [[noreturn]] () const {
+        OPENVDB_THROW(RuntimeError, "ValueVoxelCIter does not test if voxel is active.");
     }
 
     /// @{
@@ -199,6 +194,9 @@ public:
         inline Coord getCoord() const { assert(mIter); return mIter.getCoord(); }
         /// Return in @a xyz the coordinates of the item to which the value iterator is pointing.
         inline void getCoord(Coord& xyz) const { assert(mIter); xyz = mIter.getCoord(); }
+
+        /// @brief Return @c true if this iterator is pointing to an active value.
+        inline bool isValueOn() const { assert(mIter); return mIter.isValueOn(); }
 
         /// Return the const value iterator
         inline const IteratorT& valueIter() const { return mIter; }
@@ -296,6 +294,9 @@ public:
     /// Return in @a xyz the coordinates of the item to which the value iterator is pointing.
     inline void getCoord(Coord& xyz) const { assert(mIterator); xyz = mIterator.getCoord(); }
 
+    /// @brief Return @c true if the value iterator is pointing to an active value.
+    inline bool isValueOn() const { assert(mIterator); return mIterator.valueIter().isValueOn(); }
+
     /// @brief Equality operators
     bool operator==(const IndexIter& other) const { return mIterator == other.mIterator; }
     bool operator!=(const IndexIter& other) const { return !this->operator==(other); }
@@ -326,7 +327,3 @@ inline Index64 iterCount(const IterT& iter)
 } // namespace openvdb
 
 #endif // OPENVDB_POINTS_INDEX_ITERATOR_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

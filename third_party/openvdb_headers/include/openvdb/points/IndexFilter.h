@@ -1,38 +1,38 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file points/IndexFilter.h
 ///
 /// @author Dan Bailey
 ///
 /// @brief  Index filters primarily designed to be used with a FilterIndexIter.
+///
+/// Filters must adhere to the interface described in the example below:
+/// @code
+/// struct MyFilter
+/// {
+///     // Return true when the filter has been initialized for first use
+///     bool initialized() { return true; }
+///
+///     // Return index::ALL if all points are valid, index::NONE if no points are valid
+///     // and index::PARTIAL if some points are valid
+///     index::State state() { return index::PARTIAL; }
+///
+///     // Return index::ALL if all points in this leaf are valid, index::NONE if no points
+///     // in this leaf are valid and index::PARTIAL if some points in this leaf are valid
+///     template <typename LeafT>
+///     index::State state(const LeafT&) { return index::PARTIAL; }
+///
+///     // Resets the filter to refer to the specified leaf, all subsequent valid() calls
+///     // will be relative to this leaf until reset() is called with a different leaf.
+///     // Although a required method, many filters will provide an empty implementation if
+///     // there is no leaf-specific logic needed.
+///     template <typename LeafT> void reset(const LeafT&) { }
+///
+///     // Returns true if the filter is valid for the supplied iterator
+///     template <typename IterT> bool valid(const IterT&) { return true; }
+/// };
+/// @endcode
 
 #ifndef OPENVDB_POINTS_INDEX_FILTER_HAS_BEEN_INCLUDED
 #define OPENVDB_POINTS_INDEX_FILTER_HAS_BEEN_INCLUDED
@@ -46,11 +46,11 @@
 #include "IndexIterator.h"
 #include "AttributeArray.h"
 #include "AttributeGroup.h"
-
-#include <boost/ptr_container/ptr_vector.hpp>
+#include "AttributeSet.h"
 
 #include <random> // std::mt19937
 #include <numeric> // std::iota
+#include <unordered_map>
 
 
 class TestIndexFilter;
@@ -62,6 +62,7 @@ namespace points {
 
 
 ////////////////////////////////////////
+
 
 
 namespace index_filter_internal {
@@ -97,6 +98,37 @@ generateRandomSubset(const unsigned int seed, const IntType n, const IntType m)
 } // namespace index_filter_internal
 
 
+/// Index filtering on active / inactive state of host voxel
+template <bool On>
+class ValueMaskFilter
+{
+public:
+    static bool initialized() { return true; }
+    static index::State state() { return index::PARTIAL; }
+    template <typename LeafT>
+    static index::State state(const LeafT& leaf)
+    {
+        if (leaf.isDense())         return On ? index::ALL : index::NONE;
+        else if (leaf.isEmpty())    return On ? index::NONE : index::ALL;
+        return index::PARTIAL;
+    }
+
+    template <typename LeafT>
+    void reset(const LeafT&) { }
+
+    template <typename IterT>
+    bool valid(const IterT& iter) const
+    {
+        const bool valueOn = iter.isValueOn();
+        return On ? valueOn : !valueOn;
+    }
+};
+
+
+using ActiveFilter = ValueMaskFilter<true>;
+using InactiveFilter = ValueMaskFilter<false>;
+
+
 /// Index filtering on multiple group membership for inclusion and exclusion
 ///
 /// @note include filters are applied first, then exclude filters
@@ -104,10 +136,31 @@ class MultiGroupFilter
 {
 public:
     using NameVector    = std::vector<Name>;
-    using HandleVector  = boost::ptr_vector<GroupHandle>;
+    using IndexVector   = std::vector<AttributeSet::Descriptor::GroupIndex>;
+    using HandleVector  = std::vector<GroupHandle>;
 
+private:
+    static IndexVector namesToIndices(const AttributeSet& attributeSet, const NameVector& names) {
+        IndexVector indices;
+        for (const auto& name : names) {
+            try {
+                indices.emplace_back(attributeSet.groupIndex(name));
+            } catch (LookupError&) {
+                // silently drop group names that don't exist
+            }
+        }
+        return indices;
+    }
+
+public:
     MultiGroupFilter(   const NameVector& include,
-                        const NameVector& exclude)
+                        const NameVector& exclude,
+                        const AttributeSet& attributeSet)
+        : mInclude(MultiGroupFilter::namesToIndices(attributeSet, include))
+        , mExclude(MultiGroupFilter::namesToIndices(attributeSet, exclude)) { }
+
+    MultiGroupFilter(   const IndexVector& include,
+                        const IndexVector& exclude)
         : mInclude(include)
         , mExclude(exclude) { }
 
@@ -120,19 +173,23 @@ public:
 
     inline bool initialized() const { return mInitialized; }
 
+    inline index::State state() const
+    {
+        return (mInclude.empty() && mExclude.empty()) ? index::ALL : index::PARTIAL;
+    }
+
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::PARTIAL; }
+
     template <typename LeafT>
     void reset(const LeafT& leaf) {
         mIncludeHandles.clear();
         mExcludeHandles.clear();
-        for (const Name& name : mInclude) {
-            if (leaf.attributeSet().descriptor().hasGroup(name)) {
-                mIncludeHandles.push_back(new GroupHandle(leaf.groupHandle(name)));
-            }
+        for (const auto& i : mInclude) {
+            mIncludeHandles.emplace_back(leaf.groupHandle(i));
         }
-        for (const Name& name : mExclude) {
-            if (leaf.attributeSet().descriptor().hasGroup(name)) {
-                mExcludeHandles.push_back(new GroupHandle(leaf.groupHandle(name)));
-            }
+        for (const auto& i : mExclude) {
+            mExcludeHandles.emplace_back(leaf.groupHandle(i));
         }
         mInitialized = true;
     }
@@ -143,21 +200,21 @@ public:
         // accept no include filters as valid
         bool includeValid = mIncludeHandles.empty();
         for (const GroupHandle& handle : mIncludeHandles) {
-            if (handle.get(*iter)) {
+            if (handle.getUnsafe(*iter)) {
                 includeValid = true;
                 break;
             }
         }
         if (!includeValid)          return false;
         for (const GroupHandle& handle : mExcludeHandles) {
-            if (handle.get(*iter))  return false;
+            if (handle.getUnsafe(*iter))  return false;
         }
         return true;
     }
 
 private:
-    const NameVector mInclude;
-    const NameVector mExclude;
+    IndexVector mInclude;
+    IndexVector mExclude;
     HandleVector mIncludeHandles;
     HandleVector mExcludeHandles;
     bool mInitialized = false;
@@ -170,7 +227,7 @@ class RandomLeafFilter
 {
 public:
     using SeedCountPair = std::pair<Index, Index>;
-    using LeafMap       = std::map<openvdb::Coord, SeedCountPair>;
+    using LeafMap       = std::unordered_map<openvdb::Coord, SeedCountPair>;
 
     RandomLeafFilter(   const PointDataTreeT& tree,
                         const Index64 targetPoints,
@@ -195,7 +252,7 @@ public:
                 mLeafMap[iter->origin()] = SeedCountPair(dist(generator), leafPoints);
                 break;
             }
-            totalPointsFloat += factor * iter->pointCount();
+            totalPointsFloat += factor * static_cast<float>(iter->pointCount());
             const auto leafPoints = static_cast<int>(math::Floor(totalPointsFloat));
             totalPointsFloat -= static_cast<float>(leafPoints);
             totalPoints += leafPoints;
@@ -207,6 +264,10 @@ public:
     }
 
     inline bool initialized() const { return mNextIndex == -1; }
+
+    static index::State state() { return index::PARTIAL; }
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::PARTIAL; }
 
     template <typename LeafT>
     void reset(const LeafT& leaf) {
@@ -279,6 +340,10 @@ public:
 
     inline bool initialized() const { return bool(mIdHandle); }
 
+    static index::State state() { return index::PARTIAL; }
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::PARTIAL; }
+
     template <typename LeafT>
     void reset(const LeafT& leaf) {
         assert(leaf.hasAttribute(mIndex));
@@ -331,6 +396,10 @@ public:
     }
 
     inline bool initialized() const { return bool(mPositionHandle); }
+
+    static index::State state() { return index::PARTIAL; }
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::PARTIAL; }
 
     template <typename LeafT>
     void reset(const LeafT& leaf) {
@@ -392,6 +461,13 @@ public:
 
     inline bool initialized() const { return bool(mPositionHandle); }
 
+    inline index::State state() const
+    {
+        return mBbox.empty() ? index::NONE : index::PARTIAL;
+    }
+    template <typename LeafT>
+    static index::State state(const LeafT&) { return index::PARTIAL; }
+
     template <typename LeafT>
     void reset(const LeafT& leaf) {
         mPositionHandle.reset(new Handle(leaf.constAttributeArray("P")));
@@ -432,6 +508,16 @@ public:
 
     inline bool initialized() const { return mFilter1.initialized() && mFilter2.initialized(); }
 
+    inline index::State state() const
+    {
+        return this->computeState(mFilter1.state(), mFilter2.state());
+    }
+    template <typename LeafT>
+    inline index::State state(const LeafT& leaf) const
+    {
+        return this->computeState(mFilter1.state(leaf), mFilter2.state(leaf));
+    }
+
     template <typename LeafT>
     void reset(const LeafT& leaf) {
         mFilter1.reset(leaf);
@@ -445,6 +531,19 @@ public:
     }
 
 private:
+    inline index::State computeState(   index::State state1,
+                                        index::State state2) const
+    {
+        if (And) {
+            if (state1 == index::NONE || state2 == index::NONE)       return index::NONE;
+            else if (state1 == index::ALL && state2 == index::ALL)    return index::ALL;
+        } else {
+            if (state1 == index::NONE && state2 == index::NONE)       return index::NONE;
+            else if (state1 == index::ALL && state2 == index::ALL)    return index::ALL;
+        }
+        return index::PARTIAL;
+    }
+
     T1 mFilter1;
     T2 mFilter2;
 }; // class BinaryFilter
@@ -480,7 +579,3 @@ struct FilterTraits<BinaryFilter<T0, T1, And>> {
 } // namespace openvdb
 
 #endif // OPENVDB_POINTS_INDEX_FILTER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

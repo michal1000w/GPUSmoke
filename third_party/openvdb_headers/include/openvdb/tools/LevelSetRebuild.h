@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_TOOLS_LEVELSETREBUILD_HAS_BEEN_INCLUDED
 #define OPENVDB_TOOLS_LEVELSETREBUILD_HAS_BEEN_INCLUDED
@@ -39,10 +12,9 @@
 #include <openvdb/tools/MeshToVolume.h>
 #include <openvdb/util/NullInterrupter.h>
 #include <openvdb/util/Util.h>
-#include <boost/type_traits/is_floating_point.hpp>
-#include <boost/utility/enable_if.hpp>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
+#include <type_traits>
 
 
 namespace openvdb {
@@ -69,7 +41,7 @@ namespace tools {
 template<class GridType>
 inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float isovalue = 0,
-    float halfWidth = float(LEVEL_SET_HALF_WIDTH), const math::Transform* xform = NULL);
+    float halfWidth = float(LEVEL_SET_HALF_WIDTH), const math::Transform* xform = nullptr);
 
 
 /// @brief Return a new grid of type @c GridType that contains a narrow-band level set
@@ -89,7 +61,7 @@ levelSetRebuild(const GridType& grid, float isovalue = 0,
 template<class GridType>
 inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float isovalue, float exBandWidth, float inBandWidth,
-    const math::Transform* xform = NULL);
+    const math::Transform* xform = nullptr);
 
 
 /// @brief Return a new grid of type @c GridType that contains a narrow-band level set
@@ -110,7 +82,7 @@ levelSetRebuild(const GridType& grid, float isovalue, float exBandWidth, float i
 template<class GridType, typename InterruptT>
 inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float isovalue, float exBandWidth, float inBandWidth,
-    const math::Transform* xform = NULL, InterruptT* interrupter = NULL);
+    const math::Transform* xform = nullptr, InterruptT* interrupter = nullptr);
 
 
 ////////////////////////////////////////
@@ -217,6 +189,9 @@ private:
 ////////////////////////////////////////
 
 
+//{
+/// @cond OPENVDB_LEVEL_SET_REBUILD_INTERNAL
+
 /// The normal entry points for level set rebuild are the levelSetRebuild() functions.
 /// doLevelSetRebuild() is mainly for internal use, but when the isovalue and half band
 /// widths are given in ValueType units (for example, if they are queried from
@@ -224,8 +199,8 @@ private:
 ///
 /// @internal This overload is enabled only for grids with a scalar, floating-point ValueType.
 template<class GridType, typename InterruptT>
-inline typename boost::enable_if<boost::is_floating_point<typename GridType::ValueType>,
-typename GridType::Ptr>::type
+inline typename std::enable_if<
+    std::is_floating_point<typename GridType::ValueType>::value, typename GridType::Ptr>::type
 doLevelSetRebuild(const GridType& grid, typename GridType::ValueType iso,
     typename GridType::ValueType exWidth, typename GridType::ValueType inWidth,
     const math::Transform* xform, InterruptT* interrupter)
@@ -238,14 +213,14 @@ doLevelSetRebuild(const GridType& grid, typename GridType::ValueType iso,
     tools::VolumeToMesh mesher(isovalue);
     mesher(grid);
 
-    math::Transform::Ptr transform = (xform != NULL) ? xform->copy() : grid.transform().copy();
+    math::Transform::Ptr transform = (xform != nullptr) ? xform->copy() : grid.transform().copy();
 
     std::vector<Vec3s> points(mesher.pointListSize());
 
     { // Copy and transform (required for MeshToVolume) points to grid space.
         internal::PointListTransform ptnXForm(mesher.pointList(), points, *transform);
         ptnXForm.runParallel();
-        mesher.pointList().reset(NULL);
+        mesher.pointList().reset(nullptr);
     }
 
     std::vector<Vec4I> primitives;
@@ -272,19 +247,19 @@ doLevelSetRebuild(const GridType& grid, typename GridType::ValueType iso,
 
     if (interrupter) {
         return meshToVolume<GridType>(*interrupter, mesh, *transform, exBandWidth, inBandWidth,
-            DISABLE_RENORMALIZATION, NULL);
+            DISABLE_RENORMALIZATION, nullptr);
     }
 
     return meshToVolume<GridType>(mesh, *transform, exBandWidth, inBandWidth,
-        DISABLE_RENORMALIZATION, NULL);
+        DISABLE_RENORMALIZATION, nullptr);
 }
 
 
 /// @internal This overload is enabled only for grids that do not have a scalar,
 /// floating-point ValueType.
 template<class GridType, typename InterruptT>
-inline typename boost::disable_if<boost::is_floating_point<typename GridType::ValueType>,
-typename GridType::Ptr>::type
+inline typename std::enable_if<
+    !std::is_floating_point<typename GridType::ValueType>::value, typename GridType::Ptr>::type
 doLevelSetRebuild(const GridType&, typename GridType::ValueType /*isovalue*/,
     typename GridType::ValueType /*exWidth*/, typename GridType::ValueType /*inWidth*/,
     const math::Transform*, InterruptT*)
@@ -292,6 +267,9 @@ doLevelSetRebuild(const GridType&, typename GridType::ValueType /*isovalue*/,
     OPENVDB_THROW(TypeError,
         "level set rebuild is supported only for scalar, floating-point grids");
 }
+
+/// @endcond
+//}
 
 
 ////////////////////////////////////////
@@ -302,7 +280,7 @@ inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float iso, float exWidth, float inWidth,
     const math::Transform* xform, InterruptT* interrupter)
 {
-    typedef typename GridType::ValueType ValueT;
+    using ValueT = typename GridType::ValueType;
     ValueT
         isovalue(zeroVal<ValueT>() + ValueT(iso)),
         exBandWidth(zeroVal<ValueT>() + ValueT(exWidth)),
@@ -317,14 +295,14 @@ inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float iso, float exWidth, float inWidth,
     const math::Transform* xform)
 {
-    typedef typename GridType::ValueType ValueT;
+    using ValueT = typename GridType::ValueType;
     ValueT
         isovalue(zeroVal<ValueT>() + ValueT(iso)),
         exBandWidth(zeroVal<ValueT>() + ValueT(exWidth)),
         inBandWidth(zeroVal<ValueT>() + ValueT(inWidth));
 
     return doLevelSetRebuild<GridType, util::NullInterrupter>(
-        grid, isovalue, exBandWidth, inBandWidth, xform, NULL);
+        grid, isovalue, exBandWidth, inBandWidth, xform, nullptr);
 }
 
 
@@ -332,13 +310,13 @@ template<class GridType>
 inline typename GridType::Ptr
 levelSetRebuild(const GridType& grid, float iso, float halfVal, const math::Transform* xform)
 {
-    typedef typename GridType::ValueType ValueT;
+    using ValueT = typename GridType::ValueType;
     ValueT
         isovalue(zeroVal<ValueT>() + ValueT(iso)),
         halfWidth(zeroVal<ValueT>() + ValueT(halfVal));
 
     return doLevelSetRebuild<GridType, util::NullInterrupter>(
-        grid, isovalue, halfWidth, halfWidth, xform, NULL);
+        grid, isovalue, halfWidth, halfWidth, xform, nullptr);
 }
 
 
@@ -347,7 +325,3 @@ levelSetRebuild(const GridType& grid, float iso, float halfVal, const math::Tran
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_LEVELSETREBUILD_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

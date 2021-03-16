@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @file MapsUtil.h
 
@@ -34,6 +7,9 @@
 #define OPENVDB_UTIL_MAPSUTIL_HAS_BEEN_INCLUDED
 
 #include <openvdb/math/Maps.h>
+#include <algorithm> // for std::min(), std::max()
+#include <cmath>
+#include <vector>
 
 
 namespace openvdb {
@@ -133,9 +109,10 @@ calculateBounds(const MapType& map, const Vec3d& center, const Real radius, BBox
 namespace { // anonymous namespace for this helper function
 
 /// @brief Find the intersection of a line passing through the point
-/// \f$ (x=0, z=-1/g)\f$ with the circle \f$ (x-xo)^2 + (z-zo)^2 = r^2 \f$
+/// (<I>x</I>=0,&nbsp;<I>z</I>=&minus;1/<I>g</I>) with the circle
+/// (<I>x</I> &minus; <I>xo</I>)&sup2; + (<I>z</I> &minus; <I>zo</I>)&sup2; = <I>r</I>&sup2;
 /// at a point tangent to the circle.
-/// @return 0 if the focal point (0, -1/g) is inside the circle,
+/// @return 0 if the focal point (0, -1/<I>g</I>) is inside the circle,
 /// 1 if the focal point touches the circle, or 2 when both points are found.
 inline int
 findTangentPoints(const double g, const double xo, const double zo,
@@ -315,7 +292,3 @@ calculateBounds<math::NonlinearFrustumMap>(const math::NonlinearFrustumMap& frus
 } // namespace openvdb
 
 #endif // OPENVDB_UTIL_MAPSUTIL_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

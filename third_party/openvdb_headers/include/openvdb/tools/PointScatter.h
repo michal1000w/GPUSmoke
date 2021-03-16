@@ -1,36 +1,9 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 //
 /// @author Ken Museth
 ///
-/// @file PointScatter.h
+/// @file tools/PointScatter.h
 ///
 /// @brief We offer three different algorithms (each in its own class)
 ///        for scattering of points in active voxels:
@@ -55,7 +28,9 @@
 #include <openvdb/util/NullInterrupter.h>
 #include <tbb/parallel_sort.h>
 #include <tbb/parallel_for.h>
-#include <boost/scoped_array.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -88,9 +63,9 @@ class BasePointScatter;
 /// class Interrupter {
 ///   ...
 /// public:
-///   void start(const char* name = NULL)// called when computations begin
-///   void end()                         // called when computations end
-///   bool wasInterrupted(int percent=-1)// return true to break computation
+///   void start(const char* name = nullptr) // called when computations begin
+///   void end()                             // called when computations end
+///   bool wasInterrupted(int percent=-1)    // return true to break computation
 ///};
 /// @endcode
 ///
@@ -114,13 +89,13 @@ class UniformPointScatter : public BasePointScatter<PointAccessorType,
                                                     InterruptType>
 {
 public:
-    typedef BasePointScatter<PointAccessorType, RandomGenerator, InterruptType> BaseT;
+    using BaseT = BasePointScatter<PointAccessorType, RandomGenerator, InterruptType>;
 
     UniformPointScatter(PointAccessorType& points,
                         Index64 pointCount,
                         RandomGenerator& randGen,
                         double spread = 1.0,
-                        InterruptType* interrupt = NULL)
+                        InterruptType* interrupt = nullptr)
         : BaseT(points, randGen, spread, interrupt)
         , mTargetPointCount(pointCount)
         , mPointsPerVolume(0.0f)
@@ -130,43 +105,43 @@ public:
                         float pointsPerVolume,
                         RandomGenerator& randGen,
                         double spread = 1.0,
-                        InterruptType* interrupt = NULL)
+                        InterruptType* interrupt = nullptr)
         : BaseT(points, randGen, spread, interrupt)
         , mTargetPointCount(0)
         , mPointsPerVolume(pointsPerVolume)
     {
     }
 
-    /// @brief This is the main functor method implementing the actual
-    /// scattering of points.
+    /// This is the main functor method implementing the actual scattering of points.
     template<typename GridT>
     bool operator()(const GridT& grid)
     {
         mVoxelCount = grid.activeVoxelCount();
         if (mVoxelCount == 0) return false;
-        const Vec3d dim = grid.voxelSize();
-        if (mPointsPerVolume>0) {
+
+        const auto voxelVolume = grid.transform().voxelVolume();
+        if (mPointsPerVolume > 0) {
             BaseT::start("Uniform scattering with fixed point density");
-            mTargetPointCount = Index64(mPointsPerVolume*dim[0]*dim[1]*dim[2])*mVoxelCount;
-        } else if (mTargetPointCount>0) {
+            mTargetPointCount = Index64(mPointsPerVolume * voxelVolume * double(mVoxelCount));
+        } else if (mTargetPointCount > 0) {
             BaseT::start("Uniform scattering with fixed point count");
-            mPointsPerVolume = mTargetPointCount/float(dim[0]*dim[1]*dim[2] * mVoxelCount);
+            mPointsPerVolume = float(mTargetPointCount) / float(voxelVolume * double(mVoxelCount));
         } else {
             return false;
         }
 
-        boost::scoped_array<Index64> list(new Index64[mTargetPointCount]);
+        std::unique_ptr<Index64[]> idList{new Index64[mTargetPointCount]};
         math::RandInt<Index64, RandomGenerator> rand(BaseT::mRand01.engine(), 0, mVoxelCount-1);
-        for (Index64 i=0; i<mTargetPointCount; ++i) list[i] = rand();
-        tbb::parallel_sort(list.get(), list.get() + mTargetPointCount);
-        
+        for (Index64 i=0; i<mTargetPointCount; ++i) idList[i] = rand();
+        tbb::parallel_sort(idList.get(), idList.get() + mTargetPointCount);
+
         CoordBBox bbox;
         const Vec3R offset(0.5, 0.5, 0.5);
         typename GridT::ValueOnCIter valueIter = grid.cbeginValueOn();
-        
+
         for (Index64 i=0, n=valueIter.getVoxelCount() ; i != mTargetPointCount; ++i) {
             if (BaseT::interrupt()) return false;
-            const Index64 voxelId = list[i];
+            const Index64 voxelId = idList[i];
             while ( n <= voxelId ) {
                 ++valueIter;
                 n += valueIter.getVoxelCount();
@@ -175,9 +150,9 @@ public:
                 BaseT::addPoint(grid, valueIter.getCoord() - offset);
             } else {// tiles contain multiple (virtual) voxels
                 valueIter.getBoundingBox(bbox);
-                BaseT::addPoint(grid, bbox.min() - offset, bbox.extents()); 
+                BaseT::addPoint(grid, bbox.min() - offset, bbox.extents());
             }
-        }//loop over all the active voxels and tiles 
+        }//loop over all the active voxels and tiles
         //}
 
         BaseT::end();
@@ -188,7 +163,7 @@ public:
     // the operator() method was called
     void print(const std::string &name, std::ostream& os = std::cout) const
     {
-        os << "Uniformely scattered " << mPointCount << " points into " << mVoxelCount
+        os << "Uniformly scattered " << mPointCount << " points into " << mVoxelCount
            << " active voxels in \"" << name << "\" corresponding to "
            << mPointsPerVolume << " points per volume." << std::endl;
     }
@@ -215,13 +190,13 @@ class DenseUniformPointScatter : public BasePointScatter<PointAccessorType,
                                                          InterruptType>
 {
 public:
-    typedef BasePointScatter<PointAccessorType, RandomGenerator, InterruptType> BaseT;
+    using BaseT = BasePointScatter<PointAccessorType, RandomGenerator, InterruptType>;
 
     DenseUniformPointScatter(PointAccessorType& points,
                              float pointsPerVoxel,
                              RandomGenerator& randGen,
                              double spread = 1.0,
-                             InterruptType* interrupt = NULL)
+                             InterruptType* interrupt = nullptr)
         : BaseT(points, randGen, spread, interrupt)
         , mPointsPerVoxel(pointsPerVoxel)
     {
@@ -231,7 +206,7 @@ public:
     template<typename GridT>
     bool operator()(const GridT& grid)
     {
-        typedef typename GridT::ValueOnCIter ValueIter;
+        using ValueIter = typename GridT::ValueOnCIter;
         if (mPointsPerVoxel < 1.0e-6) return false;
         mVoxelCount = grid.activeVoxelCount();
         if (mVoxelCount == 0) return false;
@@ -240,9 +215,9 @@ public:
         const Vec3R offset(0.5, 0.5, 0.5);
 
         const int ppv = math::Floor(mPointsPerVoxel);
-        const double delta = mPointsPerVoxel - ppv;
+        const double delta = mPointsPerVoxel - float(ppv);
         const bool fractional = !math::isApproxZero(delta, 1.0e-6);
-        
+
         for (ValueIter iter = grid.cbeginValueOn(); iter; ++iter) {
             if (BaseT::interrupt()) return false;
             if (iter.isVoxelValue()) {// a majority is expected to be voxels
@@ -253,7 +228,7 @@ public:
                 iter.getBoundingBox(bbox);
                 const Coord size(bbox.extents());
                 const Vec3R dmin = bbox.min() - offset;
-                const double d = mPointsPerVoxel * iter.getVoxelCount();
+                const double d = mPointsPerVoxel * float(iter.getVoxelCount());
                 const int m = math::Floor(d);
                 for (int n = 0; n != m; ++n)  BaseT::addPoint(grid, dmin, size);
                 if (BaseT::getRand01() < d - m) BaseT::addPoint(grid, dmin, size);
@@ -297,13 +272,13 @@ class NonUniformPointScatter : public BasePointScatter<PointAccessorType,
                                                        InterruptType>
 {
 public:
-    typedef BasePointScatter<PointAccessorType, RandomGenerator, InterruptType> BaseT;
+    using BaseT = BasePointScatter<PointAccessorType, RandomGenerator, InterruptType>;
 
     NonUniformPointScatter(PointAccessorType& points,
                            float pointsPerVolume,
                            RandomGenerator& randGen,
                            double spread = 1.0,
-                           InterruptType* interrupt = NULL)
+                           InterruptType* interrupt = nullptr)
         : BaseT(points, randGen, spread, interrupt)
         , mPointsPerVolume(pointsPerVolume)//note this is merely a
                                            //multiplier for the local point density
@@ -325,7 +300,7 @@ public:
         const Vec3R offset(0.5, 0.5, 0.5);
         for (typename GridT::ValueOnCIter iter = grid.cbeginValueOn(); iter; ++iter) {
             if (BaseT::interrupt()) return false;
-            const double d = (*iter) * pointsPerVoxel * iter.getVoxelCount();
+            const double d = double(*iter) * pointsPerVoxel * double(iter.getVoxelCount());
             const int n = int(d);
             if (iter.isVoxelValue()) { // a majority is expected to be voxels
                 const Vec3R dmin =iter.getCoord() - offset;
@@ -376,7 +351,7 @@ protected:
     PointAccessorType&        mPoints;
     InterruptType*            mInterrupter;
     Index64                   mPointCount;
-    Index64                   mVoxelCount; 
+    Index64                   mVoxelCount;
     Index64                   mInterruptCount;
     const double              mSpread;
     math::Rand01<double, RandomGenerator> mRand01;
@@ -385,7 +360,7 @@ protected:
     BasePointScatter(PointAccessorType& points,
                      RandomGenerator& randGen,
                      double spread,
-                     InterruptType* interrupt = NULL)
+                     InterruptType* interrupt = nullptr)
         : mPoints(points)
         , mInterrupter(interrupt)
         , mPointCount(0)
@@ -417,7 +392,7 @@ protected:
 
     /// @brief Return a random floating point number between 0.5 -+ mSpread/2
     inline double getRand() { return 0.5 + mSpread * (mRand01() - 0.5); }
-   
+
     template <typename GridT>
     inline void addPoint(const GridT &grid, const Vec3R &dmin)
     {
@@ -427,7 +402,7 @@ protected:
         mPoints.add(grid.indexToWorld(pos));
         ++mPointCount;
     }
-   
+
     template <typename GridT>
     inline void addPoint(const GridT &grid, const Vec3R &dmin, const Coord &size)
     {
@@ -444,7 +419,3 @@ protected:
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_POINT_SCATTER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

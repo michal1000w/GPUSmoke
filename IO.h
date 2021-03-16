@@ -11,6 +11,9 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/atomic.h>
+
+
+
 //#include "OpenVDB/tinyvdbio.h"
 
 
@@ -276,16 +279,16 @@ struct Local {
 
 
 
-void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
+void create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
-    const ValueT outside = grid_dst.background();
+    const ValueT outside = grid_dst->background();
     const ValueT inside = -outside;
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
 
     //get bounding box
     int3 dim = grid_src->get_resolution();
 
-    grid_dst.tree().clearAllAccessors();
+    grid_dst->tree().clearAllAccessors();
 
     if (DEBUG)
         std::cout << "Initialize...\n";
@@ -326,7 +329,7 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
     //////////////////////
     std::mutex mtx2;
     tbb::parallel_for(0, THREADS, [&](int i) {
-        auto gd = grid_dst.deepCopy();
+        auto gd = grid_dst->deepCopy();
         //grid_dst.saveFloatAsHalf();
         openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
 
@@ -349,8 +352,8 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
         gd->pruneGrid(0); //beta
 
         std::lock_guard<std::mutex> lock(mtx2);
-        grid_dst.tree().combine(gd->tree(), Local::add);
-        grid_dst.pruneGrid(0);
+        grid_dst->tree().combine(gd->tree(), Local::add);
+        grid_dst->pruneGrid(0);
         //gd->tree().clearAllAccessors();
     });
     
@@ -365,16 +368,40 @@ void create_grid_mt(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvd
     //grid_src->free();
 
     //std::cout << "In the eeeend\n";
-    openvdb::tools::signedFloodFill(grid_dst.tree());
+    openvdb::tools::signedFloodFill(grid_dst->tree());
 
     float voxel_size = 0.1;
     auto transform = openvdb::math::Transform::createLinearTransform(/*voxel size=*/voxel_size); //Skala œwiatowa
     const openvdb::math::Vec3d offset(float(-dim.x) / 2., 0, float(-dim.z) / 2.);
     transform->preTranslate(offset); //center the grid
     transform->postRotate(1.571, openvdb::math::X_AXIS); // poprawa rotacji dla blendera
-    grid_dst.setTransform(
+    grid_dst->setTransform(
         transform
         ); 
+
+    
+
+    //resample
+
+    /*
+    
+    void resampleToMatch	(	const GridType & 	inGrid,
+                                GridType & 	outGrid,
+                                Interrupter & 	interrupter 
+                            )	
+    */
+    
+    openvdb::FloatGrid::ConstPtr src = grid_dst;
+    openvdb::FloatGrid::Ptr dest = openvdb::FloatGrid::create();
+    dest->setTransform(openvdb::math::Transform::createLinearTransform(0.5));
+    // Resample the input grid into the output grid, reproducing
+    // the level-set sphere at a smaller voxel size.
+    //openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*src, *dest);
+    
+    
+
+    grid_dst = dest;
+    
 
 }
 
@@ -488,7 +515,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+        create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
 #endif
         //grids->at(i)->saveFloatAsHalf();
         grids_dst[i]->saveFloatAsHalf();

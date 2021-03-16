@@ -1,46 +1,19 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_MATH_MAT4_H_HAS_BEEN_INCLUDED
 #define OPENVDB_MATH_MAT4_H_HAS_BEEN_INCLUDED
 
 #include <openvdb/Exceptions.h>
 #include <openvdb/Platform.h>
-#include <iomanip>
-#include <assert.h>
-#include <math.h>
-#include <algorithm>
 #include "Math.h"
 #include "Mat3.h"
 #include "Vec3.h"
 #include "Vec4.h"
+#include <algorithm> // for std::copy(), std::swap()
+#include <cassert>
+#include <iomanip>
+#include <cmath>
 
 
 namespace openvdb {
@@ -58,12 +31,28 @@ class Mat4: public Mat<4, T>
 {
 public:
     /// Data type held by the matrix.
-    typedef T                   value_type;
-    typedef T                   ValueType;
-    typedef Mat<4, T>           MyBase;
+    using value_type = T;
+    using ValueType = T;
+    using MyBase = Mat<4, T>;
 
     /// Trivial constructor, the matrix is NOT initialized
+#if OPENVDB_ABI_VERSION_NUMBER >= 8
+    /// @note destructor, copy constructor, assignment operator and
+    ///   move constructor are left to be defined by the compiler (default)
+    Mat4() = default;
+#else
     Mat4() {}
+
+    /// Copy constructor
+    Mat4(const Mat<4, T> &m)
+    {
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                MyBase::mm[i*4 + j] = m[i][j];
+            }
+        }
+    }
+#endif
 
     /// Constructor given array of elements, the ordering is in row major form:
     /** @verbatim
@@ -76,7 +65,7 @@ public:
     Mat4(Source *a)
     {
         for (int i = 0; i < 16; i++) {
-            MyBase::mm[i] = a[i];
+            MyBase::mm[i] = static_cast<T>(a[i]);
         }
     }
 
@@ -93,25 +82,25 @@ public:
          Source i, Source j, Source k, Source l,
          Source m, Source n, Source o, Source p)
     {
-        MyBase::mm[ 0] = T(a);
-        MyBase::mm[ 1] = T(b);
-        MyBase::mm[ 2] = T(c);
-        MyBase::mm[ 3] = T(d);
+        MyBase::mm[ 0] = static_cast<T>(a);
+        MyBase::mm[ 1] = static_cast<T>(b);
+        MyBase::mm[ 2] = static_cast<T>(c);
+        MyBase::mm[ 3] = static_cast<T>(d);
 
-        MyBase::mm[ 4] = T(e);
-        MyBase::mm[ 5] = T(f);
-        MyBase::mm[ 6] = T(g);
-        MyBase::mm[ 7] = T(h);
+        MyBase::mm[ 4] = static_cast<T>(e);
+        MyBase::mm[ 5] = static_cast<T>(f);
+        MyBase::mm[ 6] = static_cast<T>(g);
+        MyBase::mm[ 7] = static_cast<T>(h);
 
-        MyBase::mm[ 8] = T(i);
-        MyBase::mm[ 9] = T(j);
-        MyBase::mm[10] = T(k);
-        MyBase::mm[11] = T(l);
+        MyBase::mm[ 8] = static_cast<T>(i);
+        MyBase::mm[ 9] = static_cast<T>(j);
+        MyBase::mm[10] = static_cast<T>(k);
+        MyBase::mm[11] = static_cast<T>(l);
 
-        MyBase::mm[12] = T(m);
-        MyBase::mm[13] = T(n);
-        MyBase::mm[14] = T(o);
-        MyBase::mm[15] = T(p);
+        MyBase::mm[12] = static_cast<T>(m);
+        MyBase::mm[13] = static_cast<T>(n);
+        MyBase::mm[14] = static_cast<T>(o);
+        MyBase::mm[15] = static_cast<T>(p);
     }
 
     /// Construct matrix from rows or columns vectors (defaults to rows
@@ -124,16 +113,6 @@ public:
             this->setRows(v1, v2, v3, v4);
         } else {
             this->setColumns(v1, v2, v3, v4);
-        }
-    }
-
-    /// Copy constructor
-    Mat4(const Mat<4, T> &m)
-    {
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
-                MyBase::mm[i*4 + j] = m[i][j];
-            }
         }
     }
 
@@ -205,17 +184,6 @@ public:
         return Vec4<T>((*this)(0,j), (*this)(1,j), (*this)(2,j), (*this)(3,j));
     }
 
-    //@{
-    /// Array style reference to ith row
-    /// e.g.    m[1][3] = 4;
-    T* operator[](int i) { return &(MyBase::mm[i<<2]); }
-    const T* operator[](int i) const { return &(MyBase::mm[i<<2]); }
-    //@}
-
-    /// Direct access to the internal data
-    T* asPointer() {return MyBase::mm;}
-    const T* asPointer() const {return MyBase::mm;}
-
     /// Alternative indexed reference to the elements
     /// Note that the indices are row first and column second.
     /// e.g.    m(0,0) = 1;
@@ -236,7 +204,7 @@ public:
         return MyBase::mm[4*i+j];
     }
 
-    /// Set the rows of "this" matrix to the vectors v1, v2, v3, v4
+    /// Set the rows of this matrix to the vectors v1, v2, v3, v4
     void setRows(const Vec4<T> &v1, const Vec4<T> &v2,
                  const Vec4<T> &v3, const Vec4<T> &v4)
     {
@@ -261,7 +229,7 @@ public:
         MyBase::mm[15] = v4[3];
     }
 
-    /// Set the columns of "this" matrix to the vectors v1, v2, v3, v4
+    /// Set the columns of this matrix to the vectors v1, v2, v3, v4
     void setColumns(const Vec4<T> &v1, const Vec4<T> &v2,
                     const Vec4<T> &v3, const Vec4<T> &v4)
     {
@@ -286,15 +254,7 @@ public:
         MyBase::mm[15] = v4[3];
     }
 
-    /// Set the rows of "this" matrix to the vectors v1, v2, v3, v4
-    OPENVDB_DEPRECATED void setBasis(const Vec4<T> &v1, const Vec4<T> &v2,
-                                     const Vec4<T> &v3, const Vec4<T> &v4)
-    {
-        this->setRows(v1, v2, v3, v4);
-    }
-
-
-    // Set "this" matrix to zero
+    // Set this matrix to zero
     void setZero()
     {
         MyBase::mm[ 0] = 0;
@@ -315,7 +275,7 @@ public:
         MyBase::mm[15] = 0;
     }
 
-    /// Set "this" matrix to identity
+    /// Set this matrix to identity
     void setIdentity()
     {
         MyBase::mm[ 0] = 1;
@@ -383,7 +343,7 @@ public:
         return *this;
     }
 
-    /// Test if "this" is equivalent to m with tolerance of eps value
+    /// Return @c true if this matrix is equivalent to @a m within a tolerance of @a eps.
     bool eq(const Mat4 &m, T eps=1.0e-8) const
     {
         for (int i = 0; i < 16; i++) {
@@ -404,7 +364,7 @@ public:
                        );
     } // trivial
 
-    /// Return m, where \f$m_{i,j} *= scalar\f$ for \f$i, j \in [0, 3]\f$
+    /// Multiply each element of this matrix by @a scalar.
     template <typename S>
     const Mat4<T>& operator*=(S scalar)
     {
@@ -430,7 +390,7 @@ public:
         return *this;
     }
 
-    /// @brief Returns m0, where \f$m0_{i,j} += m1_{i,j}\f$ for \f$i, j \in [0, 3]\f$
+    /// Add each element of the given matrix to the corresponding element of this matrix.
     template <typename S>
     const Mat4<T> &operator+=(const Mat4<S> &m1)
     {
@@ -459,7 +419,7 @@ public:
         return *this;
     }
 
-    /// @brief Returns m0, where \f$m0_{i,j} -= m1_{i,j}\f$ for \f$i, j \in [0, 3]\f$
+    /// Subtract each element of the given matrix from the corresponding element of this matrix.
     template <typename S>
     const Mat4<T> &operator-=(const Mat4<S> &m1)
     {
@@ -488,7 +448,7 @@ public:
         return *this;
     }
 
-    /// Return m, where \f$m_{i,j} = \sum_{k} m0_{i,k}*m1_{k,j}\f$ for \f$i, j \in [0, 3]\f$
+    /// Multiply this matrix by the given matrix.
     template <typename S>
     const Mat4<T> &operator*=(const Mat4<S> &m1)
     {
@@ -710,7 +670,7 @@ public:
                 }
             }
 
-            det += sign * MyBase::mm[i] * submat.det();
+            det += T(sign) * MyBase::mm[i] * submat.det();
             sign = -sign;
         }
 
@@ -1166,7 +1126,7 @@ template <typename T0, typename T1>
 bool operator!=(const Mat4<T0> &m0, const Mat4<T1> &m1) { return !(m0 == m1); }
 
 /// @relates Mat4
-/// @brief Returns M, where \f$M_{i,j} = m_{i,j} * scalar\f$ for \f$i, j \in [0, 3]\f$
+/// @brief Multiply each element of the given matrix by @a scalar and return the result.
 template <typename S, typename T>
 Mat4<typename promote<S, T>::type> operator*(S scalar, const Mat4<T> &m)
 {
@@ -1174,7 +1134,7 @@ Mat4<typename promote<S, T>::type> operator*(S scalar, const Mat4<T> &m)
 }
 
 /// @relates Mat4
-/// @brief Returns M, where \f$M_{i,j} = m_{i,j} * scalar\f$ for \f$i, j \in [0, 3]\f$
+/// @brief Multiply each element of the given matrix by @a scalar and return the result.
 template <typename S, typename T>
 Mat4<typename promote<S, T>::type> operator*(const Mat4<T> &m, S scalar)
 {
@@ -1184,7 +1144,7 @@ Mat4<typename promote<S, T>::type> operator*(const Mat4<T> &m, S scalar)
 }
 
 /// @relates Mat4
-/// @brief Returns v, where \f$v_{i} = \sum_{n=0}^3 m_{i,n} * v_n \f$ for \f$i \in [0, 3]\f$
+/// @brief Multiply @a _m by @a _v and return the resulting vector.
 template<typename T, typename MT>
 inline Vec4<typename promote<T, MT>::type>
 operator*(const Mat4<MT> &_m,
@@ -1199,7 +1159,7 @@ operator*(const Mat4<MT> &_m,
 }
 
 /// @relates Mat4
-/// @brief Returns v, where \f$v_{i} = \sum_{n=0}^3 m_{n,i} * v_n \f$ for \f$i \in [0, 3]\f$
+/// @brief Multiply @a _v by @a _m and return the resulting vector.
 template<typename T, typename MT>
 inline Vec4<typename promote<T, MT>::type>
 operator*(const Vec4<T> &_v,
@@ -1214,12 +1174,10 @@ operator*(const Vec4<T> &_v,
 }
 
 /// @relates Mat4
-/// @brief Returns v, where
-///     \f$v_{i} = \sum_{n=0}^3\left(m_{i,n} * v_n + m_{i,3}\right)\f$ for \f$i \in [0, 2]\f$
+/// @brief Multiply @a _m by @a _v and return the resulting vector.
 template<typename T, typename MT>
 inline Vec3<typename promote<T, MT>::type>
-operator*(const Mat4<MT> &_m,
-          const Vec3<T> &_v)
+operator*(const Mat4<MT> &_m, const Vec3<T> &_v)
 {
     MT const *m = _m.asPointer();
     return Vec3<typename promote<T, MT>::type>(
@@ -1229,12 +1187,10 @@ operator*(const Mat4<MT> &_m,
 }
 
 /// @relates Mat4
-/// @brief Returns v, where
-///     \f$v_{i} = \sum_{n=0}^3\left(m_{n,i} * v_n + m_{3,i}\right)\f$ for \f$i \in [0, 2]\f$
+/// @brief Multiply @a _v by @a _m and return the resulting vector.
 template<typename T, typename MT>
 inline Vec3<typename promote<T, MT>::type>
-operator*(const Vec3<T> &_v,
-          const Mat4<MT> &_m)
+operator*(const Vec3<T> &_v, const Mat4<MT> &_m)
 {
     MT const *m = _m.asPointer();
     return Vec3<typename promote<T, MT>::type>(
@@ -1244,7 +1200,7 @@ operator*(const Vec3<T> &_v,
 }
 
 /// @relates Mat4
-/// @brief Returns M, where  \f$M_{i,j} = m0_{i,j} + m1_{i,j}\f$ for \f$i, j \in [0, 3]\f$
+/// @brief Add corresponding elements of @a m0 and @a m1 and return the result.
 template <typename T0, typename T1>
 Mat4<typename promote<T0, T1>::type>
 operator+(const Mat4<T0> &m0, const Mat4<T1> &m1)
@@ -1255,7 +1211,7 @@ operator+(const Mat4<T0> &m0, const Mat4<T1> &m1)
 }
 
 /// @relates Mat4
-/// @brief Returns M, where  \f$M_{i,j} = m0_{i,j} - m1_{i,j}\f$ for \f$i, j \in [0, 3]\f$
+/// @brief Subtract corresponding elements of @a m0 and @a m1 and return the result.
 template <typename T0, typename T1>
 Mat4<typename promote<T0, T1>::type>
 operator-(const Mat4<T0> &m0, const Mat4<T1> &m1)
@@ -1266,8 +1222,7 @@ operator-(const Mat4<T0> &m0, const Mat4<T1> &m1)
 }
 
 /// @relates Mat4
-/// @brief Returns M, where
-///     \f$M_{ij} = \sum_{n=0}^3\left(m0_{nj} + m1_{in}\right)\f$ for \f$i, j \in [0, 3]\f$
+/// @brief Multiply @a m0 by @a m1 and return the resulting matrix.
 template <typename T0, typename T1>
 Mat4<typename promote<T0, T1>::type>
 operator*(const Mat4<T0> &m0, const Mat4<T1> &m1)
@@ -1369,22 +1324,62 @@ inline bool hasTranslation(const Mat4<T>& m) {
     return (m.row(3) != Vec4<T>(0, 0, 0, 1));
 }
 
+template<typename T>
+inline Mat4<T>
+Abs(const Mat4<T>& m)
+{
+    Mat4<T> out;
+    const T* ip = m.asPointer();
+    T* op = out.asPointer();
+    for (unsigned i = 0; i < 16; ++i, ++op, ++ip) *op = math::Abs(*ip);
+    return out;
+}
 
-typedef Mat4<float>  Mat4s;
-typedef Mat4<double> Mat4d;
-typedef Mat4d        Mat4f;
+template<typename Type1, typename Type2>
+inline Mat4<Type1>
+cwiseAdd(const Mat4<Type1>& m, const Type2 s)
+{
+    Mat4<Type1> out;
+    const Type1* ip = m.asPointer();
+    Type1* op = out.asPointer();
+    for (unsigned i = 0; i < 16; ++i, ++op, ++ip) {
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        *op = *ip + s;
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+    }
+    return out;
+}
+
+template<typename T>
+inline bool
+cwiseLessThan(const Mat4<T>& m0, const Mat4<T>& m1)
+{
+    return cwiseLessThan<4, T>(m0, m1);
+}
+
+template<typename T>
+inline bool
+cwiseGreaterThan(const Mat4<T>& m0, const Mat4<T>& m1)
+{
+    return cwiseGreaterThan<4, T>(m0, m1);
+}
+
+using Mat4s = Mat4<float>;
+using Mat4d = Mat4<double>;
+using Mat4f = Mat4d;
+
+#if OPENVDB_ABI_VERSION_NUMBER >= 8
+OPENVDB_IS_POD(Mat4s)
+OPENVDB_IS_POD(Mat4d)
+#endif
 
 } // namespace math
 
 
-template<> inline math::Mat4s zeroVal<math::Mat4s>() { return math::Mat4s::identity(); }
-template<> inline math::Mat4d zeroVal<math::Mat4d>() { return math::Mat4d::identity(); }
+template<> inline math::Mat4s zeroVal<math::Mat4s>() { return math::Mat4s::zero(); }
+template<> inline math::Mat4d zeroVal<math::Mat4d>() { return math::Mat4d::zero(); }
 
 } // namespace OPENVDB_VERSION_NAME
 } // namespace openvdb
 
 #endif // OPENVDB_UTIL_MAT4_H_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

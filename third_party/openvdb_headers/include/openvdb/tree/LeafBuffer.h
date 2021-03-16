@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_TREE_LEAFBUFFER_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_LEAFBUFFER_HAS_BEEN_INCLUDED
@@ -34,9 +7,12 @@
 #include <openvdb/Types.h>
 #include <openvdb/io/Compression.h> // for io::readCompressedValues(), etc
 #include <openvdb/util/NodeMasks.h>
+#include <tbb/atomic.h>
 #include <tbb/spin_mutex.h>
 #include <algorithm> // for std::swap
+#include <cstddef> // for offsetof()
 #include <iostream>
+#include <memory>
 #include <type_traits>
 
 
@@ -47,17 +23,41 @@ OPENVDB_USE_VERSION_NAMESPACE
 namespace OPENVDB_VERSION_NAME {
 namespace tree {
 
-/// @brief Array of fixed size @f$2^{3 \times {\rm Log2Dim}}@f$ that stores
+namespace internal {
+
+/// @internal For delayed loading to be threadsafe, LeafBuffer::mOutOfCore must be
+/// memory-fenced when it is set in LeafBuffer::doLoad(), otherwise that operation
+/// could be reordered ahead of others in doLoad(), with the possible result that
+/// other threads could see the buffer as in-core before it has been fully loaded.
+/// Making mOutOfCore a TBB atomic solves the problem, since TBB atomics are release-fenced
+/// by default (unlike STL atomics, which are not even guaranteed to be lock-free).
+/// However, TBB atomics have stricter alignment requirements than their underlying value_types,
+/// so a LeafBuffer with an atomic mOutOfCore is potentially ABI-incompatible with
+/// its non-atomic counterpart.
+/// This helper class conditionally declares mOutOfCore as an atomic only if doing so
+/// doesn't break ABI compatibility.
+template<typename T>
+struct LeafBufferFlags
+{
+    /// The type of LeafBuffer::mOutOfCore
+    using type = tbb::atomic<Index32>;
+    static constexpr bool IsAtomic = true;
+};
+
+} // namespace internal
+
+
+/// @brief Array of fixed size 2<SUP>3<I>Log2Dim</I></SUP> that stores
 /// the voxel values of a LeafNode
 template<typename T, Index Log2Dim>
 class LeafBuffer
 {
 public:
     using ValueType = T;
+    using StorageType = ValueType;
     using NodeMaskType = util::NodeMask<Log2Dim>;
     static const Index SIZE = 1 << 3 * Log2Dim;
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     struct FileInfo
     {
         FileInfo(): bufpos(0) , maskpos(0) {}
@@ -66,31 +66,15 @@ public:
         io::MappedFile::Ptr mapping;
         SharedPtr<io::StreamMetadata> meta;
     };
-#endif
 
-#ifdef OPENVDB_2_ABI_COMPATIBLE
     /// Default constructor
-    LeafBuffer(): mData(new ValueType[SIZE]) {}
-    /// Construct a buffer populated with the specified value.
-    explicit LeafBuffer(const ValueType& val): mData(new ValueType[SIZE]) { this->fill(val); }
-    /// Copy constructor
-    LeafBuffer(const LeafBuffer& other): mData(new ValueType[SIZE]) { *this = other; }
-    /// Destructor
-    ~LeafBuffer() { delete[] mData; }
-
-    /// Return @c true if this buffer's values have not yet been read from disk.
-    bool isOutOfCore() const { return false; }
-    /// Return @c true if memory for this buffer has not yet been allocated.
-    bool empty() const { return (mData == nullptr); }
-#else
-    /// Default constructor
-    inline LeafBuffer(): mData(new ValueType[SIZE]), mOutOfCore(0) {}
+    inline LeafBuffer(): mData(new ValueType[SIZE]) { mOutOfCore = 0; }
     /// Construct a buffer populated with the specified value.
     explicit inline LeafBuffer(const ValueType&);
     /// Copy constructor
     inline LeafBuffer(const LeafBuffer&);
     /// Construct a buffer but don't allocate memory for the full array of values.
-    LeafBuffer(PartialCreate, const ValueType&): mData(nullptr), mOutOfCore(0) {}
+    LeafBuffer(PartialCreate, const ValueType&): mData(nullptr) { mOutOfCore = 0; }
     /// Destructor
     inline ~LeafBuffer();
 
@@ -98,7 +82,6 @@ public:
     bool isOutOfCore() const { return bool(mOutOfCore); }
     /// Return @c true if memory for this buffer has not yet been allocated.
     bool empty() const { return !mData || this->isOutOfCore(); }
-#endif
     /// Allocate memory for this buffer if it has not already been allocated.
     bool allocate() { if (mData == nullptr) mData = new ValueType[SIZE]; return true; }
 
@@ -152,59 +135,44 @@ private:
 
     bool deallocate();
 
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-    void setOutOfCore(bool) {}
-    void loadValues() const {}
-    void doLoad() const {}
-    bool detachFromFile() { return false; }
-#else
     inline void setOutOfCore(bool b) { mOutOfCore = b; }
     // To facilitate inlining in the common case in which the buffer is in-core,
     // the loading logic is split into a separate function, doLoad().
     inline void loadValues() const { if (this->isOutOfCore()) this->doLoad(); }
     inline void doLoad() const;
     inline bool detachFromFile();
-#endif
 
+    using FlagsType = typename internal::LeafBufferFlags<ValueType>::type;
 
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-    ValueType* mData;
-#else
     union {
         ValueType* mData;
         FileInfo*  mFileInfo;
     };
-    Index32 mOutOfCore; // currently interpreted as bool; extra bits reserved for future use
+    FlagsType mOutOfCore; // interpreted as bool; extra bits reserved for future use
     tbb::spin_mutex mMutex; // 1 byte
     //int8_t mReserved[3]; // padding for alignment
 
     static const ValueType sZero;
-#endif
 
     friend class ::TestLeaf;
     // Allow the parent LeafNode to access this buffer's data pointer.
     template<typename, Index> friend class LeafNode;
-
 }; // class LeafBuffer
 
 
 ////////////////////////////////////////
 
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
 template<typename T, Index Log2Dim>
 const T LeafBuffer<T, Log2Dim>::sZero = zeroVal<T>();
-#endif
 
-
-#ifndef OPENVDB_2_ABI_COMPATIBLE
 
 template<typename T, Index Log2Dim>
 inline
 LeafBuffer<T, Log2Dim>::LeafBuffer(const ValueType& val)
     : mData(new ValueType[SIZE])
-    , mOutOfCore(0)
 {
+    mOutOfCore = 0;
     this->fill(val);
 }
 
@@ -244,12 +212,8 @@ inline void
 LeafBuffer<T, Log2Dim>::setValue(Index i, const ValueType& val)
 {
     assert(i < SIZE);
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-    mData[i] = val;
-#else
     this->loadValues();
     if (mData) mData[i] = val;
-#endif
 }
 
 
@@ -258,15 +222,6 @@ inline LeafBuffer<T, Log2Dim>&
 LeafBuffer<T, Log2Dim>::operator=(const LeafBuffer& other)
 {
     if (&other != this) {
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-        if (other.mData != nullptr) {
-            this->allocate();
-            ValueType* target = mData;
-            const ValueType* source = other.mData;
-            Index n = SIZE;
-            while (n--) *target++ = *source++;
-        }
-#else // ! OPENVDB_2_ABI_COMPATIBLE
         if (this->isOutOfCore()) {
             this->detachFromFile();
         } else {
@@ -282,7 +237,6 @@ LeafBuffer<T, Log2Dim>::operator=(const LeafBuffer& other)
             Index n = SIZE;
             while (n--) *target++ = *source++;
         }
-#endif
     }
     return *this;
 }
@@ -321,9 +275,7 @@ inline void
 LeafBuffer<T, Log2Dim>::swap(LeafBuffer& other)
 {
     std::swap(mData, other.mData);
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     std::swap(mOutOfCore, other.mOutOfCore);
-#endif
 }
 
 
@@ -332,12 +284,8 @@ inline Index
 LeafBuffer<T, Log2Dim>::memUsage() const
 {
     size_t n = sizeof(*this);
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-    if (mData) n += SIZE * sizeof(ValueType);
-#else
     if (this->isOutOfCore()) n += sizeof(FileInfo);
     else if (mData) n += SIZE * sizeof(ValueType);
-#endif
     return static_cast<Index>(n);
 }
 
@@ -346,7 +294,6 @@ template<typename T, Index Log2Dim>
 inline const typename LeafBuffer<T, Log2Dim>::ValueType*
 LeafBuffer<T, Log2Dim>::data() const
 {
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     this->loadValues();
     if (mData == nullptr) {
         LeafBuffer* self = const_cast<LeafBuffer*>(this);
@@ -354,7 +301,6 @@ LeafBuffer<T, Log2Dim>::data() const
         tbb::spin_mutex::scoped_lock lock(self->mMutex);
         if (mData == nullptr) self->mData = new ValueType[SIZE];
     }
-#endif
     return mData;
 }
 
@@ -362,14 +308,12 @@ template<typename T, Index Log2Dim>
 inline typename LeafBuffer<T, Log2Dim>::ValueType*
 LeafBuffer<T, Log2Dim>::data()
 {
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     this->loadValues();
     if (mData == nullptr) {
         // This lock will be contended at most once.
         tbb::spin_mutex::scoped_lock lock(mMutex);
         if (mData == nullptr) mData = new ValueType[SIZE];
     }
-#endif
     return mData;
 }
 
@@ -379,14 +323,10 @@ inline const typename LeafBuffer<T, Log2Dim>::ValueType&
 LeafBuffer<T, Log2Dim>::at(Index i) const
 {
     assert(i < SIZE);
-#ifdef OPENVDB_2_ABI_COMPATIBLE
-    return mData[i];
-#else
     this->loadValues();
     // We can't use the ternary operator here, otherwise Visual C++ returns
     // a reference to a temporary.
     if (mData) return mData[i]; else return sZero;
-#endif
 }
 
 
@@ -454,8 +394,6 @@ LeafBuffer<T, Log2Dim>::detachFromFile()
     return false;
 }
 
-#endif // OPENVDB_2_ABI_COMPATIBLE
-
 
 ////////////////////////////////////////
 
@@ -467,6 +405,8 @@ class LeafBuffer<bool, Log2Dim>
 public:
     using NodeMaskType = util::NodeMask<Log2Dim>;
     using WordType = typename NodeMaskType::Word;
+    using ValueType = bool;
+    using StorageType = WordType;
 
     static const Index WORD_COUNT = NodeMaskType::WORD_COUNT;
     static const Index SIZE = 1 << 3 * Log2Dim;
@@ -529,7 +469,3 @@ template<Index Log2Dim> const bool LeafBuffer<bool, Log2Dim>::sOff = false;
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_LEAFBUFFER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

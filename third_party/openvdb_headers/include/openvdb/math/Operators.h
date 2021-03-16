@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file math/Operators.h
 
@@ -37,6 +10,7 @@
 #include "Stencils.h"
 #include "Maps.h"
 #include "Transform.h"
+#include <cmath> // for std::sqrt()
 
 
 namespace openvdb {
@@ -554,10 +528,10 @@ struct ISCurl
 template<DDScheme DiffScheme2, DScheme DiffScheme1>
 struct ISMeanCurvature
 {
-    /// @brief random access version
-    /// @return true if the gradient is none-zero, in which case the
-    /// mean curvature is computed as two parts: @c alpha is the numerator in
-    /// @f$\nabla \cdot (\nabla \phi / |\nabla \phi|)@f$, and @c beta is @f$|\nabla \phi|@f$.
+    /// @brief Random access version
+    /// @return @c true if the gradient is nonzero, in which case the mean curvature
+    /// is returned in two parts, @a alpha and @a beta, where @a alpha is the numerator
+    /// in &nabla; &middot; (&nabla;&Phi; / |&nabla;&Phi;|) and @a beta is |&nabla;&Phi;|.
     template<typename Accessor>
     static bool result(const Accessor& grid, const Coord& ijk,
                        typename Accessor::ValueType& alpha,
@@ -592,10 +566,10 @@ struct ISMeanCurvature
         return true;
     }
 
-    /// @brief stencil access version
-    /// @return true if the gradient is none-zero, in which case the
-    /// mean curvature is computed as two parts: @c alpha is the numerator in
-    /// @f$\nabla \cdot (\nabla \phi / |\nabla \phi|)@f$, and @c beta is @f$|\nabla \phi|@f$.
+    /// @brief Stencil access version
+    /// @return @c true if the gradient is nonzero, in which case the mean curvature
+    /// is returned in two parts, @a alpha and @a beta, where @a alpha is the numerator
+    /// in &nabla; &middot; (&nabla;&Phi; / |&nabla;&Phi;|) and @a beta is |&nabla;&Phi;|.
     template<typename StencilT>
     static bool result(const StencilT& stencil,
                        typename StencilT::ValueType& alpha,
@@ -764,9 +738,14 @@ struct Gradient<ScaleMap, CD_2ND>
         using Vec3Type = typename internal::ReturnValue<Accessor>::Vec3Type;
 
         Vec3Type iGradient( ISGradient<CD_2NDT>::result(grid, ijk) );
-        return  Vec3Type(ValueType(iGradient[0] * map.getInvTwiceScale()[0]),
-                         ValueType(iGradient[1] * map.getInvTwiceScale()[1]),
-                         ValueType(iGradient[2] * map.getInvTwiceScale()[2]) );
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        const auto gradient0 = iGradient[0] * map.getInvTwiceScale()[0];
+        const auto gradient1 = iGradient[1] * map.getInvTwiceScale()[1];
+        const auto gradient2 = iGradient[2] * map.getInvTwiceScale()[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return  Vec3Type(ValueType(gradient0),
+                         ValueType(gradient1),
+                         ValueType(gradient2));
     }
 
     // stencil access version
@@ -778,9 +757,14 @@ struct Gradient<ScaleMap, CD_2ND>
         using Vec3Type = typename internal::ReturnValue<StencilT>::Vec3Type;
 
         Vec3Type iGradient( ISGradient<CD_2NDT>::result(stencil) );
-        return  Vec3Type(ValueType(iGradient[0] * map.getInvTwiceScale()[0]),
-                         ValueType(iGradient[1] * map.getInvTwiceScale()[1]),
-                         ValueType(iGradient[2] * map.getInvTwiceScale()[2]) );
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        const auto gradient0 = iGradient[0] * map.getInvTwiceScale()[0];
+        const auto gradient1 = iGradient[1] * map.getInvTwiceScale()[1];
+        const auto gradient2 = iGradient[2] * map.getInvTwiceScale()[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return  Vec3Type(ValueType(gradient0),
+                         ValueType(gradient1),
+                         ValueType(gradient2));
     }
 };
 
@@ -798,9 +782,14 @@ struct Gradient<ScaleTranslateMap, CD_2ND>
         using Vec3Type = typename internal::ReturnValue<Accessor>::Vec3Type;
 
         Vec3Type iGradient( ISGradient<CD_2NDT>::result(grid, ijk) );
-        return  Vec3Type(ValueType(iGradient[0] * map.getInvTwiceScale()[0]),
-                         ValueType(iGradient[1] * map.getInvTwiceScale()[1]),
-                         ValueType(iGradient[2] * map.getInvTwiceScale()[2]) );
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        const auto gradient0 = iGradient[0] * map.getInvTwiceScale()[0];
+        const auto gradient1 = iGradient[1] * map.getInvTwiceScale()[1];
+        const auto gradient2 = iGradient[2] * map.getInvTwiceScale()[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return  Vec3Type(ValueType(gradient0),
+                         ValueType(gradient1),
+                         ValueType(gradient2));
     }
 
     // Stencil access version
@@ -812,9 +801,14 @@ struct Gradient<ScaleTranslateMap, CD_2ND>
         using Vec3Type = typename internal::ReturnValue<StencilT>::Vec3Type;
 
         Vec3Type iGradient( ISGradient<CD_2NDT>::result(stencil) );
-        return  Vec3Type(ValueType(iGradient[0] * map.getInvTwiceScale()[0]),
-                         ValueType(iGradient[1] * map.getInvTwiceScale()[1]),
-                         ValueType(iGradient[2] * map.getInvTwiceScale()[2]) );
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+        const auto gradient0 = iGradient[0] * map.getInvTwiceScale()[0];
+        const auto gradient1 = iGradient[1] * map.getInvTwiceScale()[1];
+        const auto gradient2 = iGradient[2] * map.getInvTwiceScale()[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return  Vec3Type(ValueType(gradient0),
+                         ValueType(gradient1),
+                         ValueType(gradient2));
     }
 };
 //@}
@@ -1595,8 +1589,11 @@ struct Laplacian<ScaleMap, DiffScheme>
         ValueType iddy = D2<DiffScheme>::inY(grid, ijk);
         ValueType iddz = D2<DiffScheme>::inZ(grid, ijk);
         const Vec3d& invScaleSqr = map.getInvScaleSqr();
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
         // scale them by the appropriate 1/dx^2, 1/dy^2, 1/dz^2 and sum
-        return ValueType(iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2]);
+        const ValueType value = iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return value;
     }
 
     // stencil access version
@@ -1610,8 +1607,11 @@ struct Laplacian<ScaleMap, DiffScheme>
         ValueType iddy = D2<DiffScheme>::inY(stencil);
         ValueType iddz = D2<DiffScheme>::inZ(stencil);
         const Vec3d& invScaleSqr = map.getInvScaleSqr();
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
         // scale them by the appropriate 1/dx^2, 1/dy^2, 1/dz^2 and sum
-        return ValueType(iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2]);
+        const ValueType value = iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return value;
     }
 };
 
@@ -1629,8 +1629,11 @@ struct Laplacian<ScaleTranslateMap, DiffScheme>
         ValueType iddy = D2<DiffScheme>::inY(grid, ijk);
         ValueType iddz = D2<DiffScheme>::inZ(grid, ijk);
         const Vec3d& invScaleSqr = map.getInvScaleSqr();
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
         // scale them by the appropriate 1/dx^2, 1/dy^2, 1/dz^2 and sum
-        return ValueType(iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2]);
+        const ValueType value = iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return value;
     }
 
     // stencil access version
@@ -1643,8 +1646,11 @@ struct Laplacian<ScaleTranslateMap, DiffScheme>
         ValueType iddy = D2<DiffScheme>::inY(stencil);
         ValueType iddz = D2<DiffScheme>::inZ(stencil);
         const Vec3d& invScaleSqr = map.getInvScaleSqr();
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
         // scale them by the appropriate 1/dx^2, 1/dy^2, 1/dz^2 and sum
-        return ValueType(iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2]);
+        const ValueType value = iddx * invScaleSqr[0] + iddy * invScaleSqr[1] + iddz * invScaleSqr[2];
+        OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+        return value;
     }
 };
 
@@ -1745,15 +1751,16 @@ struct CPT_RANGE
 
 
 /// @brief Compute the mean curvature.
-/// @return the mean curvature in two parts: @c alpha is the numerator in
-/// @f$\nabla \cdot (\nabla \phi / |\nabla \phi|)@f$, and @c beta is @f$|\nabla \phi|@f$.
+/// @details The mean curvature is returned in two parts, @a alpha and @a beta,
+/// where @a alpha is the numerator in &nabla; &middot; (&nabla;&Phi; / |&nabla;&Phi;|)
+/// and @a beta is |&nabla;&Phi;|.
 template<typename MapType, DDScheme DiffScheme2, DScheme DiffScheme1>
 struct MeanCurvature
 {
-    /// @brief random access version
-    /// @return true if the gradient is none-zero, in which case the
-    /// mean curvature is computed as two parts: @c alpha is the numerator in
-    /// @f$\nabla \cdot (\nabla \phi / |\nabla \phi|)@f$, and @c beta is @f$|\nabla \phi|@f$.
+    /// @brief Random access version
+    /// @return @c true if the gradient is nonzero, in which case the mean curvature
+    /// is returned in two parts, @a alpha and @a beta, where @a alpha is the numerator
+    /// in &nabla; &middot; (&nabla;&Phi; / |&nabla;&Phi;|) and @a beta is |&nabla;&Phi;|.
     template<typename Accessor>
     static bool compute(const MapType& map, const Accessor& grid, const Coord& ijk,
                         double& alpha, double& beta)
@@ -1829,10 +1836,10 @@ struct MeanCurvature
                ValueType(alpha/(2. *math::Pow2(beta))) : 0;
     }
 
-    /// @brief stencil access version
-    /// @return true if the gradient is none-zero, in which case the
-    /// mean curvature is computed as two parts: @c alpha is the numerator in
-    /// @f$\nabla \cdot (\nabla \phi / |\nabla \phi|)@f$, and @c beta is @f$|\nabla \phi|@f$.
+    /// @brief Stencil access version
+    /// @return @c true if the gradient is nonzero, in which case the mean curvature
+    /// is returned in two parts, @a alpha and @a beta, where @a alpha is the numerator
+    /// in &nabla; &middot; (&nabla;&Phi; / |&nabla;&Phi;|) and @a beta is |&nabla;&Phi;|.
     template<typename StencilT>
     static bool compute(const MapType& map, const StencilT& stencil,
                         double& alpha, double& beta)
@@ -2117,7 +2124,3 @@ private:
 } // end openvdb namespace
 
 #endif // OPENVDB_MATH_OPERATORS_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

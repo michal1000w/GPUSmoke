@@ -1,36 +1,10 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
-#ifndef OPENVDB_METADATA_METADATA_HAS_BEEN_INCLUDED
-#define OPENVDB_METADATA_METADATA_HAS_BEEN_INCLUDED
+#ifndef OPENVDB_METADATA_HAS_BEEN_INCLUDED
+#define OPENVDB_METADATA_HAS_BEEN_INCLUDED
 
+#include "version.h"
 #include "Exceptions.h"
 #include "Types.h"
 #include "math/Math.h" // for math::isZero()
@@ -38,6 +12,7 @@
 #include <cstdint>
 #include <iostream>
 #include <string>
+#include <vector>
 
 
 namespace openvdb {
@@ -53,6 +28,10 @@ public:
 
     Metadata() {}
     virtual ~Metadata() {}
+
+    // Disallow copying of instances of this class.
+    Metadata(const Metadata&) = delete;
+    Metadata& operator=(const Metadata&) = delete;
 
     /// Return the type name of the metadata.
     virtual Name typeName() const = 0;
@@ -106,30 +85,34 @@ protected:
     virtual void readValue(std::istream&, Index32 numBytes) = 0;
     /// Write the metadata to a stream.
     virtual void writeValue(std::ostream&) const = 0;
-
-private:
-    // Disallow copying of instances of this class.
-    Metadata(const Metadata&);
-    Metadata& operator=(const Metadata&);
 };
 
 
-/// @brief Subclass to read (and ignore) data of an unregistered type
+/// @brief Subclass to hold raw data of an unregistered type
 class OPENVDB_API UnknownMetadata: public Metadata
 {
 public:
-    UnknownMetadata() {}
-    virtual ~UnknownMetadata() {}
-    virtual Name typeName() const { return "<unknown>"; }
-    virtual Metadata::Ptr copy() const { OPENVDB_THROW(TypeError, "Metadata has unknown type"); }
-    virtual void copy(const Metadata&) { OPENVDB_THROW(TypeError, "Destination has unknown type"); }
-    virtual std::string str() const { return "<unknown>"; }
-    virtual bool asBool() const { return false; }
-    virtual Index32 size() const { return 0; }
+    using ByteVec = std::vector<uint8_t>;
+
+    explicit UnknownMetadata(const Name& typ = "<unknown>"): mTypeName(typ) {}
+
+    Name typeName() const override { return mTypeName; }
+    Metadata::Ptr copy() const override;
+    void copy(const Metadata&) override;
+    std::string str() const override { return (mBytes.empty() ? "" : "<binary data>"); }
+    bool asBool() const override { return !mBytes.empty(); }
+    Index32 size() const override { return static_cast<Index32>(mBytes.size()); }
+
+    void setValue(const ByteVec& bytes) { mBytes = bytes; }
+    const ByteVec& value() const { return mBytes; }
 
 protected:
-    virtual void readValue(std::istream&s, Index32 numBytes);
-    virtual void writeValue(std::ostream&) const;
+    void readValue(std::istream&, Index32 numBytes) override;
+    void writeValue(std::ostream&) const override;
+
+private:
+    Name mTypeName;
+    ByteVec mBytes;
 };
 
 
@@ -144,14 +127,14 @@ public:
     TypedMetadata();
     TypedMetadata(const T& value);
     TypedMetadata(const TypedMetadata<T>& other);
-    virtual ~TypedMetadata();
+    ~TypedMetadata() override;
 
-    virtual Name typeName() const;
-    virtual Metadata::Ptr copy() const;
-    virtual void copy(const Metadata& other);
-    virtual std::string str() const;
-    virtual bool asBool() const;
-    virtual Index32 size() const { return static_cast<Index32>(sizeof(T)); }
+    Name typeName() const override;
+    Metadata::Ptr copy() const override;
+    void copy(const Metadata& other) override;
+    std::string str() const override;
+    bool asBool() const override;
+    Index32 size() const override { return static_cast<Index32>(sizeof(T)); }
 
     /// Set this metadata's value.
     void setValue(const T&);
@@ -171,8 +154,8 @@ public:
     static bool isRegisteredType();
 
 protected:
-    virtual void readValue(std::istream&, Index32 numBytes);
-    virtual void writeValue(std::ostream&) const;
+    void readValue(std::istream&, Index32 numBytes) override;
+    void writeValue(std::ostream&) const override;
 
 private:
     T mValue;
@@ -384,6 +367,9 @@ using Vec2SMetadata  = TypedMetadata<Vec2s>;
 using Vec3DMetadata  = TypedMetadata<Vec3d>;
 using Vec3IMetadata  = TypedMetadata<Vec3i>;
 using Vec3SMetadata  = TypedMetadata<Vec3s>;
+using Vec4DMetadata  = TypedMetadata<Vec4d>;
+using Vec4IMetadata  = TypedMetadata<Vec4i>;
+using Vec4SMetadata  = TypedMetadata<Vec4s>;
 using Mat4SMetadata  = TypedMetadata<Mat4s>;
 using Mat4DMetadata  = TypedMetadata<Mat4d>;
 
@@ -396,6 +382,14 @@ inline Index32
 StringMetadata::size() const
 {
     return static_cast<Index32>(mValue.size());
+}
+
+
+template<>
+inline std::string
+StringMetadata::str() const
+{
+    return mValue;
 }
 
 
@@ -417,8 +411,4 @@ StringMetadata::writeValue(std::ostream& os) const
 } // namespace OPENVDB_VERSION_NAME
 } // namespace openvdb
 
-#endif // OPENVDB_METADATA_METADATA_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
+#endif // OPENVDB_METADATA_HAS_BEEN_INCLUDED

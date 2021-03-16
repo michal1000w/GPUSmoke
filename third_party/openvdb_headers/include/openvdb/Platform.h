@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 ///
 /// @file Platform.h
 
@@ -37,17 +10,24 @@
 
 #define PRAGMA(x) _Pragma(#x)
 
-/// Use OPENVDB_DEPRECATED to mark functions as deprecated.
-/// It should be placed right before the signature of the function,
-/// e.g., "OPENVDB_DEPRECATED void functionName();".
-#ifdef OPENVDB_DEPRECATED
-#undef OPENVDB_DEPRECATED
-#endif
-#ifdef _MSC_VER
-    #define OPENVDB_DEPRECATED  __declspec(deprecated)
-#else
-    #define OPENVDB_DEPRECATED  __attribute__ ((deprecated))
-#endif
+/// @name Utilities
+/// @{
+/// @cond OPENVDB_VERSION_INTERNAL
+#define OPENVDB_PREPROC_STRINGIFY_(x) #x
+/// @endcond
+/// @brief Return @a x as a string literal.  If @a x is a macro,
+/// return its value as a string literal.
+/// @hideinitializer
+#define OPENVDB_PREPROC_STRINGIFY(x) OPENVDB_PREPROC_STRINGIFY_(x)
+
+/// @cond OPENVDB_VERSION_INTERNAL
+#define OPENVDB_PREPROC_CONCAT_(x, y) x ## y
+/// @endcond
+/// @brief Form a new token by concatenating two existing tokens.
+/// If either token is a macro, concatenate its value.
+/// @hideinitializer
+#define OPENVDB_PREPROC_CONCAT(x, y) OPENVDB_PREPROC_CONCAT_(x, y)
+/// @}
 
 /// Macro for determining if GCC version is >= than X.Y
 #if defined(__GNUC__)
@@ -57,38 +37,21 @@
     #define OPENVDB_CHECK_GCC(MAJOR, MINOR) 0
 #endif
 
-/// Macro for determining if there are sufficient C++0x/C++11 features
-#ifdef __INTEL_COMPILER
-    #ifdef __INTEL_CXX11_MODE__
-        #define OPENVDB_HAS_CXX11 1
-    #endif
-#elif defined(__clang__)
-    #ifndef _LIBCPP_VERSION
-        #include <ciso646>
-    #endif
-    #ifdef _LIBCPP_VERSION
-        #define OPENVDB_HAS_CXX11 1
-    #endif
-#elif defined(__GXX_EXPERIMENTAL_CXX0X__) || (__cplusplus > 199711L)
-    #define OPENVDB_HAS_CXX11 1
-#elif defined(_MSC_VER)
-    #if (_MSC_VER >= 1700)
-        #define OPENVDB_HAS_CXX11 1
-    #endif
-#endif
-#if defined(__GNUC__) && !OPENVDB_CHECK_GCC(4, 4)
-    // ICC uses GCC's standard library headers, so even if the ICC version
-    // is recent enough for C++11, the GCC version might not be.
-    #undef OPENVDB_HAS_CXX11
-#endif
+/// OpenVDB now requires C++11
+#define OPENVDB_HAS_CXX11 1
 
-/// For compilers that need templated function specializations to have
-/// storage qualifiers, we need to declare the specializations as static inline.
-/// Otherwise, we'll get linker errors about multiply defined symbols.
-#if defined(__GNUC__) && OPENVDB_CHECK_GCC(4, 4)
-    #define OPENVDB_STATIC_SPECIALIZATION
-#else
-    #define OPENVDB_STATIC_SPECIALIZATION static
+
+/// SIMD Intrinsic Headers
+#if defined(OPENVDB_USE_SSE42) || defined(OPENVDB_USE_AVX)
+    #if defined(_WIN32)
+        #include <intrin.h>
+    #elif defined(__GNUC__)
+        #if defined(__x86_64__) || defined(__i386__)
+            #include <x86intrin.h>
+        #elif defined(__ARM_NEON__)
+            #include <arm_neon.h>
+        #endif
+    #endif
 #endif
 
 
@@ -131,35 +94,86 @@
 #endif
 
 
-#ifdef _MSC_VER
-    /// Visual C++ does not have constants like M_PI unless this is defined.
-    /// @note This is needed even though the core library is built with this but
-    /// hcustom 12.1 doesn't define it. So this is needed for HDK operators.
-    #ifndef _USE_MATH_DEFINES
-        #define _USE_MATH_DEFINES
+/// @brief Bracket code with OPENVDB_NO_DEPRECATION_WARNING_BEGIN/_END,
+/// to inhibit warnings about deprecated code.
+/// @note Use this sparingly.  Remove references to deprecated code if at all possible.
+/// @details Example:
+/// @code
+/// [[deprecated]] void myDeprecatedFunction() {}
+///
+/// {
+///     OPENVDB_NO_DEPRECATION_WARNING_BEGIN
+///     myDeprecatedFunction();
+///     OPENVDB_NO_DEPRECATION_WARNING_END
+/// }
+/// @endcode
+#if defined __INTEL_COMPILER
+    #define OPENVDB_NO_DEPRECATION_WARNING_BEGIN \
+        _Pragma("warning (push)") \
+        _Pragma("warning (disable:1478)") \
+        PRAGMA(message("NOTE: ignoring deprecation warning at " __FILE__  \
+            ":" OPENVDB_PREPROC_STRINGIFY(__LINE__)))
+    #define OPENVDB_NO_DEPRECATION_WARNING_END \
+        _Pragma("warning (pop)")
+#elif defined __clang__
+    #define OPENVDB_NO_DEPRECATION_WARNING_BEGIN \
+        _Pragma("clang diagnostic push") \
+        _Pragma("clang diagnostic ignored \"-Wdeprecated-declarations\"")
+        // note: no #pragma message, since Clang treats them as warnings
+    #define OPENVDB_NO_DEPRECATION_WARNING_END \
+        _Pragma("clang diagnostic pop")
+#elif defined __GNUC__
+    #define OPENVDB_NO_DEPRECATION_WARNING_BEGIN \
+        _Pragma("GCC diagnostic push") \
+        _Pragma("GCC diagnostic ignored \"-Wdeprecated-declarations\"") \
+        _Pragma("message(\"NOTE: ignoring deprecation warning\")")
+    #define OPENVDB_NO_DEPRECATION_WARNING_END \
+        _Pragma("GCC diagnostic pop")
+#elif defined _MSC_VER
+    #define OPENVDB_NO_DEPRECATION_WARNING_BEGIN \
+        __pragma(warning(push)) \
+        __pragma(warning(disable : 4996)) \
+        __pragma(message("NOTE: ignoring deprecation warning at " __FILE__ \
+            ":" OPENVDB_PREPROC_STRINGIFY(__LINE__)))
+    #define OPENVDB_NO_DEPRECATION_WARNING_END \
+        __pragma(warning(pop))
+#else
+    #define OPENVDB_NO_DEPRECATION_WARNING_BEGIN
+    #define OPENVDB_NO_DEPRECATION_WARNING_END
+#endif
+
+
+/// @brief Bracket code with OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN/_END,
+/// to inhibit warnings about type conversion.
+/// @note Use this sparingly.  Use static casts and explicit type conversion if at all possible.
+/// @details Example:
+/// @code
+/// float value = 0.1f;
+/// OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+/// int valueAsInt = value;
+/// OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+/// @endcode
+#if defined __INTEL_COMPILER
+    #define OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+    #define OPENVDB_NO_TYPE_CONVERSION_WARNING_END
+#elif defined __GNUC__
+    // -Wfloat-conversion was only introduced in GCC 4.9
+    #if OPENVDB_CHECK_GCC(4, 9)
+        #define OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN \
+            _Pragma("GCC diagnostic push") \
+            _Pragma("GCC diagnostic ignored \"-Wconversion\"") \
+            _Pragma("GCC diagnostic ignored \"-Wfloat-conversion\"")
+    #else
+        #define OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN \
+            _Pragma("GCC diagnostic push") \
+            _Pragma("GCC diagnostic ignored \"-Wconversion\"")
     #endif
-    /// Visual C++ does not have round
-    #include <boost/math/special_functions/round.hpp>
-    using boost::math::round;
+    #define OPENVDB_NO_TYPE_CONVERSION_WARNING_END \
+        _Pragma("GCC diagnostic pop")
+#else
+    #define OPENVDB_NO_TYPE_CONVERSION_WARNING_BEGIN
+    #define OPENVDB_NO_TYPE_CONVERSION_WARNING_END
 #endif
-
-/// Visual C++ uses _copysign() instead of copysign()
-#ifdef _MSC_VER
-    #include <float.h>
-    static inline double copysign(double x, double y) { return _copysign(x, y); }
-#endif
-
-/// Visual C++ does not have stdint.h which defines types like uint64_t.
-/// So for portability we instead include boost/cstdint.hpp.
-#include <boost/cstdint.hpp>
-using boost::int8_t;
-using boost::int16_t;
-using boost::int32_t;
-using boost::int64_t;
-using boost::uint8_t;
-using boost::uint16_t;
-using boost::uint32_t;
-using boost::uint64_t;
 
 /// Helper macros for defining library symbol visibility
 #ifdef OPENVDB_EXPORT
@@ -202,8 +216,54 @@ using boost::uint64_t;
     #define OPENVDB_HOUDINI_API OPENVDB_IMPORT
 #endif
 
-#endif // OPENVDB_PLATFORM_HAS_BEEN_INCLUDED
+#if defined(__ICC)
 
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
+// Use these defines to bracket a region of code that has safe static accesses.
+// Keep the region as small as possible.
+#define OPENVDB_START_THREADSAFE_STATIC_REFERENCE   __pragma(warning(disable:1710))
+#define OPENVDB_FINISH_THREADSAFE_STATIC_REFERENCE  __pragma(warning(default:1710))
+#define OPENVDB_START_THREADSAFE_STATIC_WRITE       __pragma(warning(disable:1711))
+#define OPENVDB_FINISH_THREADSAFE_STATIC_WRITE      __pragma(warning(default:1711))
+#define OPENVDB_START_THREADSAFE_STATIC_ADDRESS     __pragma(warning(disable:1712))
+#define OPENVDB_FINISH_THREADSAFE_STATIC_ADDRESS    __pragma(warning(default:1712))
+
+// Use these defines to bracket a region of code that has unsafe static accesses.
+// Keep the region as small as possible.
+#define OPENVDB_START_NON_THREADSAFE_STATIC_REFERENCE   __pragma(warning(disable:1710))
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_REFERENCE  __pragma(warning(default:1710))
+#define OPENVDB_START_NON_THREADSAFE_STATIC_WRITE       __pragma(warning(disable:1711))
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_WRITE      __pragma(warning(default:1711))
+#define OPENVDB_START_NON_THREADSAFE_STATIC_ADDRESS     __pragma(warning(disable:1712))
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_ADDRESS    __pragma(warning(default:1712))
+
+// Simpler version for one-line cases
+#define OPENVDB_THREADSAFE_STATIC_REFERENCE(CODE) \
+    __pragma(warning(disable:1710)); CODE; __pragma(warning(default:1710))
+#define OPENVDB_THREADSAFE_STATIC_WRITE(CODE) \
+    __pragma(warning(disable:1711)); CODE; __pragma(warning(default:1711))
+#define OPENVDB_THREADSAFE_STATIC_ADDRESS(CODE) \
+    __pragma(warning(disable:1712)); CODE; __pragma(warning(default:1712))
+
+#else // GCC does not support these compiler warnings
+
+#define OPENVDB_START_THREADSAFE_STATIC_REFERENCE
+#define OPENVDB_FINISH_THREADSAFE_STATIC_REFERENCE
+#define OPENVDB_START_THREADSAFE_STATIC_WRITE
+#define OPENVDB_FINISH_THREADSAFE_STATIC_WRITE
+#define OPENVDB_START_THREADSAFE_STATIC_ADDRESS
+#define OPENVDB_FINISH_THREADSAFE_STATIC_ADDRESS
+
+#define OPENVDB_START_NON_THREADSAFE_STATIC_REFERENCE
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_REFERENCE
+#define OPENVDB_START_NON_THREADSAFE_STATIC_WRITE
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_WRITE
+#define OPENVDB_START_NON_THREADSAFE_STATIC_ADDRESS
+#define OPENVDB_FINISH_NON_THREADSAFE_STATIC_ADDRESS
+
+#define OPENVDB_THREADSAFE_STATIC_REFERENCE(CODE) CODE
+#define OPENVDB_THREADSAFE_STATIC_WRITE(CODE) CODE
+#define OPENVDB_THREADSAFE_STATIC_ADDRESS(CODE) CODE
+
+#endif // defined(__ICC)
+
+#endif // OPENVDB_PLATFORM_HAS_BEEN_INCLUDED

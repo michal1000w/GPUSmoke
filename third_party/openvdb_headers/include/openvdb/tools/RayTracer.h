@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file RayTracer.h
 ///
@@ -51,20 +24,14 @@
 #include <openvdb/math/Math.h>
 #include <openvdb/tools/RayIntersector.h>
 #include <openvdb/tools/Interpolation.h>
-#include <boost/scoped_array.hpp>
 #include <deque>
+#include <iostream>
 #include <fstream>
+#include <limits>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <vector>
-
-#ifdef OPENVDB_TOOLS_RAYTRACER_USE_EXR
-#include <OpenEXR/ImfPixelType.h>
-#include <OpenEXR/ImfChannelList.h>
-#include <OpenEXR/ImfOutputFile.h>
-#include <OpenEXR/ImfHeader.h>
-#include <OpenEXR/ImfFrameBuffer.h>
-#endif
 
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
@@ -253,7 +220,7 @@ private:
 //////////////////////////////////////// FILM ////////////////////////////////////////
 
 /// @brief A simple class that allows for concurrent writes to pixels in an image,
-/// background initialization of the image, and PPM or EXR file output.
+/// background initialization of the image, and PPM file output.
 class Film
 {
 public:
@@ -278,7 +245,7 @@ public:
         RGBA  operator* (ValueT scale)  const { return RGBA(r*scale, g*scale, b*scale);}
         RGBA  operator+ (const RGBA& rhs) const { return RGBA(r+rhs.r, g+rhs.g, b+rhs.b);}
         RGBA  operator* (const RGBA& rhs) const { return RGBA(r*rhs.r, g*rhs.g, b*rhs.b);}
-        RGBA& operator+=(const RGBA& rhs) { r+=rhs.r; g+=rhs.g; b+=rhs.b, a+=rhs.a; return *this;}
+        RGBA& operator+=(const RGBA& rhs) { r+=rhs.r; g+=rhs.g; b+=rhs.b; a+=rhs.a; return *this;}
 
         void over(const RGBA& rhs)
         {
@@ -333,7 +300,7 @@ public:
         std::string name(fileName);
         if (name.find_last_of(".") == std::string::npos) name.append(".ppm");
 
-        boost::scoped_array<unsigned char> buffer(new unsigned char[3*mSize]);
+        std::unique_ptr<unsigned char[]> buffer(new unsigned char[3*mSize]);
         unsigned char *tmp = buffer.get(), *q = tmp;
         RGBA* p = mPixels.get();
         size_t n = mSize;
@@ -353,38 +320,6 @@ public:
         os.write(reinterpret_cast<const char*>(&(*tmp)), 3 * mSize * sizeof(unsigned char));
     }
 
-#ifdef OPENVDB_TOOLS_RAYTRACER_USE_EXR
-    void saveEXR(const std::string& fileName, size_t compression = 2, size_t threads = 8)
-    {
-        std::string name(fileName);
-        if (name.find_last_of(".") == std::string::npos) name.append(".exr");
-
-        if (threads>0) Imf::setGlobalThreadCount(threads);
-        Imf::Header header(mWidth, mHeight);
-        if (compression==0) header.compression() = Imf::NO_COMPRESSION;
-        if (compression==1) header.compression() = Imf::RLE_COMPRESSION;
-        if (compression>=2) header.compression() = Imf::ZIP_COMPRESSION;
-        header.channels().insert("R", Imf::Channel(Imf::FLOAT));
-        header.channels().insert("G", Imf::Channel(Imf::FLOAT));
-        header.channels().insert("B", Imf::Channel(Imf::FLOAT));
-        header.channels().insert("A", Imf::Channel(Imf::FLOAT));
-
-        Imf::FrameBuffer framebuffer;
-        framebuffer.insert("R", Imf::Slice( Imf::FLOAT, (char *) &(mPixels[0].r),
-                                            sizeof (RGBA), sizeof (RGBA) * mWidth));
-        framebuffer.insert("G", Imf::Slice( Imf::FLOAT, (char *) &(mPixels[0].g),
-                                            sizeof (RGBA), sizeof (RGBA) * mWidth));
-        framebuffer.insert("B", Imf::Slice( Imf::FLOAT, (char *) &(mPixels[0].b),
-                                            sizeof (RGBA), sizeof (RGBA) * mWidth));
-        framebuffer.insert("A", Imf::Slice( Imf::FLOAT, (char *) &(mPixels[0].a),
-                                            sizeof (RGBA), sizeof (RGBA) * mWidth));
-
-        Imf::OutputFile file(name.c_str(), header);
-        file.setFrameBuffer(framebuffer);
-        file.writePixels(mHeight);
-    }
-#endif
-
     size_t width()       const { return mWidth; }
     size_t height()      const { return mHeight; }
     size_t numPixels()   const { return mSize; }
@@ -392,7 +327,7 @@ public:
 
 private:
     size_t mWidth, mHeight, mSize;
-    boost::scoped_array<RGBA> mPixels;
+    std::unique_ptr<RGBA[]> mPixels;
 };// Film
 
 
@@ -945,7 +880,7 @@ operator()(const tbb::blocked_range<size_t>& range) const
 {
     const BaseShader& shader = *mShader;
     Vec3Type xyz, nml;
-    const float frac = 1.0f / (1.0f + mSubPixels);
+    const float frac = 1.0f / (1.0f + float(mSubPixels));
     for (size_t j=range.begin(), n=0, je = range.end(); j<je; ++j) {
         for (size_t i=0, ie = mCamera->width(); i<ie; ++i) {
             Film::RGBA& bg = mCamera->pixel(i,j);
@@ -1117,7 +1052,3 @@ operator()(const tbb::blocked_range<size_t>& range) const
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_RAYTRACER_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

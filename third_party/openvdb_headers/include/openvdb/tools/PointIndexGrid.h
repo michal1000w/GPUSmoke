@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file   PointIndexGrid.h
 ///
@@ -45,6 +18,7 @@
 
 #include "PointPartitioner.h"
 
+#include <openvdb/version.h>
 #include <openvdb/Exceptions.h>
 #include <openvdb/Grid.h>
 #include <openvdb/Types.h>
@@ -53,7 +27,6 @@
 #include <openvdb/tree/LeafNode.h>
 #include <openvdb/tree/Tree.h>
 
-#include <boost/scoped_array.hpp>
 #include <tbb/atomic.h>
 #include <tbb/blocked_range.h>
 #include <tbb/parallel_for.h>
@@ -284,7 +257,7 @@ private:
     using Range = std::pair<const ValueType*, const ValueType*>;
     using RangeDeque = std::deque<Range>;
     using RangeDequeCIter = typename RangeDeque::const_iterator;
-    using IndexArray = boost::scoped_array<ValueType>;
+    using IndexArray = std::unique_ptr<ValueType[]>;
 
     void clear();
 
@@ -431,7 +404,7 @@ struct PopulateLeafNodesOp
     using IndexT = uint32_t;
     using Partitioner = PointPartitioner<IndexT, LeafNodeT::LOG2DIM>;
 
-    PopulateLeafNodesOp(boost::scoped_array<LeafNodeT*>& leafNodes,
+    PopulateLeafNodesOp(std::unique_ptr<LeafNodeT*[]>& leafNodes,
         const Partitioner& partitioner)
         : mLeafNodes(leafNodes.get())
         , mPartitioner(&partitioner)
@@ -450,8 +423,8 @@ struct PopulateLeafNodesOp
         const IndexT voxelCount = LeafNodeT::SIZE;
 
         // allocate histogram buffers
-        boost::scoped_array<VoxelOffsetT> offsets(new VoxelOffsetT[maxPointCount]);
-        boost::scoped_array<IndexT> histogram(new IndexT[voxelCount]);
+        std::unique_ptr<VoxelOffsetT[]> offsets{new VoxelOffsetT[maxPointCount]};
+        std::unique_ptr<IndexT[]> histogram{new IndexT[voxelCount]};
 
         VoxelOffsetT const * const voxelOffsets = mPartitioner->voxelOffsets().get();
 
@@ -518,7 +491,7 @@ constructPointTree(TreeType& tree, const math::Transform& xform, const PointArra
 {
     using LeafType = typename TreeType::LeafNodeType;
 
-    boost::scoped_array<LeafType*> leafNodes;
+    std::unique_ptr<LeafType*[]> leafNodes;
     size_t leafNodeCount = 0;
 
     {
@@ -552,7 +525,7 @@ constructPointTree(TreeType& tree, const math::Transform& xform, const PointArra
 
 template<typename T>
 inline void
-dequeToArray(const std::deque<T>& d, boost::scoped_array<T>& a, size_t& size)
+dequeToArray(const std::deque<T>& d, std::unique_ptr<T[]>& a, size_t& size)
 {
     size = d.size();
     a.reset(new T[size]);
@@ -1428,14 +1401,12 @@ public:
     {
     }
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     PointIndexLeafNode(PartialCreate, const Coord& coords,
         const T& value = zeroVal<T>(), bool active = false)
         : BaseLeaf(PartialCreate(), coords, value, active)
         , mIndices()
     {
     }
-#endif
 
     /// Deep copy constructor
     PointIndexLeafNode(const PointIndexLeafNode& rhs) : BaseLeaf(rhs), mIndices(rhs.mIndices) {}
@@ -1775,7 +1746,7 @@ PointIndexLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& b
         /// BaseLeaf::readBuffers(), the point index list will need to be regenerated.
     } else {
         // Read and discard voxel values.
-        boost::scoped_array<char> buf(new char[numBytes]);
+        std::unique_ptr<char[]> buf{new char[numBytes]};
         is.read(buf.get(), numBytes);
     }
 
@@ -1784,7 +1755,7 @@ PointIndexLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& b
     is.read(reinterpret_cast<char*>(&auxDataBytes), sizeof(Index64));
     if (auxDataBytes > 0) {
         // For now, read and discard any auxiliary data.
-        boost::scoped_array<char> auxData(new char[auxDataBytes]);
+        std::unique_ptr<char[]> auxData{new char[auxDataBytes]};
         is.read(auxData.get(), auxDataBytes);
     }
 }
@@ -1834,7 +1805,3 @@ struct SameLeafConfig<Dim1, openvdb::tools::PointIndexLeafNode<T2, Dim1> >
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_POINT_INDEX_GRID_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

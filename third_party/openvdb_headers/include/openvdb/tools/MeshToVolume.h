@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file   MeshToVolume.h
 ///
@@ -61,9 +34,6 @@
 #include <tbb/partitioner.h>
 #include <tbb/task_group.h>
 #include <tbb/task_scheduler_init.h>
-
-#include <boost/integer_traits.hpp> // for const_max
-#include <boost/scoped_array.hpp>
 
 #include <algorithm> // for std::sort()
 #include <cmath> // for std::isfinite(), std::isnan()
@@ -735,15 +705,16 @@ public:
 
         tree::ValueAccessor<const TreeType> acc(*mTree);
         Coord ijk;
+        const Int32 DIM = static_cast<Int32>(LeafNodeType::DIM);
 
         for (size_t n = range.begin(), N = range.end(); n < N; ++n) {
             const Coord& origin = mCoordinates[n];
-            offsetsNextX[n] = findNeighbourNode(acc, origin, Coord(LeafNodeType::DIM, 0, 0));
-            offsetsPrevX[n] = findNeighbourNode(acc, origin, Coord(-LeafNodeType::DIM, 0, 0));
-            offsetsNextY[n] = findNeighbourNode(acc, origin, Coord(0, LeafNodeType::DIM, 0));
-            offsetsPrevY[n] = findNeighbourNode(acc, origin, Coord(0, -LeafNodeType::DIM, 0));
-            offsetsNextZ[n] = findNeighbourNode(acc, origin, Coord(0, 0, LeafNodeType::DIM));
-            offsetsPrevZ[n] = findNeighbourNode(acc, origin, Coord(0, 0, -LeafNodeType::DIM));
+            offsetsNextX[n] = findNeighbourNode(acc, origin, Coord(DIM, 0, 0));
+            offsetsPrevX[n] = findNeighbourNode(acc, origin, Coord(-DIM, 0, 0));
+            offsetsNextY[n] = findNeighbourNode(acc, origin, Coord(0, DIM, 0));
+            offsetsPrevY[n] = findNeighbourNode(acc, origin, Coord(0, -DIM, 0));
+            offsetsNextZ[n] = findNeighbourNode(acc, origin, Coord(0, 0, DIM));
+            offsetsPrevZ[n] = findNeighbourNode(acc, origin, Coord(0, 0, -DIM));
         }
     }
 
@@ -759,7 +730,7 @@ public:
             ijk += step;
         }
 
-        return boost::integer_traits<size_t>::const_max;
+        return std::numeric_limits<size_t>::max();
     }
 
 
@@ -774,15 +745,13 @@ private:
 
 
 template<typename TreeType>
-struct LeafNodeConnectivityTable {
-
-    enum { INVALID_OFFSET = boost::integer_traits<size_t>::const_max };
+struct LeafNodeConnectivityTable
+{
+    enum { INVALID_OFFSET = std::numeric_limits<size_t>::max() };
 
     using LeafNodeType = typename TreeType::LeafNodeType;
 
     LeafNodeConnectivityTable(TreeType& tree)
-        : mLeafNodes()
-        , mOffsets(nullptr)
     {
         mLeafNodes.reserve(tree.leafCount());
         tree.getNodes(mLeafNodes);
@@ -796,7 +765,7 @@ struct LeafNodeConnectivityTable {
 
         // stash the leafnode origin coordinate and temporarily store the
         // linear offset in the origin.x variable.
-        boost::scoped_array<Coord> coordinates(new Coord[mLeafNodes.size()]);
+        std::unique_ptr<Coord[]> coordinates{new Coord[mLeafNodes.size()]};
         tbb::parallel_for(range,
             StashOriginAndStoreOffset<TreeType>(mLeafNodes, coordinates.get()));
 
@@ -828,7 +797,7 @@ struct LeafNodeConnectivityTable {
 
 private:
     std::vector<LeafNodeType*> mLeafNodes;
-    boost::scoped_array<size_t> mOffsets;
+    std::unique_ptr<size_t[]> mOffsets;
 }; // struct LeafNodeConnectivityTable
 
 
@@ -853,11 +822,13 @@ public:
 
     void operator()(const tbb::blocked_range<size_t>& range) const {
 
+        constexpr Int32 DIM = static_cast<Int32>(LeafNodeType::DIM);
+
         std::vector<LeafNodeType*>& nodes = mConnectivity->nodes();
 
         // Z Axis
         size_t idxA = 0, idxB = 1;
-        Index step = 1;
+        Int32 step = 1;
 
         const size_t* nextOffsets = mConnectivity->offsetsNextZ();
         const size_t* prevOffsets = mConnectivity->offsetsPrevZ();
@@ -866,7 +837,7 @@ public:
 
             idxA = 0;
             idxB = 2;
-            step = LeafNodeType::DIM;
+            step = DIM;
 
             nextOffsets = mConnectivity->offsetsNextY();
             prevOffsets = mConnectivity->offsetsPrevY();
@@ -875,7 +846,7 @@ public:
 
             idxA = 1;
             idxB = 2;
-            step = LeafNodeType::DIM * LeafNodeType::DIM;
+            step = DIM*DIM;
 
             nextOffsets = mConnectivity->offsetsNextX();
             prevOffsets = mConnectivity->offsetsPrevX();
@@ -883,20 +854,20 @@ public:
 
         Coord ijk(0, 0, 0);
 
-        int& a = ijk[idxA];
-        int& b = ijk[idxB];
+        Int32& a = ijk[idxA];
+        Int32& b = ijk[idxB];
 
         for (size_t n = range.begin(), N = range.end(); n < N; ++n) {
 
             size_t startOffset = mStartNodeIndices[n];
             size_t lastOffset = startOffset;
 
-            Index pos(0);
+            Int32 pos(0);
 
-            for (a = 0; a < int(LeafNodeType::DIM); ++a) {
-                for (b = 0; b < int(LeafNodeType::DIM); ++b) {
+            for (a = 0; a < DIM; ++a) {
+                for (b = 0; b < DIM; ++b) {
 
-                    pos =  LeafNodeType::coordToOffset(ijk);
+                    pos = static_cast<Int32>(LeafNodeType::coordToOffset(ijk));
                     size_t offset = startOffset;
 
                     // sweep in +axis direction until a boundary voxel is hit.
@@ -916,7 +887,7 @@ public:
 
                     // sweep in -axis direction until a boundary voxel is hit.
                     offset = lastOffset;
-                    pos += step * (LeafNodeType::DIM - 1);
+                    pos += step * (DIM - 1);
                     while ( offset != ConnectivityTable::INVALID_OFFSET &&
                             traceVoxelLine(*nodes[offset], pos, -step)) {
                         offset = prevOffsets[offset];
@@ -927,7 +898,7 @@ public:
     }
 
 
-    bool traceVoxelLine(LeafNodeType& node, Index pos, Index step) const {
+    bool traceVoxelLine(LeafNodeType& node, Int32 pos, const Int32 step) const {
 
         ValueType* data = node.buffer().data();
 
@@ -935,6 +906,7 @@ public:
 
         for (Index i = 0; i < LeafNodeType::DIM; ++i) {
 
+            assert(pos >= 0);
             ValueType& dist = data[pos];
 
             if (dist < ValueType(0.0)) {
@@ -1114,7 +1086,7 @@ public:
     using ValueType = typename TreeType::ValueType;
     using LeafNodeType = typename TreeType::LeafNodeType;
 
-    SeedFillExteriorSign(std::vector<LeafNodeType*>& nodes, bool* changedNodeMask)
+    SeedFillExteriorSign(std::vector<LeafNodeType*>& nodes, const bool* changedNodeMask)
         : mNodes(nodes.empty() ? nullptr : &nodes[0])
         , mChangedNodeMask(changedNodeMask)
     {
@@ -1124,13 +1096,17 @@ public:
         for (size_t n = range.begin(), N = range.end(); n < N; ++n) {
             if (mChangedNodeMask[n]) {
                 //seedFill(*mNodes[n]);
-                mChangedNodeMask[n] = scanFill(*mNodes[n]);
+                // Do not update the flag in mChangedNodeMask even if scanFill
+                // returns false. mChangedNodeMask is queried by neighboring
+                // accesses in ::SeedPoints which needs to know that this
+                // node has values propagated on a previous iteration.
+                scanFill(*mNodes[n]);
             }
         }
     }
 
     LeafNodeType    ** const mNodes;
-    bool             * const mChangedNodeMask;
+    const bool       * const mChangedNodeMask;
 };
 
 
@@ -1221,22 +1197,18 @@ public:
     void operator()(const tbb::blocked_range<size_t>& range) const {
 
         for (size_t n = range.begin(), N = range.end(); n < N; ++n) {
+            bool changedValue = false;
 
-            if (!mChangedNodeMask[n]) {
+            changedValue |= processZ(n, /*firstFace=*/true);
+            changedValue |= processZ(n, /*firstFace=*/false);
 
-                bool changedValue = false;
+            changedValue |= processY(n, /*firstFace=*/true);
+            changedValue |= processY(n, /*firstFace=*/false);
 
-                changedValue |= processZ(n, /*firstFace=*/true);
-                changedValue |= processZ(n, /*firstFace=*/false);
+            changedValue |= processX(n, /*firstFace=*/true);
+            changedValue |= processX(n, /*firstFace=*/false);
 
-                changedValue |= processY(n, /*firstFace=*/true);
-                changedValue |= processY(n, /*firstFace=*/false);
-
-                changedValue |= processX(n, /*firstFace=*/true);
-                changedValue |= processX(n, /*firstFace=*/false);
-
-                mNodeMask[n] = changedValue;
-            }
+            mNodeMask[n] = changedValue;
         }
     }
 
@@ -1372,7 +1344,9 @@ struct ComputeIntersectingVoxelSign
     using Int32TreeType = typename TreeType::template ValueConverter<Int32>::Type;
     using Int32LeafNodeType = typename Int32TreeType::LeafNodeType;
 
-    using LocalData = std::pair<boost::shared_array<Vec3d>, boost::shared_array<bool> >;
+    using PointArray = std::unique_ptr<Vec3d[]>;
+    using MaskArray = std::unique_ptr<bool[]>;
+    using LocalData = std::pair<PointArray, MaskArray>;
     using LocalDataTable = tbb::enumerable_thread_specific<LocalData>;
 
     ComputeIntersectingVoxelSign(
@@ -1402,10 +1376,10 @@ struct ComputeIntersectingVoxelSign
 
         LocalData& localData = mLocalDataTable->local();
 
-        boost::shared_array<Vec3d>& points = localData.first;
+        PointArray& points = localData.first;
         if (!points) points.reset(new Vec3d[LeafNodeType::SIZE * 2]);
 
-        boost::shared_array<bool>& mask = localData.second;
+        MaskArray& mask = localData.second;
         if (!mask) mask.reset(new bool[LeafNodeType::SIZE]);
 
 
@@ -1839,7 +1813,7 @@ releaseLeafNodes(TreeType& tree)
 {
     using RootNodeType = typename TreeType::RootNodeType;
     using NodeChainType = typename RootNodeType::NodeChainType;
-    using InternalNodeType = typename boost::mpl::at<NodeChainType, boost::mpl::int_<1> >::type;
+    using InternalNodeType = typename NodeChainType::template Get<1>;
 
     std::vector<InternalNodeType*> nodes;
     tree.getNodes(nodes);
@@ -1956,9 +1930,25 @@ struct VoxelizationData {
 
     unsigned char getNewPrimId() {
 
+        /// @warning Don't use parallel methods here!
+        /// The primIdTree is used as a "scratch" pad to mark visits for a given polygon
+        /// into voxels which it may contribute to. The tree is kept as lightweight as
+        /// possible and is reset when a maximum count or size is reached. A previous
+        /// bug here occurred due to the calling of tree methods with multi-threaded
+        /// implementations, resulting in nested parallelization and re-use of the TLS
+        /// from the initial task. This consequently resulted in non deterministic values
+        /// of mPrimCount on the return of the initial task, and could potentially end up
+        /// with a mPrimCount equal to that of the MaxPrimId. This is used as the background
+        /// value of the scratch tree.
+        /// @see jira.aswf.io/browse/OVDB-117, PR #564
+        /// @todo Consider profiling this operator with tree.clear() and Investigate the
+        /// chosen value of MaxPrimId
+
         if (mPrimCount == MaxPrimId || primIdTree.leafCount() > 1000) {
             mPrimCount = 0;
-            primIdTree.clear();
+            primIdTree.root().clear();
+            primIdTree.clearAllAccessors();
+            assert(mPrimCount == 0);
         }
 
         return mPrimCount++;
@@ -2035,11 +2025,13 @@ private:
         enum { POLYGON_LIMIT = 1000 };
 
         SubTask(const Triangle& prim, DataTable& dataTable,
-            int subdivisionCount, size_t polygonCount)
+            int subdivisionCount, size_t polygonCount,
+            Interrupter* interrupter = nullptr)
             : mLocalDataTable(&dataTable)
             , mPrim(prim)
             , mSubdivisionCount(subdivisionCount)
             , mPolygonCount(polygonCount)
+            , mInterrupter(interrupter)
         {
         }
 
@@ -2050,17 +2042,18 @@ private:
                 typename VoxelizationDataType::Ptr& dataPtr = mLocalDataTable->local();
                 if (!dataPtr) dataPtr.reset(new VoxelizationDataType());
 
-                voxelizeTriangle(mPrim, *dataPtr);
+                voxelizeTriangle(mPrim, *dataPtr, mInterrupter);
 
-            } else {
-                spawnTasks(mPrim, *mLocalDataTable, mSubdivisionCount, mPolygonCount);
+            } else if (!(mInterrupter && mInterrupter->wasInterrupted())) {
+                spawnTasks(mPrim, *mLocalDataTable, mSubdivisionCount, mPolygonCount, mInterrupter);
             }
         }
 
-        DataTable * const mLocalDataTable;
-        Triangle    const mPrim;
-        int         const mSubdivisionCount;
-        size_t      const mPolygonCount;
+        DataTable   * const mLocalDataTable;
+        Triangle      const mPrim;
+        int           const mSubdivisionCount;
+        size_t        const mPolygonCount;
+        Interrupter * const mInterrupter;
     }; // struct SubTask
 
     inline static int evalSubdivisionCount(const Triangle& prim)
@@ -2084,14 +2077,18 @@ private:
             polygonCount < SubTask::POLYGON_LIMIT ? evalSubdivisionCount(prim) : 0;
 
         if (subdivisionCount <= 0) {
-            voxelizeTriangle(prim, data);
+            voxelizeTriangle(prim, data, mInterrupter);
         } else {
-            spawnTasks(prim, *mDataTable, subdivisionCount, polygonCount);
+            spawnTasks(prim, *mDataTable, subdivisionCount, polygonCount, mInterrupter);
         }
     }
 
     static void spawnTasks(
-        const Triangle& mainPrim, DataTable& dataTable, int subdivisionCount, size_t polygonCount)
+        const Triangle& mainPrim,
+        DataTable& dataTable,
+        int subdivisionCount,
+        size_t polygonCount,
+        Interrupter* const interrupter)
     {
         subdivisionCount -= 1;
         polygonCount *= 4;
@@ -2108,27 +2105,27 @@ private:
         prim.a = mainPrim.a;
         prim.b = ab;
         prim.c = ac;
-        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount));
+        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount, interrupter));
 
         prim.a = ab;
         prim.b = bc;
         prim.c = ac;
-        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount));
+        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount, interrupter));
 
         prim.a = ab;
         prim.b = mainPrim.b;
         prim.c = bc;
-        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount));
+        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount, interrupter));
 
         prim.a = ac;
         prim.b = bc;
         prim.c = mainPrim.c;
-        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount));
+        tasks.run(SubTask(prim, dataTable, subdivisionCount, polygonCount, interrupter));
 
         tasks.wait();
     }
 
-    static void voxelizeTriangle(const Triangle& prim, VoxelizationDataType& data)
+    static void voxelizeTriangle(const Triangle& prim, VoxelizationDataType& data, Interrupter* const interrupter)
     {
         std::deque<Coord> coordList;
         Coord ijk, nijk;
@@ -2136,26 +2133,35 @@ private:
         ijk = Coord::floor(prim.a);
         coordList.push_back(ijk);
 
-        computeDistance(ijk, prim, data);
+        // The first point may not be quite in bounds, and rely
+        // on one of the neighbours to have the first valid seed,
+        // so we cannot early-exit here.
+        updateDistance(ijk, prim, data);
 
         unsigned char primId = data.getNewPrimId();
         data.primIdAcc.setValueOnly(ijk, primId);
 
         while (!coordList.empty()) {
-            ijk = coordList.back();
-            coordList.pop_back();
+            if (interrupter && interrupter->wasInterrupted()) {
+                tbb::task::self().cancel_group_execution();
+                break;
+            }
+            for (Int32 pass = 0; pass < 1048576 && !coordList.empty(); ++pass) {
+                ijk = coordList.back();
+                coordList.pop_back();
 
-            for (Int32 i = 0; i < 26; ++i) {
-                nijk = ijk + util::COORD_OFFSETS[i];
-                if (primId != data.primIdAcc.getValue(nijk)) {
-                    data.primIdAcc.setValueOnly(nijk, primId);
-                    if(computeDistance(nijk, prim, data)) coordList.push_back(nijk);
+                for (Int32 i = 0; i < 26; ++i) {
+                    nijk = ijk + util::COORD_OFFSETS[i];
+                    if (primId != data.primIdAcc.getValue(nijk)) {
+                        data.primIdAcc.setValueOnly(nijk, primId);
+                        if(updateDistance(nijk, prim, data)) coordList.push_back(nijk);
+                    }
                 }
             }
         }
     }
 
-    static bool computeDistance(const Coord& ijk, const Triangle& prim, VoxelizationDataType& data)
+    static bool updateDistance(const Coord& ijk, const Triangle& prim, VoxelizationDataType& data)
     {
         Vec3d uvw, voxelCenter(ijk[0], ijk[1], ijk[2]);
 
@@ -2163,6 +2169,11 @@ private:
 
         const ValueType dist = ValueType((voxelCenter -
             closestPointOnTriangleToPoint(prim.a, prim.c, prim.b, voxelCenter, uvw)).lengthSqr());
+
+        // Either the points may be NAN, or they could be far enough from
+        // the origin that computing distance fails.
+        if (std::isnan(dist))
+            return false;
 
         const ValueType oldDist = data.distAcc.getValue(ijk);
 
@@ -3009,10 +3020,16 @@ traceExteriorBoundaries(FloatTreeT& tree)
 {
     using ConnectivityTable = mesh_to_volume_internal::LeafNodeConnectivityTable<FloatTreeT>;
 
+    // Build a node connectivity table where each leaf node has an offset into a
+    // linearized list of nodes, and each leaf stores its six axis aligned neighbor
+    // offsets
     ConnectivityTable nodeConnectivity(tree);
 
     std::vector<size_t> zStartNodes, yStartNodes, xStartNodes;
 
+    // Store all nodes which do not have negative neighbors i.e. the nodes furthest
+    // in -X, -Y, -Z. We sweep from lowest coordinate positions +axis and then
+    // from the furthest positive coordinate positions -axis
     for (size_t n = 0; n < nodeConnectivity.size(); ++n) {
         if (ConnectivityTable::INVALID_OFFSET == nodeConnectivity.offsetsPrevX()[n]) {
             xStartNodes.push_back(n);
@@ -3029,6 +3046,9 @@ traceExteriorBoundaries(FloatTreeT& tree)
 
     using SweepingOp = mesh_to_volume_internal::SweepExteriorSign<FloatTreeT>;
 
+    // Sweep the exterior value signs (make them negative) up until the voxel intersection
+    // with the isosurface. Do this in both lowest -> + and largest -> - directions
+
     tbb::parallel_for(tbb::blocked_range<size_t>(0, zStartNodes.size()),
         SweepingOp(SweepingOp::Z_AXIS, zStartNodes, nodeConnectivity));
 
@@ -3041,9 +3061,9 @@ traceExteriorBoundaries(FloatTreeT& tree)
     const size_t numLeafNodes = nodeConnectivity.size();
     const size_t numVoxels = numLeafNodes * FloatTreeT::LeafNodeType::SIZE;
 
-    boost::scoped_array<bool> changedNodeMaskA(new bool[numLeafNodes]);
-    boost::scoped_array<bool> changedNodeMaskB(new bool[numLeafNodes]);
-    boost::scoped_array<bool> changedVoxelMask(new bool[numVoxels]);
+    std::unique_ptr<bool[]> changedNodeMaskA{new bool[numLeafNodes]};
+    std::unique_ptr<bool[]> changedNodeMaskB{new bool[numLeafNodes]};
+    std::unique_ptr<bool[]> changedVoxelMask{new bool[numVoxels]};
 
     mesh_to_volume_internal::fillArray(changedNodeMaskA.get(), true, numLeafNodes);
     mesh_to_volume_internal::fillArray(changedNodeMaskB.get(), false, numLeafNodes);
@@ -3053,13 +3073,24 @@ traceExteriorBoundaries(FloatTreeT& tree)
 
     bool nodesUpdated = false;
     do {
+        // Perform per leaf node localized propagation of signs by looping over
+        // all voxels and checking to see if any of their neighbors (within the
+        // same leaf) are negative
         tbb::parallel_for(nodeRange, mesh_to_volume_internal::SeedFillExteriorSign<FloatTreeT>(
             nodeConnectivity.nodes(), changedNodeMaskA.get()));
 
+        // For each leaf, check its axis aligned neighbors and propagate any changes
+        // which occurred previously (in SeedFillExteriorSign OR in SyncVoxelMask) to
+        // the leaf faces. Note that this operation stores the propagated face results
+        // in a separate buffer (changedVoxelMask) to avoid writing to nodes being read
+        // from other threads. Additionally mark any leaf nodes which will absorb any
+        // changes from its neighbors in changedNodeMaskB
         tbb::parallel_for(nodeRange, mesh_to_volume_internal::SeedPoints<FloatTreeT>(
             nodeConnectivity, changedNodeMaskA.get(), changedNodeMaskB.get(),
             changedVoxelMask.get()));
 
+        // Only nodes where a value was influenced by an adjacent node need to be
+        // processed on the next pass.
         changedNodeMaskA.swap(changedNodeMaskB);
 
         nodesUpdated = false;
@@ -3068,6 +3099,8 @@ traceExteriorBoundaries(FloatTreeT& tree)
             if (nodesUpdated) break;
         }
 
+        // Use the voxel mask updates in ::SeedPoints to actually assign the new values
+        // across leaf node faces
         if (nodesUpdated) {
             tbb::parallel_for(nodeRange, mesh_to_volume_internal::SyncVoxelMask<FloatTreeT>(
                 nodeConnectivity.nodes(), changedNodeMaskA.get(), changedVoxelMask.get()));
@@ -3338,7 +3371,7 @@ meshToVolume(
         nodes.reserve(distTree.leafCount());
         distTree.getNodes(nodes);
 
-        boost::scoped_array<ValueType> buffer(new ValueType[LeafNodeType::SIZE * nodes.size()]);
+        std::unique_ptr<ValueType[]> buffer{new ValueType[LeafNodeType::SIZE * nodes.size()]};
 
         const ValueType offset = ValueType(0.8 * voxelSize);
 
@@ -3401,6 +3434,9 @@ meshToVolume(
 ////////////////////////////////////////
 
 
+//{
+/// @cond OPENVDB_MESH_TO_VOLUME_INTERNAL
+
 /// @internal This overload is enabled only for grids with a scalar, floating-point ValueType.
 template<typename GridType, typename Interrupter>
 inline typename std::enable_if<std::is_floating_point<typename GridType::ValueType>::value,
@@ -3420,7 +3456,7 @@ doMeshConversion(
     }
 
     const size_t numPoints = points.size();
-    boost::scoped_array<Vec3s> indexSpacePoints(new Vec3s[numPoints]);
+    std::unique_ptr<Vec3s[]> indexSpacePoints{new Vec3s[numPoints]};
 
     // transform points to local grid index space
     tbb::parallel_for(tbb::blocked_range<size_t>(0, numPoints),
@@ -3434,20 +3470,22 @@ doMeshConversion(
         QuadAndTriangleDataAdapter<Vec3s, Vec3I>
             mesh(indexSpacePoints.get(), numPoints, &triangles[0], triangles.size());
 
-        return meshToVolume<GridType>(mesh, xform, exBandWidth, inBandWidth, conversionFlags);
+        return meshToVolume<GridType>(
+            interrupter, mesh, xform, exBandWidth, inBandWidth, conversionFlags);
 
     } else if (triangles.empty()) {
 
         QuadAndTriangleDataAdapter<Vec3s, Vec4I>
             mesh(indexSpacePoints.get(), numPoints, &quads[0], quads.size());
 
-        return meshToVolume<GridType>(mesh, xform, exBandWidth, inBandWidth, conversionFlags);
+        return meshToVolume<GridType>(
+            interrupter, mesh, xform, exBandWidth, inBandWidth, conversionFlags);
     }
 
     // pack primitives
 
     const size_t numPrimitives = triangles.size() + quads.size();
-    boost::scoped_array<Vec4I> prims(new Vec4I[numPrimitives]);
+    std::unique_ptr<Vec4I[]> prims{new Vec4I[numPrimitives]};
 
     for (size_t n = 0, N = triangles.size(); n < N; ++n) {
         const Vec3I& triangle = triangles[n];
@@ -3489,6 +3527,9 @@ doMeshConversion(
     OPENVDB_THROW(TypeError,
         "mesh to volume conversion is supported only for scalar floating-point grids");
 }
+
+/// @endcond
+//}
 
 
 ////////////////////////////////////////
@@ -3756,8 +3797,8 @@ MeshToVoxelEdgeData::GenEdgeData::join(GenEdgeData& rhs)
 {
     using RootNodeType = TreeType::RootNodeType;
     using NodeChainType = RootNodeType::NodeChainType;
-    static_assert(boost::mpl::size<NodeChainType>::value > 1, "expected tree height > 1");
-    using InternalNodeType = boost::mpl::at<NodeChainType, boost::mpl::int_<1> >::type;
+    static_assert(NodeChainType::Size > 1, "expected tree height > 1");
+    using InternalNodeType = typename NodeChainType::template Get<1>;
 
     Coord ijk;
     Index offset;
@@ -4195,7 +4236,3 @@ createLevelSetBox(const math::BBox<VecType>& bbox,
 } // namespace openvdb
 
 #endif // OPENVDB_TOOLS_MESH_TO_VOLUME_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 #ifndef OPENVDB_TREE_LEAF_NODE_BOOL_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_LEAF_NODE_BOOL_HAS_BEEN_INCLUDED
@@ -37,9 +10,11 @@
 #include <openvdb/util/NodeMasks.h>
 #include "LeafNode.h"
 #include "Iterator.h"
-#include <boost/shared_array.hpp>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <type_traits>
+#include <vector>
 
 
 namespace openvdb {
@@ -91,10 +66,8 @@ public:
     /// @param active  the active state to which to initialize all voxels
     explicit LeafNode(const Coord& xyz, bool value = false, bool active = false);
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// "Partial creation" constructor used during file input
     LeafNode(PartialCreate, const Coord& xyz, bool value = false, bool active = false);
-#endif
 
     /// Deep copy constructor
     LeafNode(const LeafNode&);
@@ -136,6 +109,8 @@ public:
     static Index getChildDim() { return 1; }
 
     static Index32 leafCount() { return 1; }
+    /// no-op
+    void nodeCount(std::vector<Index32> &) const {}
     static Index32 nonLeafCount() { return 0; }
 
     /// Return the number of active voxels.
@@ -151,8 +126,6 @@ public:
     bool isEmpty() const { return mValueMask.isOff(); }
     /// Return @c true if this node only contains active voxels.
     bool isDense() const { return mValueMask.isOn(); }
-
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// @brief Return @c true if memory for this node's buffer has been allocated.
     /// @details Currently, boolean leaf nodes don't support partial creation,
     /// so this always returns @c true.
@@ -161,7 +134,6 @@ public:
     /// @details Currently, boolean leaf nodes don't support partial creation,
     /// so this has no effect.
     bool allocate() { return true; }
-#endif
 
     /// Return the memory in bytes occupied by this node.
     Index64 memUsage() const;
@@ -306,6 +278,8 @@ public:
 
     /// Set all voxels within an axis-aligned box to the specified value and active state.
     void fill(const CoordBBox& bbox, bool value, bool active = true);
+    /// Set all voxels within an axis-aligned box to the specified value and active state.
+    void denseFill(const CoordBBox& bbox, bool val, bool on = true) { this->fill(bbox, val, on); }
 
     /// Set all voxels to the specified value but don't change their active states.
     void fill(const bool& value);
@@ -427,6 +401,30 @@ public:
     /// and are equal to within the given tolerance, and return the value in
     /// @a constValue and the active state in @a state.
     bool isConstant(bool& constValue, bool& state, bool tolerance = 0) const;
+
+    /// @brief Computes the median value of all the active and inactive voxels in this node.
+    /// @return The median value.
+    ///
+    /// @details The median for boolean values is defined as the mode
+    /// of the values, i.e. the value that occurs most often.
+    bool medianAll() const;
+
+    /// @brief Computes the median value of all the active voxels in this node.
+    /// @return The number of active voxels.
+    /// @param value Updated with the median value of all the active voxels.
+    ///
+    /// @details The median for boolean values is defined as the mode
+    /// of the values, i.e. the value that occurs most often.
+    Index medianOn(ValueType &value) const;
+
+    /// @brief Computes the median value of all the inactive voxels in this node.
+    /// @return The number of inactive voxels.
+    /// @param value Updated with the median value of all the inactive voxels.
+    ///
+    /// @details The median for boolean values is defined as the mode
+    /// of the values, i.e. the value that occurs most often.
+    Index medianOff(ValueType &value) const;
+
     /// Return @c true if all of this node's values are inactive.
     bool isInactive() const { return mValueMask.isOff(); }
 
@@ -449,7 +447,7 @@ public:
     ///
     /// @note This operation modifies only active states, not values.
     template<typename OtherType>
-    void topologyUnion(const LeafNode<OtherType, Log2Dim>& other);
+    void topologyUnion(const LeafNode<OtherType, Log2Dim>& other, const bool preserveTiles = false);
 
     /// @brief Intersect this node's set of active values with the active values
     /// of the other node, whose @c ValueType may be different. So a
@@ -775,7 +773,6 @@ LeafNode<bool, Log2Dim>::LeafNode(const Coord& xyz, bool value, bool active)
 }
 
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
 template<Index Log2Dim>
 inline
 LeafNode<bool, Log2Dim>::LeafNode(PartialCreate, const Coord& xyz, bool value, bool active)
@@ -787,7 +784,6 @@ LeafNode<bool, Log2Dim>::LeafNode(PartialCreate, const Coord& xyz, bool value, b
     /// Consider modifying the Buffer class to allow it to be constructed
     /// without allocating a bitmask.
 }
-#endif
 
 
 template<Index Log2Dim>
@@ -1006,7 +1002,7 @@ LeafNode<bool, Log2Dim>::readBuffers(std::istream& is, bool /*fromHalf*/)
 
         // Read in the buffer.
         // (Note: prior to the bool leaf optimization, buffers were always compressed.)
-        boost::shared_array<bool> buf(new bool[SIZE]);
+        std::unique_ptr<bool[]> buf{new bool[SIZE]};
         io::readData<bool>(is, buf.get(), SIZE, /*isCompressed=*/true);
 
         // Transfer values to mBuffer.
@@ -1076,6 +1072,35 @@ LeafNode<bool, Log2Dim>::isConstant(bool& constValue, bool& state, bool toleranc
     return true;
 }
 
+////////////////////////////////////////
+
+template<Index Log2Dim>
+inline bool
+LeafNode<bool, Log2Dim>::medianAll() const
+{
+    const Index countTrue = mBuffer.mData.countOn();
+    return countTrue > (NUM_VALUES >> 1);
+}
+
+template<Index Log2Dim>
+inline Index
+LeafNode<bool, Log2Dim>::medianOn(bool& state) const
+{
+    const NodeMaskType tmp = mBuffer.mData & mValueMask;//both true and active
+    const Index countTrueOn = tmp.countOn(), countOn = mValueMask.countOn();
+    state = countTrueOn > (NUM_VALUES >> 1);
+    return countOn;
+}
+
+template<Index Log2Dim>
+inline Index
+LeafNode<bool, Log2Dim>::medianOff(bool& state) const
+{
+    const NodeMaskType tmp = mBuffer.mData & (!mValueMask);//both true and inactive
+    const Index countTrueOff = tmp.countOn(), countOff = mValueMask.countOff();
+    state = countTrueOff > (NUM_VALUES >> 1);
+    return countOff;
+}
 
 ////////////////////////////////////////
 
@@ -1282,7 +1307,7 @@ LeafNode<bool, Log2Dim>::merge(bool tileValue, bool tileActive)
 template<Index Log2Dim>
 template<typename OtherType>
 inline void
-LeafNode<bool, Log2Dim>::topologyUnion(const LeafNode<OtherType, Log2Dim>& other)
+LeafNode<bool, Log2Dim>::topologyUnion(const LeafNode<OtherType, Log2Dim>& other, bool)
 {
     mValueMask |= other.valueMask();
 }
@@ -1355,11 +1380,15 @@ template<Index Log2Dim>
 inline void
 LeafNode<bool, Log2Dim>::fill(const CoordBBox& bbox, bool value, bool active)
 {
-    for (Int32 x = bbox.min().x(); x <= bbox.max().x(); ++x) {
+    auto clippedBBox = this->getNodeBoundingBox();
+    clippedBBox.intersect(bbox);
+    if (!clippedBBox) return;
+
+    for (Int32 x = clippedBBox.min().x(); x <= clippedBBox.max().x(); ++x) {
         const Index offsetX = (x & (DIM-1u))<<2*Log2Dim;
-        for (Int32 y = bbox.min().y(); y <= bbox.max().y(); ++y) {
+        for (Int32 y = clippedBBox.min().y(); y <= clippedBBox.max().y(); ++y) {
             const Index offsetXY = offsetX + ((y & (DIM-1u))<<  Log2Dim);
-            for (Int32 z = bbox.min().z(); z <= bbox.max().z(); ++z) {
+            for (Int32 z = clippedBBox.min().z(); z <= clippedBBox.max().z(); ++z) {
                 const Index offset = offsetXY + (z & (DIM-1u));
                 mValueMask.set(offset, active);
                 mBuffer.mData.set(offset, value);
@@ -1560,18 +1589,10 @@ LeafNode<bool, Log2Dim>::visitActiveBBox(BBoxOp& op) const
 {
     if (op.template descent<LEVEL>()) {
         for (ValueOnCIter i=this->cbeginValueOn(); i; ++i) {
-#ifdef _MSC_VER
-            op.operator()<LEVEL>(CoordBBox::createCube(i.getCoord(), 1));
-#else
             op.template operator()<LEVEL>(CoordBBox::createCube(i.getCoord(), 1));
-#endif
         }
     } else {
-#ifdef _MSC_VER
-        op.operator()<LEVEL>(this->getNodeBoundingBox());
-#else
         op.template operator()<LEVEL>(this->getNodeBoundingBox());
-#endif
     }
 }
 
@@ -1702,7 +1723,3 @@ LeafNode<bool, Log2Dim>::doVisit2(NodeT& self, OtherChildAllIterT& otherIter,
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_LEAF_NODE_BOOL_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

@@ -1,36 +1,7 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @file tree/Tree.h
-///
-/// @todo Optimize Tree::evalMinMax
 
 #ifndef OPENVDB_TREE_TREE_HAS_BEEN_INCLUDED
 #define OPENVDB_TREE_TREE_HAS_BEEN_INCLUDED
@@ -47,10 +18,10 @@
 #include "LeafNode.h"
 #include "TreeIterator.h"
 #include "ValueAccessor.h"
-#include <tbb/atomic.h>
 #include <tbb/concurrent_hash_map.h>
 #include <cstdint>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <vector>
 
@@ -89,7 +60,7 @@ public:
     virtual Metadata::Ptr getBackgroundValue() const { return Metadata::Ptr(); }
 
     /// @brief Return in @a bbox the axis-aligned bounding box of all
-    /// leaf nodes and active tiles.
+    /// active tiles and leaf nodes with active values.
     /// @details This is faster than calling evalActiveVoxelBoundingBox,
     /// which visits the individual active voxels, and hence
     /// evalLeafBoundingBox produces a less tight, i.e. approximate, bbox.
@@ -118,18 +89,14 @@ public:
 
     virtual void getIndexRange(CoordBBox& bbox) const = 0;
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// @brief Replace with background tiles any nodes whose voxel buffers
     /// have not yet been allocated.
     /// @details Typically, unallocated nodes are leaf nodes whose voxel buffers
     /// are not yet resident in memory because delayed loading is in effect.
     /// @sa readNonresidentBuffers, io::File::open
     virtual void clipUnallocatedNodes() = 0;
-#ifndef OPENVDB_3_ABI_COMPATIBLE
     /// Return the total number of unallocated leaf nodes residing in this tree.
     virtual Index32 unallocatedLeafCount() const = 0;
-#endif
-#endif
 
 
     //
@@ -141,6 +108,12 @@ public:
     virtual Index treeDepth() const = 0;
     /// Return the number of leaf nodes.
     virtual Index32 leafCount() const = 0;
+#if OPENVDB_ABI_VERSION_NUMBER >= 7
+    /// Return a vector with node counts. The number of nodes of type NodeType
+    /// is given as element NodeType::LEVEL in the return vector. Thus, the size
+    /// of this vector corresponds to the height (or depth) of this tree.
+    virtual std::vector<Index32> nodeCount() const = 0;
+#endif
     /// Return the number of non-leaf nodes.
     virtual Index32 nonLeafCount() const = 0;
     /// Return the number of active voxels stored in leaf nodes.
@@ -151,10 +124,8 @@ public:
     virtual Index64 activeVoxelCount() const = 0;
     /// Return the number of inactive voxels within the bounding box of all active voxels.
     virtual Index64 inactiveVoxelCount() const = 0;
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// Return the total number of active tiles.
     virtual Index64 activeTileCount() const = 0;
-#endif
 
     /// Return the total amount of memory in bytes occupied by this tree.
     virtual Index64 memUsage() const { return 0; }
@@ -174,7 +145,6 @@ public:
 
     /// Read all data buffers for this tree.
     virtual void readBuffers(std::istream&, bool saveFloatAsHalf = false) = 0;
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// Read all of this tree's data buffers that intersect the given bounding box.
     virtual void readBuffers(std::istream&, const CoordBBox&, bool saveFloatAsHalf = false) = 0;
     /// @brief Read all of this tree's data buffers that are not yet resident in memory
@@ -183,7 +153,6 @@ public:
     /// disconnects the tree from the file.
     /// @sa clipUnallocatedNodes, io::File::open, io::MappedFile
     virtual void readNonresidentBuffers() const = 0;
-#endif
     /// Write out all the data buffers for this tree.
     virtual void writeBuffers(std::ostream&, bool saveFloatAsHalf = false) const = 0;
 
@@ -343,7 +312,6 @@ public:
     void writeTopology(std::ostream&, bool saveFloatAsHalf = false) const override;
     /// Read all data buffers for this tree.
     void readBuffers(std::istream&, bool saveFloatAsHalf = false) override;
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// Read all of this tree's data buffers that intersect the given bounding box.
     void readBuffers(std::istream&, const CoordBBox&, bool saveFloatAsHalf = false) override;
     /// @brief Read all of this tree's data buffers that are not yet resident in memory
@@ -352,7 +320,6 @@ public:
     /// disconnects the tree from the file.
     /// @sa clipUnallocatedNodes, io::File::open, io::MappedFile
     void readNonresidentBuffers() const override;
-#endif
     /// Write out all data buffers for this tree.
     void writeBuffers(std::ostream&, bool saveFloatAsHalf = false) const override;
 
@@ -368,6 +335,17 @@ public:
     Index treeDepth() const override { return DEPTH; }
     /// Return the number of leaf nodes.
     Index32 leafCount() const override { return mRoot.leafCount(); }
+#if OPENVDB_ABI_VERSION_NUMBER >= 7
+    /// Return a vector with node counts. The number of nodes of type NodeType
+    /// is given as element NodeType::LEVEL in the return vector. Thus, the size
+    /// of this vector corresponds to the height (or depth) of this tree.
+    std::vector<Index32> nodeCount() const override
+    {
+        std::vector<Index32> vec(DEPTH, 0);
+        mRoot.nodeCount( vec );
+        return vec;// Named Return Value Optimization
+    }
+#endif
     /// Return the number of non-leaf nodes.
     Index32 nonLeafCount() const override { return mRoot.nonLeafCount(); }
     /// Return the number of active voxels stored in leaf nodes.
@@ -475,19 +453,15 @@ public:
 
     /// Set all voxels that lie outside the given axis-aligned box to the background.
     void clip(const CoordBBox&);
-
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     /// @brief Replace with background tiles any nodes whose voxel buffers
     /// have not yet been allocated.
     /// @details Typically, unallocated nodes are leaf nodes whose voxel buffers
     /// are not yet resident in memory because delayed loading is in effect.
     /// @sa readNonresidentBuffers, io::File::open
     void clipUnallocatedNodes() override;
-#ifndef OPENVDB_3_ABI_COMPATIBLE
+
     /// Return the total number of unallocated leaf nodes residing in this tree.
     Index32 unallocatedLeafCount() const override;
-#endif
-#endif
 
     //@{
     /// @brief Set all voxels within a given axis-aligned box to a constant value.
@@ -505,16 +479,24 @@ public:
     }
     //@}
 
-    /// @brief Set all voxels within a given axis-aligned box to a constant value.
+    /// @brief Set all voxels within a given axis-aligned box to a constant value
+    /// and ensure that those voxels are all represented at the leaf level.
     /// @param bbox    inclusive coordinates of opposite corners of an axis-aligned box.
     /// @param value   the value to which to set voxels within the box.
     /// @param active  if true, mark voxels within the box as active,
     ///                otherwise mark them as inactive.
-    ///
-    /// @note This operation generates a dense representation of the
-    ///       filled box. This implies that active tiles are voxelized, i.e. only active
-    ///       voxels are generated from this fill operation.
+    /// @sa voxelizeActiveTiles()
     void denseFill(const CoordBBox& bbox, const ValueType& value, bool active = true);
+
+    /// @brief Densify active tiles, i.e., replace them with leaf-level active voxels.
+    ///
+    /// @param threaded if true, this operation is multi-threaded (over the internal nodes).
+    ///
+    /// @warning This method can explode the tree's memory footprint, especially if it
+    /// contains active tiles at the upper levels (in particular the root level)!
+    ///
+    /// @sa denseFill()
+    void voxelizeActiveTiles(bool threaded = true);
 
     /// @brief Reduce the memory footprint of this tree by replacing with tiles
     /// any nodes whose values are all the same (optionally to within a tolerance)
@@ -526,15 +508,12 @@ public:
         mRoot.prune(tolerance);
     }
 
-    //@{
     /// @brief Add the given leaf node to this tree, creating a new branch if necessary.
     /// If a leaf node with the same origin already exists, replace it.
     ///
     /// @warning Ownership of the leaf is transferred to the tree so
     /// the client code should not attempt to delete the leaf pointer!
     void addLeaf(LeafNodeType* leaf) { assert(leaf); mRoot.addLeaf(leaf); }
-    OPENVDB_DEPRECATED void addLeaf(LeafNodeType& leaf) { mRoot.addLeaf(&leaf); }
-    //@}
 
     /// @brief Add a tile containing voxel (x, y, z) at the specified tree level,
     /// creating a new branch if necessary.  Delete any existing lower-level nodes
@@ -683,14 +662,6 @@ public:
     /// Min and max are both inclusive.
     void getIndexRange(CoordBBox& bbox) const override { mRoot.getIndexRange(bbox); }
 
-    /// @brief Densify active tiles, i.e., replace them with leaf-level active voxels.
-    ///
-    /// @param threaded if true, this operation is multi-threaded (over the internal nodes).
-    ///
-    /// @warning This method can explode the tree's memory footprint, especially if it
-    /// contains active tiles at the upper levels, e.g. root level!
-    void voxelizeActiveTiles(bool threaded = true);
-
     /// @brief Efficiently merge another tree into this tree using one of several schemes.
     /// @details This operation is primarily intended to combine trees that are mostly
     /// non-overlapping (for example, intermediate trees from computations that are
@@ -713,8 +684,11 @@ public:
     /// Specifically, active tiles and voxels in this tree are not changed, and
     /// tiles or voxels that were inactive in this tree but active in the other tree
     /// are marked as active in this tree but left with their original values.
+    ///
+    /// @note If preserveTiles is true, any active tile in this topology
+    /// will not be densified by overlapping child topology.
     template<typename OtherRootNodeType>
-    void topologyUnion(const Tree<OtherRootNodeType>& other);
+    void topologyUnion(const Tree<OtherRootNodeType>& other, const bool preserveTiles = false);
 
     /// @brief Intersects this tree's set of active values with the active values
     /// of the other tree, whose @c ValueType may be different.
@@ -958,176 +932,36 @@ public:
         bool prune = false);
 #endif
 
-    /// @brief Use sparse traversal to call the given functor with bounding box
-    /// information for all active tiles and leaf nodes or active voxels in the tree.
-    ///
-    /// @note The bounding boxes are guaranteed to be non-overlapping.
-    /// @param op  a functor with a templated call operator of the form
-    ///     <tt>template<Index LEVEL> void operator()(const CoordBBox& bbox)</tt>,
-    ///     where <tt>bbox</tt> is the bounding box of either an active tile
-    ///     (if @c LEVEL > 0), a leaf node or an active voxel.
-    ///     The functor must also provide a templated method of the form
-    ///     <tt>template<Index LEVEL> bool descent()</tt> that returns @c false
-    ///     if bounding boxes below the specified tree level are not to be visited.
-    ///     In such cases of early tree termination, a bounding box is instead
-    ///     derived from each terminating child node.
-    ///
-    /// @par Example:
-    ///     Visit and process all active tiles and leaf nodes in a tree, but don't
-    ///     descend to the active voxels.  The smallest bounding boxes that will be
-    ///     visited are those of leaf nodes or level-1 active tiles.
-    /// @code
-    /// {
-    ///     struct ProcessTilesAndLeafNodes {
-    ///         // Descend to leaf nodes, but no further.
-    ///         template<Index LEVEL> inline bool descent() { return LEVEL > 0; }
-    ///         // Use this version to descend to voxels:
-    ///         //template<Index LEVEL> inline bool descent() { return true; }
-    ///
-    ///         template<Index LEVEL>
-    ///         inline void operator()(const CoordBBox &bbox) {
-    ///             if (LEVEL > 0) {
-    ///                 // code to process an active tile
-    ///             } else {
-    ///                 // code to process a leaf node
-    ///             }
-    ///         }
-    ///     };
-    ///     ProcessTilesAndLeafNodes op;
-    ///     aTree.visitActiveBBox(op);
-    /// }
-    /// @endcode
-    /// @see openvdb/unittest/TestTree.cc for another example.
-    template<typename BBoxOp> void visitActiveBBox(BBoxOp& op) const { mRoot.visitActiveBBox(op); }
+    template<typename BBoxOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
+    void visitActiveBBox(BBoxOp& op) const { mRoot.visitActiveBBox(op); }
 
-    /// Traverse this tree in depth-first order, and at each node call the given functor
-    /// with a @c DenseIterator (see Iterator.h) that points to either a child node or a
-    /// tile value.  If the iterator points to a child node and the functor returns true,
-    /// do not descend to the child node; instead, continue the traversal at the next
-    /// iterator position.
-    /// @param op  a functor of the form <tt>template<typename IterT> bool op(IterT&)</tt>,
-    ///            where @c IterT is either a RootNode::ChildAllIter,
-    ///            an InternalNode::ChildAllIter or a LeafNode::ChildAllIter
-    ///
-    /// @note There is no iterator that points to a RootNode, so to visit the root node,
-    /// retrieve the @c parent() of a RootNode::ChildAllIter.
-    ///
-    /// @par Example:
-    ///     Print information about the nodes and tiles of a tree, but not individual voxels.
-    /// @code
-    /// namespace {
-    ///     template<typename TreeT>
-    ///     struct PrintTreeVisitor
-    ///     {
-    ///         using RootT = typename TreeT::RootNodeType;
-    ///         bool visitedRoot;
-    ///
-    ///         PrintTreeVisitor(): visitedRoot(false) {}
-    ///
-    ///         template<typename IterT>
-    ///         inline bool operator()(IterT& iter)
-    ///         {
-    ///             if (!visitedRoot && iter.parent().getLevel() == RootT::LEVEL) {
-    ///                 visitedRoot = true;
-    ///                 std::cout << "Level-" << RootT::LEVEL << " node" << std::endl;
-    ///             }
-    ///             typename IterT::NonConstValueType value;
-    ///             typename IterT::ChildNodeType* child = iter.probeChild(value);
-    ///             if (child == nullptr) {
-    ///                 std::cout << "Tile with value " << value << std::endl;
-    ///                 return true; // no child to visit, so stop descending
-    ///             }
-    ///             std::cout << "Level-" << child->getLevel() << " node" << std::endl;
-    ///             return (child->getLevel() == 0); // don't visit leaf nodes
-    ///         }
-    ///
-    ///         // The generic method, above, calls iter.probeChild(), which is not defined
-    ///         // for LeafNode::ChildAllIter.  These overloads ensure that the generic
-    ///         // method template doesn't get instantiated for LeafNode iterators.
-    ///         bool operator()(typename TreeT::LeafNodeType::ChildAllIter&) { return true; }
-    ///         bool operator()(typename TreeT::LeafNodeType::ChildAllCIter&) { return true; }
-    ///     };
-    /// }
-    /// {
-    ///     PrintTreeVisitor visitor;
-    ///     tree.visit(visitor);
-    /// }
-    /// @endcode
-    template<typename VisitorOp> void visit(VisitorOp& op);
-    template<typename VisitorOp> void visit(const VisitorOp& op);
+    template<typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
+    void visit(VisitorOp& op);
+    template<typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
+    void visit(const VisitorOp& op);
 
-    /// Like visit(), but using @c const iterators, i.e., with
-    /// @param op  a functor of the form <tt>template<typename IterT> bool op(IterT&)</tt>,
-    ///            where @c IterT is either a RootNode::ChildAllCIter,
-    ///            an InternalNode::ChildAllCIter or a LeafNode::ChildAllCIter
-    template<typename VisitorOp> void visit(VisitorOp& op) const;
-    template<typename VisitorOp> void visit(const VisitorOp& op) const;
+    template<typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
+    void visit(VisitorOp& op) const;
+    template<typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
+    void visit(const VisitorOp& op) const;
 
-    /// Traverse this tree and another tree in depth-first order, and for corresponding
-    /// subregions of index space call the given functor with two @c DenseIterators
-    /// (see Iterator.h), each of which points to either a child node or a tile value
-    /// of this tree and the other tree.  If the A iterator points to a child node
-    /// and the functor returns a nonzero value with bit 0 set (e.g., 1), do not descend
-    /// to the child node; instead, continue the traversal at the next A iterator position.
-    /// Similarly, if the B iterator points to a child node and the functor returns a value
-    /// with bit 1 set (e.g., 2), continue the traversal at the next B iterator position.
-    /// @note The other tree must have the same index space and fan-out factors as
-    /// this tree, but it may have a different @c ValueType and a different topology.
-    /// @param other  a tree of the same type as this tree
-    /// @param op     a functor of the form
-    ///               <tt>template<class AIterT, class BIterT> int op(AIterT&, BIterT&)</tt>,
-    ///               where @c AIterT and @c BIterT are any combination of a
-    ///               RootNode::ChildAllIter, an InternalNode::ChildAllIter or a
-    ///               LeafNode::ChildAllIter with an @c OtherTreeType::RootNode::ChildAllIter,
-    ///               an @c OtherTreeType::InternalNode::ChildAllIter
-    ///               or an @c OtherTreeType::LeafNode::ChildAllIter
-    ///
-    /// @par Example:
-    ///     Given two trees of the same type, @c aTree and @c bTree, replace leaf nodes of
-    ///     @c aTree with corresponding leaf nodes of @c bTree, leaving @c bTree partially empty.
-    /// @code
-    /// namespace {
-    ///     template<typename AIterT, typename BIterT>
-    ///     inline int stealLeafNodes(AIterT& aIter, BIterT& bIter)
-    ///     {
-    ///         typename AIterT::NonConstValueType aValue;
-    ///         typename AIterT::ChildNodeType* aChild = aIter.probeChild(aValue);
-    ///         typename BIterT::NonConstValueType bValue;
-    ///         typename BIterT::ChildNodeType* bChild = bIter.probeChild(bValue);
-    ///
-    ///         const Index aLevel = aChild->getLevel(), bLevel = bChild->getLevel();
-    ///         if (aChild && bChild && aLevel == 0 && bLevel == 0) { // both are leaf nodes
-    ///             aIter.setChild(bChild); // give B's child to A
-    ///             bIter.setValue(bValue); // replace B's child with a constant tile value
-    ///         }
-    ///         // Don't iterate over leaf node voxels of either A or B.
-    ///         int skipBranch = (aLevel == 0) ? 1 : 0;
-    ///         if (bLevel == 0) skipBranch = skipBranch | 2;
-    ///         return skipBranch;
-    ///     }
-    /// }
-    /// {
-    ///     aTree.visit2(bTree, stealLeafNodes);
-    /// }
-    /// @endcode
     template<typename OtherTreeType, typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
     void visit2(OtherTreeType& other, VisitorOp& op);
     template<typename OtherTreeType, typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
     void visit2(OtherTreeType& other, const VisitorOp& op);
 
-    /// Like visit2(), but using @c const iterators, i.e., with
-    /// @param other  a tree of the same type as this tree
-    /// @param op     a functor of the form
-    ///               <tt>template<class AIterT, class BIterT> int op(AIterT&, BIterT&)</tt>,
-    ///               where @c AIterT and @c BIterT are any combination of a
-    ///               RootNode::ChildAllCIter, an InternalNode::ChildAllCIter
-    ///               or a LeafNode::ChildAllCIter with an
-    ///               @c OtherTreeType::RootNode::ChildAllCIter,
-    ///               an @c OtherTreeType::InternalNode::ChildAllCIter
-    ///               or an @c OtherTreeType::LeafNode::ChildAllCIter
     template<typename OtherTreeType, typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
     void visit2(OtherTreeType& other, VisitorOp& op) const;
     template<typename OtherTreeType, typename VisitorOp>
+    [[deprecated("Use DynamicNodeManager instead")]]
     void visit2(OtherTreeType& other, const VisitorOp& op) const;
 
 
@@ -1244,11 +1078,11 @@ protected:
     mutable AccessorRegistry mAccessorRegistry;
     mutable ConstAccessorRegistry mConstAccessorRegistry;
 
-    static tbb::atomic<const Name*> sTreeTypeName;
+    static std::unique_ptr<const Name> sTreeTypeName;
 }; // end of Tree class
 
 template<typename _RootNodeType>
-tbb::atomic<const Name*> Tree<_RootNodeType>::sTreeTypeName;
+std::unique_ptr<const Name> Tree<_RootNodeType>::sTreeTypeName;
 
 
 /// @brief Tree3<T, N1, N2>::Type is the type of a three-level tree
@@ -1306,9 +1140,7 @@ TreeBase::print(std::ostream& os, int /*verboseLevel*/) const
 {
     os << "    Tree Type: " << type()
        << "    Active Voxel Count: " << activeVoxelCount() << std::endl
-#ifndef OPENVDB_2_ABI_COMPATIBLE
        << "    Active tile Count: " << activeTileCount() << std::endl
-#endif
        << "    Inactive Voxel Count: " << inactiveVoxelCount() << std::endl
        << "    Leaf Node Count: " << leafCount() << std::endl
        << "    Non-leaf Node Count: " << nonLeafCount() << std::endl;
@@ -1452,8 +1284,6 @@ Tree<RootNodeType>::readBuffers(std::istream &is, bool saveFloatAsHalf)
 }
 
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
-
 template<typename RootNodeType>
 inline void
 Tree<RootNodeType>::readBuffers(std::istream &is, const CoordBBox& bbox, bool saveFloatAsHalf)
@@ -1472,8 +1302,6 @@ Tree<RootNodeType>::readNonresidentBuffers() const
         it->getValue(Index(0));
     }
 }
-
-#endif // !OPENVDB_2_ABI_COMPATIBLE
 
 
 template<typename RootNodeType>
@@ -1785,7 +1613,6 @@ Tree<RootNodeType>::clip(const CoordBBox& bbox)
 }
 
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
 template<typename RootNodeType>
 inline void
 Tree<RootNodeType>::clipUnallocatedNodes()
@@ -1800,7 +1627,6 @@ Tree<RootNodeType>::clipUnallocatedNodes()
     }
 }
 
-#ifndef OPENVDB_3_ABI_COMPATIBLE
 template<typename RootNodeType>
 inline Index32
 Tree<RootNodeType>::unallocatedLeafCount() const
@@ -1809,8 +1635,15 @@ Tree<RootNodeType>::unallocatedLeafCount() const
     for (auto it = this->cbeginLeaf(); it; ++it) if (!it->isAllocated()) ++sum;
     return sum;
 }
-#endif
-#endif
+
+
+template<typename RootNodeType>
+inline void
+Tree<RootNodeType>::sparseFill(const CoordBBox& bbox, const ValueType& value, bool active)
+{
+    this->clearAllAccessors();
+    return mRoot.sparseFill(bbox, value, active);
+}
 
 
 template<typename RootNodeType>
@@ -1821,12 +1654,13 @@ Tree<RootNodeType>::denseFill(const CoordBBox& bbox, const ValueType& value, boo
     return mRoot.denseFill(bbox, value, active);
 }
 
+
 template<typename RootNodeType>
 inline void
-Tree<RootNodeType>::sparseFill(const CoordBBox& bbox, const ValueType& value, bool active)
+Tree<RootNodeType>::voxelizeActiveTiles(bool threaded)
 {
     this->clearAllAccessors();
-    return mRoot.sparseFill(bbox, value, active);
+    mRoot.voxelizeActiveTiles(threaded);
 }
 
 
@@ -1852,15 +1686,6 @@ Tree<RootNodeType>::getBackgroundValue() const
 
 template<typename RootNodeType>
 inline void
-Tree<RootNodeType>::voxelizeActiveTiles(bool threaded)
-{
-    this->clearAllAccessors();
-    mRoot.voxelizeActiveTiles(threaded);
-}
-
-
-template<typename RootNodeType>
-inline void
 Tree<RootNodeType>::merge(Tree& other, MergePolicy policy)
 {
     this->clearAllAccessors();
@@ -1879,10 +1704,10 @@ Tree<RootNodeType>::merge(Tree& other, MergePolicy policy)
 template<typename RootNodeType>
 template<typename OtherRootNodeType>
 inline void
-Tree<RootNodeType>::topologyUnion(const Tree<OtherRootNodeType>& other)
+Tree<RootNodeType>::topologyUnion(const Tree<OtherRootNodeType>& other, const bool preserveTiles)
 {
     this->clearAllAccessors();
-    mRoot.topologyUnion(other.root());
+    mRoot.topologyUnion(other.root(), preserveTiles);
 }
 
 template<typename RootNodeType>
@@ -2121,7 +1946,9 @@ template<typename RootNodeType>
 inline const Name&
 Tree<RootNodeType>::treeType()
 {
-    if (sTreeTypeName == nullptr) {
+    static std::once_flag once;
+    std::call_once(once, []()
+    {
         std::vector<Index> dims;
         Tree::getNodeLog2Dims(dims);
         std::ostringstream ostr;
@@ -2129,9 +1956,8 @@ Tree<RootNodeType>::treeType()
         for (size_t i = 1, N = dims.size(); i < N; ++i) { // start from 1 to skip the RootNode
             ostr << "_" << dims[i];
         }
-        Name* s = new Name(ostr.str());
-        if (sTreeTypeName.compare_and_swap(s, nullptr) != nullptr) delete s;
-    }
+        sTreeTypeName.reset(new Name(ostr.str()));
+    });
     return *sTreeTypeName;
 }
 
@@ -2169,7 +1995,7 @@ Tree<RootNodeType>::evalLeafBoundingBox(CoordBBox& bbox) const
 
     mRoot.evalActiveBoundingBox(bbox, false);
 
-    return true;// not empty
+    return !bbox.empty();
 }
 
 template<typename RootNodeType>
@@ -2182,7 +2008,7 @@ Tree<RootNodeType>::evalActiveVoxelBoundingBox(CoordBBox& bbox) const
 
     mRoot.evalActiveBoundingBox(bbox, true);
 
-    return true;// not empty
+    return !bbox.empty();
 }
 
 
@@ -2212,13 +2038,14 @@ template<typename RootNodeType>
 inline void
 Tree<RootNodeType>::evalMinMax(ValueType& minVal, ValueType& maxVal) const
 {
+    /// @todo optimize
     minVal = maxVal = zeroVal<ValueType>();
     if (ValueOnCIter iter = this->cbeginValueOn()) {
         minVal = maxVal = *iter;
         for (++iter; iter; ++iter) {
             const ValueType& val = *iter;
-            if (val < minVal) minVal = val;
-            if (val > maxVal) maxVal = val;
+            if (math::cwiseLessThan(val, minVal)) minVal = val;
+            if (math::cwiseGreaterThan(val, maxVal)) maxVal = val;
         }
     }
 }
@@ -2249,7 +2076,7 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
     OnExit restorePrecision(os);
 
     std::vector<Index> dims;
-    Tree::getNodeLog2Dims(dims);
+    Tree::getNodeLog2Dims(dims);// leaf is the last element
 
     os << "Information about Tree:\n"
         << "  Type: " << this->type() << "\n";
@@ -2263,7 +2090,7 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
             for (size_t i = 1, N = dims.size() - 1; i < N; ++i) {
                 os << ", Internal(" << (1 << dims[i]) << "^3)";
             }
-            os << ", Leaf(" << (1 << *dims.rbegin()) << "^3)\n";
+            os << ", Leaf(" << (1 << dims.back()) << "^3)\n";
         }
         os << "  Background value: " << mRoot.background() << "\n";
         return;
@@ -2275,23 +2102,34 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
     if (verboseLevel > 3) {
         // This forces loading of all non-resident nodes.
         this->evalMinMax(minVal, maxVal);
-    }    
+    }
 
+#if OPENVDB_ABI_VERSION_NUMBER >= 7
+    const auto nodeCount = this->nodeCount();//fast
+    const Index32 leafCount = nodeCount.front();// leaf is the first element
+#else
     std::vector<Index64> nodeCount(dims.size());
-    for (NodeCIter it = cbeginNode(); it; ++it) ++(nodeCount[it.getDepth()]);
+    for (NodeCIter it = cbeginNode(); it; ++it) ++(nodeCount[it.getDepth()]);//slow
+    const Index64 leafCount = *nodeCount.rbegin();// leaf is the last element
+#endif
+    assert(dims.size() == nodeCount.size());
 
     Index64 totalNodeCount = 0;
     for (size_t i = 0; i < nodeCount.size(); ++i) totalNodeCount += nodeCount[i];
 
     // Print node types, counts and sizes.
     os << "    Root(1 x " << mRoot.getTableSize() << ")";
-    if (dims.size() > 1) {
+    if (dims.size() >= 2) {
         for (size_t i = 1, N = dims.size() - 1; i < N; ++i) {
+#if OPENVDB_ABI_VERSION_NUMBER >= 7
+            os << ", Internal(" << util::formattedInt(nodeCount[N - i]);
+#else
             os << ", Internal(" << util::formattedInt(nodeCount[i]);
+#endif
             os << " x " << (1 << dims[i]) << "^3)";
         }
-        os << ", Leaf(" << util::formattedInt(*nodeCount.rbegin());
-        os << " x " << (1 << *dims.rbegin()) << "^3)\n";
+        os << ", Leaf(" << util::formattedInt(leafCount);
+        os << " x " << (1 << dims.back()) << "^3)\n";
     }
     os << "  Background value: " << mRoot.background() << "\n";
 
@@ -2303,7 +2141,6 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
     }
 
     const Index64
-        leafCount = *nodeCount.rbegin(),
         numActiveVoxels = this->activeVoxelCount(),
         numActiveLeafVoxels = this->activeLeafVoxelCount(),
         numActiveTiles = this->activeTileCount();
@@ -2332,7 +2169,6 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
             os << "  Average leaf node fill ratio:  " << fillRatio << "%\n";
         }
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
         if (verboseLevel > 2) {
             Index64 sum = 0;// count the number of unallocated leaf nodes
             for (auto it = this->cbeginLeaf(); it; ++it) if (!it->isAllocated()) ++sum;
@@ -2340,7 +2176,6 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
                << util::formattedInt(sum) << " ("
                << (100.0 * double(sum) / double(totalNodeCount)) << "%)\n";
         }
-#endif
     } else {
         os << "  Tree is empty!\n";
     }
@@ -2373,7 +2208,3 @@ Tree<RootNodeType>::print(std::ostream& os, int verboseLevel) const
 } // namespace openvdb
 
 #endif // OPENVDB_TREE_TREE_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )

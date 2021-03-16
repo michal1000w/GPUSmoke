@@ -1,32 +1,5 @@
-///////////////////////////////////////////////////////////////////////////
-//
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-//
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
-//
-// Redistributions of source code must retain the above copyright
-// and license notice and the following restrictions and disclaimer.
-//
-// *     Neither the name of DreamWorks Animation nor the names of
-// its contributors may be used to endorse or promote products derived
-// from this software without specific prior written permission.
-//
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-// "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-// LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
-// A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
-// OWNER OR CONTRIBUTORS BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
-// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-// LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
-// DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
-// THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-// (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-// OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// IN NO EVENT SHALL THE COPYRIGHT HOLDERS' AND CONTRIBUTORS' AGGREGATE
-// LIABILITY FOR ALL CLAIMS REGARDLESS OF THEIR BASIS EXCEED US$250.00.
-//
-///////////////////////////////////////////////////////////////////////////
+// Copyright Contributors to the OpenVDB Project
+// SPDX-License-Identifier: MPL-2.0
 
 /// @author Dan Bailey
 ///
@@ -39,6 +12,7 @@
 #ifndef OPENVDB_POINTS_POINT_DATA_GRID_HAS_BEEN_INCLUDED
 #define OPENVDB_POINTS_POINT_DATA_GRID_HAS_BEEN_INCLUDED
 
+#include <openvdb/version.h>
 #include <openvdb/Grid.h>
 #include <openvdb/tree/Tree.h>
 #include <openvdb/tree/LeafNode.h>
@@ -48,9 +22,13 @@
 #include "AttributeGroup.h"
 #include "AttributeSet.h"
 #include "StreamCompression.h"
+#include <cstring> // std::memcpy
+#include <iostream>
+#include <limits>
+#include <memory>
 #include <type_traits> // std::is_same
 #include <utility> // std::pair, std::make_pair
-
+#include <vector>
 
 class TestPointDataLeaf;
 
@@ -237,6 +215,17 @@ inline void
 setStreamingMode(PointDataTreeT& tree, bool on = true);
 
 
+/// @brief  Sequentially pre-fetch all delayed-load voxel and attribute data from disk in order
+///         to accelerate subsequent random access.
+///
+/// @param  tree                the PointDataTree.
+/// @param  position            if enabled, prefetch the position attribute (default is on)
+/// @param  otherAttributes     if enabled, prefetch all other attributes (default is on)
+template <typename PointDataTreeT>
+inline void
+prefetch(PointDataTreeT& tree, bool position = true, bool otherAttributes = true);
+
+
 ////////////////////////////////////////
 
 
@@ -316,22 +305,25 @@ public:
         : BaseLeaf(other, zeroVal<T>(), zeroVal<T>(), TopologyCopy())
         , mAttributeSet(new AttributeSet) { }
 
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     PointDataLeafNode(PartialCreate, const Coord& coords,
         const T& value = zeroVal<T>(), bool active = false)
         : BaseLeaf(PartialCreate(), coords, value, active)
         , mAttributeSet(new AttributeSet) { assertNonModifiableUnlessZero(value); }
-#endif
 
 public:
 
     /// Retrieve the attribute set.
     const AttributeSet& attributeSet() const { return *mAttributeSet; }
 
+    /// @brief Steal the attribute set, a new, empty attribute set is inserted in it's place.
+    AttributeSet::UniquePtr stealAttributeSet();
+
     /// @brief Create a new attribute set. Existing attributes will be removed.
-    void initializeAttributes(const Descriptor::Ptr& descriptor, const Index arrayLength);
+    void initializeAttributes(const Descriptor::Ptr& descriptor, const Index arrayLength,
+        const AttributeArray::ScopedRegistryLock* lock = nullptr);
     /// @brief Clear the attribute set.
-    void clearAttributes(const bool updateValueMask = true);
+    void clearAttributes(const bool updateValueMask = true,
+        const AttributeArray::ScopedRegistryLock* lock = nullptr);
 
     /// @brief Returns @c true if an attribute with this index exists.
     /// @param pos Index of the attribute
@@ -346,9 +338,13 @@ public:
     /// @param pos Index of the new attribute in the descriptor replacement.
     /// @param strideOrTotalSize Stride of the attribute array (if constantStride), total size otherwise
     /// @param constantStride if @c false, stride is interpreted as total size of the array
+    /// @param metadata optional default value metadata
+    /// @param lock an optional scoped registry lock to avoid contention
     AttributeArray::Ptr appendAttribute(const Descriptor& expected, Descriptor::Ptr& replacement,
                                         const size_t pos, const Index strideOrTotalSize = 1,
-                                        const bool constantStride = true);
+                                        const bool constantStride = true,
+                                        const Metadata* metadata = nullptr,
+                                        const AttributeArray::ScopedRegistryLock* lock = nullptr);
 
     /// @brief Drop list of attributes.
     /// @param pos vector of attribute indices to drop
@@ -387,12 +383,18 @@ public:
     void validateOffsets() const;
 
     /// @brief Read-write attribute array reference from index
+    /// @details Attribute arrays can be shared across leaf nodes, so non-const
+    /// access will deep-copy the array to make it unique. Always prefer
+    /// accessing const arrays where possible to eliminate this copying.
     /// {
     AttributeArray& attributeArray(const size_t pos);
     const AttributeArray& attributeArray(const size_t pos) const;
     const AttributeArray& constAttributeArray(const size_t pos) const;
     /// }
     /// @brief Read-write attribute array reference from name
+    /// @details Attribute arrays can be shared across leaf nodes, so non-const
+    /// access will deep-copy the array to make it unique. Always prefer
+    /// accessing const arrays where possible to eliminate this copying.
     /// {
     AttributeArray& attributeArray(const Name& attributeName);
     const AttributeArray& attributeArray(const Name& attributeName) const;
@@ -589,7 +591,7 @@ public:
     using ValueAll  = typename BaseLeaf::ValueAll;
 
 private:
-    std::unique_ptr<AttributeSet> mAttributeSet;
+    AttributeSet::UniquePtr mAttributeSet;
     uint16_t mVoxelBufferSize = 0;
 
 protected:
@@ -615,32 +617,6 @@ public:
 
 public:
 
-#ifdef _MSC_VER
-    using ValueOnIter = typename BaseLeaf::ValueIter<
-        MaskOnIterator, PointDataLeafNode, const ValueType, ValueOn>;
-    using ValueOnCIter = typename BaseLeaf::ValueIter<
-        MaskOnIterator, const PointDataLeafNode, const ValueType, ValueOn>;
-    using ValueOffIter = typename BaseLeaf::ValueIter<
-        MaskOffIterator, PointDataLeafNode, const ValueType, ValueOff>;
-    using ValueOffCIter = typename BaseLeaf::ValueIter<
-        MaskOffIterator,const PointDataLeafNode,const ValueType,ValueOff>;
-    using ValueAllIter = typename BaseLeaf::ValueIter<
-        MaskDenseIterator, PointDataLeafNode, const ValueType, ValueAll>;
-    using ValueAllCIter = typename BaseLeaf::ValueIter<
-        MaskDenseIterator,const PointDataLeafNode,const ValueType,ValueAll>;
-    using ChildOnIter = typename BaseLeaf::ChildIter<
-        MaskOnIterator, PointDataLeafNode, ChildOn>;
-    using ChildOnCIter = typename BaseLeaf::ChildIter<
-        MaskOnIterator, const PointDataLeafNode, ChildOn>;
-    using ChildOffIter = typename BaseLeaf::ChildIter<
-        MaskOffIterator, PointDataLeafNode, ChildOff>;
-    using ChildOffCIter = typename BaseLeaf::ChildIter<
-        MaskOffIterator, const PointDataLeafNode, ChildOff>;
-    using ChildAllIter = typename BaseLeaf::DenseIter<
-        PointDataLeafNode, ValueType, ChildAll>;
-    using ChildAllCIter = typename BaseLeaf::DenseIter<
-        const PointDataLeafNode, const ValueType, ChildAll>;
-#else
     using ValueOnIter = typename BaseLeaf::template ValueIter<
         MaskOnIterator, PointDataLeafNode, const ValueType, ValueOn>;
     using ValueOnCIter = typename BaseLeaf::template ValueIter<
@@ -665,7 +641,6 @@ public:
         PointDataLeafNode, ValueType, ChildAll>;
     using ChildAllCIter = typename BaseLeaf::template DenseIter<
         const PointDataLeafNode, const ValueType, ChildAll>;
-#endif
 
     using IndexVoxelIter    = IndexIter<ValueVoxelCIter, NullFilter>;
     using IndexAllIter      = IndexIter<ValueAllCIter, NullFilter>;
@@ -673,20 +648,41 @@ public:
     using IndexOffIter      = IndexIter<ValueOffCIter, NullFilter>;
 
     /// @brief Leaf index iterator
-    IndexAllIter beginIndexAll() const;
-    IndexOnIter beginIndexOn() const;
-    IndexOffIter beginIndexOff() const;
+    IndexAllIter beginIndexAll() const
+    {
+        NullFilter filter;
+        return this->beginIndex<ValueAllCIter, NullFilter>(filter);
+    }
+    IndexOnIter beginIndexOn() const
+    {
+        NullFilter filter;
+        return this->beginIndex<ValueOnCIter, NullFilter>(filter);
+    }
+    IndexOffIter beginIndexOff() const
+    {
+        NullFilter filter;
+        return this->beginIndex<ValueOffCIter, NullFilter>(filter);
+    }
 
     template<typename IterT, typename FilterT>
     IndexIter<IterT, FilterT> beginIndex(const FilterT& filter) const;
 
     /// @brief Filtered leaf index iterator
     template<typename FilterT>
-    IndexIter<ValueAllCIter, FilterT> beginIndexAll(const FilterT& filter) const;
+    IndexIter<ValueAllCIter, FilterT> beginIndexAll(const FilterT& filter) const
+    {
+        return this->beginIndex<ValueAllCIter, FilterT>(filter);
+    }
     template<typename FilterT>
-    IndexIter<ValueOnCIter, FilterT> beginIndexOn(const FilterT& filter) const;
+    IndexIter<ValueOnCIter, FilterT> beginIndexOn(const FilterT& filter) const
+    {
+        return this->beginIndex<ValueOnCIter, FilterT>(filter);
+    }
     template<typename FilterT>
-    IndexIter<ValueOffCIter, FilterT> beginIndexOff(const FilterT& filter) const;
+    IndexIter<ValueOffCIter, FilterT> beginIndexOff(const FilterT& filter) const
+    {
+        return this->beginIndex<ValueOffCIter, FilterT>(filter);
+    }
 
     /// @brief Leaf index iterator from voxel
     IndexVoxelIter beginIndexVoxel(const Coord& ijk) const;
@@ -743,8 +739,18 @@ public:
 // PointDataLeafNode implementation
 
 template<typename T, Index Log2Dim>
+inline AttributeSet::UniquePtr
+PointDataLeafNode<T, Log2Dim>::stealAttributeSet()
+{
+    AttributeSet::UniquePtr ptr = std::make_unique<AttributeSet>();
+    std::swap(ptr, mAttributeSet);
+    return ptr;
+}
+
+template<typename T, Index Log2Dim>
 inline void
-PointDataLeafNode<T, Log2Dim>::initializeAttributes(const Descriptor::Ptr& descriptor, const Index arrayLength)
+PointDataLeafNode<T, Log2Dim>::initializeAttributes(const Descriptor::Ptr& descriptor, const Index arrayLength,
+    const AttributeArray::ScopedRegistryLock* lock)
 {
     if (descriptor->size() != 1 ||
         descriptor->find("P") == AttributeSet::INVALID_POS ||
@@ -753,20 +759,19 @@ PointDataLeafNode<T, Log2Dim>::initializeAttributes(const Descriptor::Ptr& descr
         OPENVDB_THROW(IndexError, "Initializing attributes only allowed with one Vec3f position attribute.");
     }
 
-    mAttributeSet.reset(new AttributeSet(descriptor, arrayLength));
+    mAttributeSet.reset(new AttributeSet(descriptor, arrayLength, lock));
 }
 
 template<typename T, Index Log2Dim>
 inline void
-PointDataLeafNode<T, Log2Dim>::clearAttributes(const bool updateValueMask)
+PointDataLeafNode<T, Log2Dim>::clearAttributes(const bool updateValueMask,
+    const AttributeArray::ScopedRegistryLock* lock)
 {
-    mAttributeSet.reset(new AttributeSet(*mAttributeSet, 0));
+    mAttributeSet.reset(new AttributeSet(*mAttributeSet, 0, lock));
 
     // zero voxel values
 
-    for (Index n = 0; n < LeafNodeType::NUM_VALUES; n++) {
-        this->setOffsetOnly(n, 0);
-    }
+    this->buffer().fill(ValueType(0));
 
     // if updateValueMask, also de-activate all voxels
 
@@ -792,9 +797,12 @@ template<typename T, Index Log2Dim>
 inline AttributeArray::Ptr
 PointDataLeafNode<T, Log2Dim>::appendAttribute( const Descriptor& expected, Descriptor::Ptr& replacement,
                                                 const size_t pos, const Index strideOrTotalSize,
-                                                const bool constantStride)
+                                                const bool constantStride,
+                                                const Metadata* metadata,
+                                                const AttributeArray::ScopedRegistryLock* lock)
 {
-    return mAttributeSet->appendAttribute(expected, replacement, pos, strideOrTotalSize, constantStride);
+    return mAttributeSet->appendAttribute(
+        expected, replacement, pos, strideOrTotalSize, constantStride, metadata, lock);
 }
 
 template<typename T, Index Log2Dim>
@@ -983,63 +991,24 @@ template<typename ValueIterT, typename FilterT>
 inline IndexIter<ValueIterT, FilterT>
 PointDataLeafNode<T, Log2Dim>::beginIndex(const FilterT& filter) const
 {
+    // generate no-op iterator if filter evaluates no indices
+
+    if (filter.state() == index::NONE) {
+        return IndexIter<ValueIterT, FilterT>(ValueIterT(), filter);
+    }
+
+    // copy filter to ensure thread-safety
+
+    FilterT newFilter(filter);
+    newFilter.reset(*this);
+
     using IterTraitsT = tree::IterTraits<LeafNodeType, ValueIterT>;
 
     // construct the value iterator and reset the filter to use this leaf
 
     ValueIterT valueIter = IterTraitsT::begin(*this);
-    FilterT newFilter(filter);
-    newFilter.reset(*this);
 
     return IndexIter<ValueIterT, FilterT>(valueIter, newFilter);
-}
-
-template<typename T, Index Log2Dim>
-template<typename FilterT>
-inline IndexIter<typename PointDataLeafNode<T, Log2Dim>::ValueAllCIter, FilterT>
-PointDataLeafNode<T, Log2Dim>::beginIndexAll(const FilterT& filter) const
-{
-    return this->beginIndex<ValueAllCIter, FilterT>(filter);
-}
-
-template<typename T, Index Log2Dim>
-template<typename FilterT>
-inline IndexIter<typename PointDataLeafNode<T, Log2Dim>::ValueOnCIter, FilterT>
-PointDataLeafNode<T, Log2Dim>::beginIndexOn(const FilterT& filter) const
-{
-    return this->beginIndex<ValueOnCIter, FilterT>(filter);
-}
-
-template<typename T, Index Log2Dim>
-template<typename FilterT>
-inline IndexIter<typename PointDataLeafNode<T, Log2Dim>::ValueOffCIter, FilterT>
-PointDataLeafNode<T, Log2Dim>::beginIndexOff(const FilterT& filter) const
-{
-    return this->beginIndex<ValueOffCIter, FilterT>(filter);
-}
-
-template<typename T, Index Log2Dim>
-inline IndexIter<typename PointDataLeafNode<T, Log2Dim>::ValueAllCIter, NullFilter>
-PointDataLeafNode<T, Log2Dim>::beginIndexAll() const
-{
-    NullFilter filter;
-    return this->beginIndex<ValueAllCIter, NullFilter>(filter);
-}
-
-template<typename T, Index Log2Dim>
-inline typename PointDataLeafNode<T, Log2Dim>::IndexOnIter
-PointDataLeafNode<T, Log2Dim>::beginIndexOn() const
-{
-    NullFilter filter;
-    return this->beginIndex<ValueOnCIter, NullFilter>(filter);
-}
-
-template<typename T, Index Log2Dim>
-inline typename PointDataLeafNode<T, Log2Dim>::IndexOffIter
-PointDataLeafNode<T, Log2Dim>::beginIndexOff() const
-{
-    NullFilter filter;
-    return this->beginIndex<ValueOffCIter, NullFilter>(filter);
 }
 
 template<typename T, Index Log2Dim>
@@ -1076,7 +1045,7 @@ template<typename T, Index Log2Dim>
 inline Index64
 PointDataLeafNode<T, Log2Dim>::pointCount() const
 {
-    return iterCount(this->beginIndexAll());
+    return this->getLastValue();
 }
 
 template<typename T, Index Log2Dim>
@@ -1101,8 +1070,15 @@ template<typename T, Index Log2Dim>
 inline Index64
 PointDataLeafNode<T, Log2Dim>::groupPointCount(const Name& groupName) const
 {
-    GroupFilter filter(groupName);
-    return iterCount(this->beginIndexAll(filter));
+    if (!this->attributeSet().descriptor().hasGroup(groupName)) {
+        return Index64(0);
+    }
+    GroupFilter filter(groupName, this->attributeSet());
+    if (filter.state() == index::ALL) {
+        return this->pointCount();
+    } else {
+        return iterCount(this->beginIndexAll(filter));
+    }
 }
 
 template<typename T, Index Log2Dim>
@@ -1171,6 +1147,16 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
 {
     struct Local
     {
+        static void destroyPagedStream(const io::StreamMetadata::AuxDataMap& auxData, const Index index)
+        {
+            // if paged stream exists, delete it
+            std::string key("paged:" + std::to_string(index));
+            auto it = auxData.find(key);
+            if (it != auxData.end()) {
+                (const_cast<io::StreamMetadata::AuxDataMap&>(auxData)).erase(it);
+            }
+        }
+
         static compression::PagedInputStream& getOrInsertPagedStream(   const io::StreamMetadata::AuxDataMap& auxData,
                                                                         const Index index)
         {
@@ -1232,9 +1218,10 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
         OPENVDB_THROW(IoError, "Cannot read in a PointDataLeaf without StreamMetadata.");
     }
 
-    const Index pass = meta->pass();
+    const Index pass(static_cast<uint16_t>(meta->pass()));
+    const Index maximumPass(static_cast<uint16_t>(meta->pass() >> 16));
 
-    const Index attributes = (this->buffers() - 4) / 2;
+    const Index attributes = (maximumPass - 4) / 2;
 
     if (pass == 0) {
         // pass 0 - voxel data sizes
@@ -1251,9 +1238,29 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
             uint8_t header;
             is.read(reinterpret_cast<char*>(&header), sizeof(uint8_t));
             mAttributeSet->readDescriptor(is);
-            if (header == uint8_t(1)) {
+            if (header & uint8_t(1)) {
                 AttributeSet::DescriptorPtr descriptor = mAttributeSet->descriptorPtr();
                 Local::insertDescriptor(meta->auxData(), descriptor);
+            }
+            // a forwards-compatibility mechanism for future use,
+            // if a 0x2 bit is set, read and skip over a specific number of bytes
+            if (header & uint8_t(2)) {
+                uint64_t bytesToSkip;
+                is.read(reinterpret_cast<char*>(&bytesToSkip), sizeof(uint64_t));
+                if (bytesToSkip > uint64_t(0)) {
+                    auto metadata = io::getStreamMetadataPtr(is);
+                    if (metadata && metadata->seekable()) {
+                        is.seekg(bytesToSkip, std::ios_base::cur);
+                    }
+                    else {
+                        std::vector<uint8_t> tempData(bytesToSkip);
+                        is.read(reinterpret_cast<char*>(&tempData[0]), bytesToSkip);
+                    }
+                }
+            }
+            // this reader is only able to read headers with 0x1 and 0x2 bits set
+            if (header > uint8_t(3)) {
+                OPENVDB_THROW(IoError, "Unrecognised header flags in PointDataLeafNode");
             }
         }
         mAttributeSet->readMetadata(is);
@@ -1261,7 +1268,8 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
     else if (pass < (attributes + 2)) {
         // pass 2...n+2 - attribute uniform values
         const size_t attributeIndex = pass - 2;
-        AttributeArray* array = mAttributeSet->get(attributeIndex);
+        AttributeArray* array = attributeIndex < mAttributeSet->size() ?
+            mAttributeSet->get(attributeIndex) : nullptr;
         if (array) {
             compression::PagedInputStream& pagedStream =
                 Local::getOrInsertPagedStream(meta->auxData(), static_cast<Index>(attributeIndex));
@@ -1273,6 +1281,8 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
     else if (pass == attributes + 2) {
         // pass n+2 - voxel data
 
+        const Index passValue(meta->pass());
+
         // StreamMetadata pass variable used to temporarily store voxel buffer size
         io::StreamMetadata& nonConstMeta = const_cast<io::StreamMetadata&>(*meta);
         nonConstMeta.setPass(mVoxelBufferSize);
@@ -1281,12 +1291,13 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
         BaseLeaf::readBuffers(is, fromHalf);
 
         // pass now reset to original value
-        nonConstMeta.setPass(pass);
+        nonConstMeta.setPass(passValue);
     }
     else if (pass < (attributes*2 + 3)) {
         // pass n+2..2n+2 - attribute buffers
         const Index attributeIndex = pass - attributes - 3;
-        AttributeArray* array = mAttributeSet->get(attributeIndex);
+        AttributeArray* array = attributeIndex < mAttributeSet->size() ?
+            mAttributeSet->get(attributeIndex) : nullptr;
         if (array) {
             compression::PagedInputStream& pagedStream =
                 Local::getOrInsertPagedStream(meta->auxData(), attributeIndex);
@@ -1294,6 +1305,15 @@ PointDataLeafNode<T, Log2Dim>::readBuffers(std::istream& is, const CoordBBox& /*
             pagedStream.setSizeOnly(false);
             array->readPagedBuffers(pagedStream);
         }
+        // cleanup paged stream reference in auxiliary metadata
+        if (pass > attributes + 3) {
+            Local::destroyPagedStream(meta->auxData(), attributeIndex-1);
+        }
+    }
+    else if (pass < buffers()) {
+        // pass 2n+3 - cleanup last paged stream
+        const Index attributeIndex = pass - attributes - 4;
+        Local::destroyPagedStream(meta->auxData(), attributeIndex);
     }
 }
 
@@ -1397,7 +1417,7 @@ PointDataLeafNode<T, Log2Dim>::writeBuffers(std::ostream& os, bool toHalf) const
         OPENVDB_THROW(IoError, "Cannot write out a PointDataLeaf without StreamMetadata.");
     }
 
-    const Index pass = meta->pass();
+    const Index pass(static_cast<uint16_t>(meta->pass()));
 
     // leaf traversal analysis deduces the number of passes to perform for this leaf
     // then updates the leaf traversal value to ensure all passes will be written
@@ -1410,7 +1430,8 @@ PointDataLeafNode<T, Log2Dim>::writeBuffers(std::ostream& os, bool toHalf) const
         return;
     }
 
-    const Index attributes = (this->buffers() - 4) / 2;
+    const Index maximumPass(static_cast<uint16_t>(meta->pass() >> 16));
+    const Index attributes = (maximumPass - 4) / 2;
 
     if (pass == 0) {
         // pass 0 - voxel data sizes
@@ -1445,7 +1466,8 @@ PointDataLeafNode<T, Log2Dim>::writeBuffers(std::ostream& os, bool toHalf) const
         if (pass > 2) {
             Local::destroyPagedStream(meta->auxData(), attributeIndex-1);
         }
-        const AttributeArray* array = mAttributeSet->getConst(attributeIndex);
+        const AttributeArray* array = attributeIndex < mAttributeSet->size() ?
+            mAttributeSet->getConst(attributeIndex) : nullptr;
         if (array) {
             compression::PagedOutputStream& pagedStream =
                 Local::getOrInsertPagedStream(meta->auxData(), attributeIndex);
@@ -1467,7 +1489,8 @@ PointDataLeafNode<T, Log2Dim>::writeBuffers(std::ostream& os, bool toHalf) const
         if (pass > attributes + 2) {
             Local::destroyPagedStream(meta->auxData(), attributeIndex-1);
         }
-        const AttributeArray* array = mAttributeSet->getConst(attributeIndex);
+        const AttributeArray* array = attributeIndex < mAttributeSet->size() ?
+            mAttributeSet->getConst(attributeIndex) : nullptr;
         if (array) {
             compression::PagedOutputStream& pagedStream =
                 Local::getOrInsertPagedStream(meta->auxData(), attributeIndex);
@@ -1509,9 +1532,7 @@ template<typename T, Index Log2Dim>
 inline void
 PointDataLeafNode<T, Log2Dim>::fill(const CoordBBox& bbox, const ValueType& value, bool active)
 {
-#ifndef OPENVDB_2_ABI_COMPATIBLE
     if (!this->allocate()) return;
-#endif
 
     this->assertNonModifiableUnlessZero(value);
 
@@ -1575,11 +1596,108 @@ setStreamingMode(PointDataTreeT& tree, bool on)
 }
 
 
+template <typename PointDataTreeT>
+inline void
+prefetch(PointDataTreeT& tree, bool position, bool otherAttributes)
+{
+    // NOTE: the following is intentionally not multi-threaded, as the I/O
+    // is faster if done in the order in which it is stored in the file
+
+    auto leaf = tree.cbeginLeaf();
+    if (!leaf)  return;
+
+    const auto& attributeSet = leaf->attributeSet();
+
+    // pre-fetch leaf data
+
+    for ( ; leaf; ++leaf) {
+        leaf->buffer().data();
+    }
+
+    // pre-fetch position attribute data (position will typically have index 0)
+
+    size_t positionIndex = attributeSet.find("P");
+
+    if (position && positionIndex != AttributeSet::INVALID_POS) {
+        for (leaf = tree.cbeginLeaf(); leaf; ++leaf) {
+            assert(leaf->hasAttribute(positionIndex));
+            leaf->constAttributeArray(positionIndex).loadData();
+        }
+    }
+
+    // pre-fetch other attribute data
+
+    if (otherAttributes) {
+        const size_t attributes = attributeSet.size();
+        for (size_t attributeIndex = 0; attributeIndex < attributes; attributeIndex++) {
+            if (attributeIndex == positionIndex)     continue;
+            for (leaf = tree.cbeginLeaf(); leaf; ++leaf) {
+                assert(leaf->hasAttribute(attributeIndex));
+                leaf->constAttributeArray(attributeIndex).loadData();
+            }
+        }
+    }
+}
+
+
+namespace internal {
+
 /// @brief Global registration of point data-related types
+/// @note This is called from @c openvdb::initialize, so there is
+/// no need to call it directly.
 void initialize();
 
 /// @brief Global deregistration of point data-related types
+/// @note This is called from @c openvdb::uninitialize, so there is
+/// no need to call it directly.
 void uninitialize();
+
+
+/// @brief Recursive node chain which generates a openvdb::TypeList value
+/// converted types of nodes to PointDataGrid nodes of the same configuration,
+/// rooted at RootNodeType in reverse order, from LeafNode to RootNode.
+/// See also TreeConverter<>.
+template<typename HeadT, int HeadLevel>
+struct PointDataNodeChain
+{
+    using SubtreeT = typename PointDataNodeChain<typename HeadT::ChildNodeType, HeadLevel-1>::Type;
+    using RootNodeT = tree::RootNode<typename SubtreeT::Back>;
+    using Type = typename SubtreeT::template Append<RootNodeT>;
+};
+
+// Specialization for internal nodes which require their embedded child type to
+// be switched
+template <typename ChildT, Index Log2Dim, int HeadLevel>
+struct PointDataNodeChain<tree::InternalNode<ChildT, Log2Dim>, HeadLevel>
+{
+    using SubtreeT = typename PointDataNodeChain<ChildT, HeadLevel-1>::Type;
+    using InternalNodeT = tree::InternalNode<typename SubtreeT::Back, Log2Dim>;
+    using Type = typename SubtreeT::template Append<InternalNodeT>;
+};
+
+// Specialization for the last internal node of a node chain, expected
+// to be templated on a leaf node
+template <typename ChildT, Index Log2Dim>
+struct PointDataNodeChain<tree::InternalNode<ChildT, Log2Dim>, /*HeadLevel=*/1>
+{
+    using LeafNodeT = PointDataLeafNode<PointDataIndex32, ChildT::LOG2DIM>;
+    using InternalNodeT = tree::InternalNode<LeafNodeT, Log2Dim>;
+    using Type = TypeList<LeafNodeT, InternalNodeT>;
+};
+
+} // namespace internal
+
+
+/// @brief Similiar to ValueConverter, but allows for tree configuration conversion
+/// to a PointDataTree. ValueConverter<PointDataIndex32> cannot be used as a
+/// PointDataLeafNode is not a specialization of LeafNode
+template <typename TreeType>
+struct TreeConverter {
+    using RootNodeT = typename TreeType::RootNodeType;
+    using NodeChainT = typename internal::PointDataNodeChain<RootNodeT, RootNodeT::LEVEL>::Type;
+    using Type = tree::Tree<typename NodeChainT::Back>;
+};
+
 
 } // namespace points
 
@@ -1600,7 +1718,3 @@ struct SameLeafConfig<Dim1, points::PointDataLeafNode<T2, Dim1>> { static const 
 } // namespace openvdb
 
 #endif // OPENVDB_POINTS_POINT_DATA_GRID_HAS_BEEN_INCLUDED
-
-// Copyright (c) 2012-2016 DreamWorks Animation LLC
-// All rights reserved. This software is distributed under the
-// Mozilla Public License 2.0 ( http://www.mozilla.org/MPL/2.0/ )
