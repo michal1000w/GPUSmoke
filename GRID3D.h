@@ -50,6 +50,9 @@ inline void __checkCudaErrors(cudaError err, const char* file, const int line)
 
 
 
+
+
+
 class GRID3D {
 
 
@@ -309,8 +312,8 @@ public:
         for (int i = 0; i < size(); i++) {
             if (grid[i] < 0.01)
                 grid[i] = 0.0f;
-            grid[i] = min(grid[i], 1.0);
-            grid[i] = max(grid[i], 0.0);
+            grid[i] = fmin(grid[i], 1.0);
+            grid[i] = fmax(grid[i], 0.0);
         }
     }
 
@@ -509,7 +512,7 @@ public:
 
                         //if (*position >= 0.01) {
                         if (*position != 0.0) {
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.05, min((*position), 1.0));
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * fmax(0.05, fmin((*position), 1.0));
                         }
 
                     }
@@ -550,7 +553,7 @@ public:
                         //if (*position >= 0.01) {
                         if (*position >= 0.01) {
                             //*position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01,min((*position), 1.0));
-                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * max(0.01, min((*position), 1.0));
+                            *position += evaluate(make_float3(x, y, z), frame % 512, resolution, NTS, offset, scale, time_anim) * intensity * fmax(0.01, fmin((*position), 1.0));
                         }
 
                     }
