@@ -650,54 +650,64 @@ public:
         
         if (Upsampling && TUpsampling) {
             //Apply Wavelet Noise
+            std::cout << "R:";
+            std::cout << "D";
             auto grid = state->density->readToGrid();
+            std::cout << ";T";
             auto gridt = state->temperature->readToGrid();
-            
+            std::cout << ";";
             if (INFLUENCE_SIM && UpsamplingVelocity) {
                 //std::cout << "Reading grid";
-                auto velvel = state->velocity->readToGrid3D();
-                //std::cout << "Copied";
+                auto velvel = state->velocity->readToGrid3D(true);
+                std::cout << "Cpd->";
                 grid->LoadVelocity(velvel);
 
-                //std::cout << "Deleting velvel";
+                std::cout << "Ldd->";
                 velvel->free();
+                std::cout << "Freed->";
                 velvel->freeCuda();
+                std::cout << "CUDA->";
                 velvel->freeCudaVel();
             }
+            std::cout << "V";
 
             //std::cout << "Loaded";
 
             int NOISE_SC = 64;
 
+            std::cout << "|L:";
             if (!GRID->is_noise_grid()) {
                 GRID = state->density->readToGrid();
                 GRID->free();
                 //std::cout << GRID->get_noise_status() << std::endl;
                 GRID->generateTile(NOISE_SC);
             }
-
+            std::cout << "D";
             grid->LoadNoise(GRID);
+            std::cout << ";T";
             gridt->LoadNoise(GRID);
+            std::cout << ";";
 
             
             //std::cout << "Upsampling";
             int Upscale_Rate = 1;
 
             //Upsampling
+            std::cout << "Upscaling:";
+            std::cout << "Den";
             if (UpsamplingDensity)
                 grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1, noise_intensity, time_anim); //normal grid
+            std::cout << ";Temp";
             if (UpsamplingTemperature)
                 gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET * 1.6f, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
-            
+            std::cout << ";Vel";
             if (INFLUENCE_SIM && UpsamplingVelocity) {
                 grid->UpScale(Upscale_Rate, SEED, frame, OFFSET * 10, SCALE * 2, NOISE_SC, 2, noise_intensity * 1.5f, time_anim); //velocity grid
             }
-            
 
-            //std::cout << "Combine grids";
+            std::cout << ";Comb";
             grid->combine_with_temp_grid(gridt);
-
 
             delete gridt;
 

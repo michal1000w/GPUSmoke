@@ -20,8 +20,29 @@
 #define SUPER_NULL -122.1123123
 #define VELOCITY_NOISE
 
+/*
+#define CHECK cudaError_t error = cudaGetLastError();\
+ if (error != cudaSuccess){\
+ printf("CUDA Error: %s\n", cudaGetErrorString(error));\
+}
 
+#define cudaCheckError() {                                          \
+ cudaError_t e=cudaGetLastError();                                 \
+ if(e!=cudaSuccess) {                                              \
+   printf("Cuda failure %s:%d: '%s'\n",__FILE__,__LINE__,cudaGetErrorString(e));           \
+ }                                                                 \
+}
+*/
+#define checkCudaErrors(err)  __checkCudaErrors (err, __FILE__, __LINE__)
 
+inline void __checkCudaErrors(cudaError err, const char* file, const int line)
+{
+    if (cudaSuccess != err)
+    {
+        fprintf(stderr, "%s(%i) : CUDA Runtime API error %d: %s.\n", file, line, (int)err, cudaGetErrorString(err));
+        exit(-1);
+    }
+}
 
 
 
@@ -47,7 +68,7 @@ class GRID3D {
             grid_vel[0] = make_float3(SUPER_NULL,SUPER_NULL,SUPER_NULL);
         }
         if (!cuda_velocity_initialized) {
-            cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size());
+            checkCudaErrors(cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size()));
             cuda_velocity_initialized = true;
         }
     }
@@ -120,12 +141,13 @@ public:
         free();
         this->resolution = dim;
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
-        cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost);
+        checkCudaErrors(cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost));
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
         initNoiseGrid();
         grid_temp = new float[1];
         grid_temp[0] = 0.0;
+        //cudaCheckError();
     }
 
 #ifdef VELOCITY_NOISE
@@ -133,7 +155,7 @@ public:
 
         if (this->resolution.x == dim.x && this->resolution.y == dim.y && this->resolution.z == dim.z) {
             //std::cout << "Copying";
-            cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost);
+            checkCudaErrors(cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost));
         }
         else {
             //std::cout << "Free data";
@@ -142,8 +164,9 @@ public:
             //std::cout << "Allocating memory";
             grid_vel = new float3[size()];
             //std::cout << "Copying";
-            cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost);
+            checkCudaErrors(cudaMemcpy(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost));
         }
+        //cudaCheckError();
         //std::cout << "Copied from device" << std::endl;
     }
 #endif
@@ -304,18 +327,20 @@ public:
     void copyToDevice(bool addNoise = true) {
         if (addNoise)
             this->addNoise();
-        cudaMalloc((void**)&vdb_temp, sizeof(float) * size());
-        cudaMemcpy(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice);
+        checkCudaErrors(cudaMalloc((void**)&vdb_temp, sizeof(float) * size()));
+        checkCudaErrors(cudaMemcpy(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice));
 
         normalizeData();
         //copy to device
-        cudaMalloc((void**)&vdb, sizeof(float) * size());
-        cudaMemcpy(vdb, grid, sizeof(float) * size(), cudaMemcpyHostToDevice);
+        checkCudaErrors(cudaMalloc((void**)&vdb, sizeof(float) * size()));
+        checkCudaErrors(cudaMemcpy(vdb, grid, sizeof(float) * size(), cudaMemcpyHostToDevice));
+        //cudaCheckError();
     }
 #ifdef VELOCITY_NOISE
     void copyToDeviceVel() {
-        cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size());
-        cudaMemcpy(grid_vel_gpu, grid_vel, SIZEOF_FLOAT3 * size(), cudaMemcpyHostToDevice);
+        checkCudaErrors(cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size()));
+        checkCudaErrors(cudaMemcpy(grid_vel_gpu, grid_vel, SIZEOF_FLOAT3 * size(), cudaMemcpyHostToDevice));
+        //cudaCheckError();
     }
 #endif
 

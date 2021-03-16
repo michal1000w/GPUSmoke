@@ -26,12 +26,13 @@ public:
     }
     
     inline GRID3D* readToGrid3D(bool debug = false) {
-        if (debug)
-            std::cout << "  Reading Grid:";
-        //std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
+        if (debug) {
+            std::cout << " Reading Grid:";
+            std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
+        }
         clock_t startTime = clock();
         GRID3D* output = new GRID3D(dim);
-        //std::cout << "Copying...." << std::endl;
+        if (debug) std::cout << "Copying..." << std::endl;
         output->load_from_device3D(dim, readTarget());
         //std::cout << "Done";
         //output->set_pointer(new GRID3D(dim, readTarget()));
