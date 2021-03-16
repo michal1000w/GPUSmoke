@@ -49,7 +49,8 @@ OPENVDB_USE_VERSION_NAMESPACE
 namespace OPENVDB_VERSION_NAME {
 namespace tools {
 
-
+#undef min
+#undef max
 ////////////////////////////////////////
 
 

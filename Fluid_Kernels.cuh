@@ -49,11 +49,16 @@ inline __device__ T get_cell(int3 c, int3 d, T* vol) {
     }
 }
 
+inline __host__ __device__ float3 floorr(const float3 v)
+{
+    return make_float3(floorf(v.x), floorf(v.y), floorf(v.z));
+}
+
 template <typename T>
 inline __device__ T get_cellF(float3 p, int3 d, T* vol) {
 
     // bilinear interpolation
-    float3 l = floor(p);
+    float3 l = floorr(p);
     int3 rp = make_int3(l);
     float3 dif = p - l;
     T sum = zero<T>();

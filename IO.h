@@ -393,10 +393,10 @@ void create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D* grid_src, const o
     
     openvdb::FloatGrid::ConstPtr src = grid_dst;
     openvdb::FloatGrid::Ptr dest = openvdb::FloatGrid::create();
-    dest->setTransform(openvdb::math::Transform::createLinearTransform(0.5));
+    dest->setTransform(openvdb::math::Transform::createLinearTransform(0.0001));
     // Resample the input grid into the output grid, reproducing
     // the level-set sphere at a smaller voxel size.
-    //openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*src, *dest);
+    openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*src, *dest);
     
     
 

@@ -8,7 +8,7 @@
 #define _USE_MATH_DEFINES
 #include <nanovdb/NanoVDB.h>
 #include <openvdb/openvdb.h>
-//#include <openvdb/tools/GridTransformer.h>
+#include <openvdb/tools/GridTransformer.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/SignedFloodFill.h>
 

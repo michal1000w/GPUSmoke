@@ -157,8 +157,7 @@
       <Runtime>InheritFromHost</Runtime>
       <AdditionalCompilerOptions>
       </AdditionalCompilerOptions>
-      <Defines>
-      </Defines>
+      <Defines>_USE_MATH_DEFINES</Defines>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
     </CudaCompile>
     <CudaLink>
