@@ -848,7 +848,7 @@ public:
                 delete gridt;
                 grid->free();
                 grid->free_noise();
-                grid->freeCuda();
+                //grid->freeCuda1();
                 delete grid;
             }
         }

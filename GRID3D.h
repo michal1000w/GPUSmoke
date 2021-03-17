@@ -393,6 +393,9 @@ public:
         checkCudaErrors(cudaFree(vdb));
         checkCudaErrors(cudaFree(vdb_temp));
     }
+    void freeCuda1() {
+        checkCudaErrors(cudaFree(vdb));
+    }
     void freeNoise() {
         checkCudaErrors(cudaFree(vdb_noise));
     }
