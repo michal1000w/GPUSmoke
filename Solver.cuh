@@ -82,9 +82,9 @@ public:
     float noise_intensity;
     float time_anim = 0.1;
 
-    bool UpsamplingVelocity = true;
-    bool UpsamplingDensity = true;
-    bool UpsamplingTemperature = true;
+    bool UpsamplingVelocity = false;
+    bool UpsamplingDensity = false;
+    bool UpsamplingTemperature = false;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -599,7 +599,7 @@ public:
         GRID = new GRID3D();
         InitGPUNoise(64);
 
-        ExampleScene(true);
+        
         
 
         state->f_weight = 0.05;

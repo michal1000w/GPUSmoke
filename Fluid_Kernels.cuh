@@ -822,3 +822,193 @@ __global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
         d_dest[get_voxel(x, y, z, vd)] = 0.0f;
     }
 }
+
+
+
+
+
+#define ADD_WEIGHTEDX(x,y,z)\
+  weight = dw[0][(x) + 1] * w[1][(y) + 1] * w[2][(z) + 1];\
+  result += weight * neighbors[x + 1][y + 1][z + 1];
+
+#define ADD_WEIGHTEDY(x,y,z)\
+  weight = w[0][(x) + 1] * dw[1][(y) + 1] * w[2][(z) + 1];\
+  result += weight * neighbors[x + 1][y + 1][z + 1];
+
+#define ADD_WEIGHTEDZ(x,y,z)\
+  weight = w[0][(x) + 1] * w[1][(y) + 1] * dw[2][(z) + 1];\
+  result += weight * neighbors[x + 1][y + 1][z + 1];
+
+
+inline __device__ float3 WNoiseVecGPU(float3& p, float* data, int max_dim) {
+    float3 final = make_float3(0, 0, 0);
+    const int NOISE_TILE_SIZE = max_dim;
+    float w[3][3];
+    float dw[3][3];
+    float result = 0;
+    int xC, yC, zC;
+    float weight;
+
+    int midX = (int)ceilf(p.x - 0.5f);
+    int midY = (int)ceilf(p.y - 0.5f);
+    int midZ = (int)ceilf(p.z - 0.5f);
+
+    float t0 = midX - (p.x - 0.5f);
+    float t1 = midY - (p.y - 0.5f);
+    float t2 = midZ - (p.z - 0.5f);
+
+    // precache all the neighbors for fast access
+    float neighbors[3][3][3];
+    for (int z = -1; z <= 1; z++)
+        for (int y = -1; y <= 1; y++)
+            for (int x = -1; x <= 1; x++)
+            {
+                xC = Mod(midX + (x), NOISE_TILE_SIZE);
+                yC = Mod(midY + (y), NOISE_TILE_SIZE);
+                zC = Mod(midZ + (z), NOISE_TILE_SIZE);
+                neighbors[x + 1][y + 1][z + 1] = data[zC * NOISE_TILE_SIZE * NOISE_TILE_SIZE + yC * NOISE_TILE_SIZE + xC];
+            }
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // evaluate splines
+    ///////////////////////////////////////////////////////////////////////////////////////
+    dw[0][0] = -t0;
+    dw[0][2] = (1.f - t0);
+    dw[0][1] = 2.0f * t0 - 1.0f;
+
+    dw[1][0] = -t1;
+    dw[1][2] = (1.0f - t1);
+    dw[1][1] = 2.0f * t1 - 1.0f;
+
+    dw[2][0] = -t2;
+    dw[2][2] = (1.0f - t2);
+    dw[2][1] = 2.0f * t2 - 1.0f;
+
+    w[0][0] = t0 * t0 * 0.5f;
+    w[0][2] = (1.f - t0) * (1.f - t0) * 0.5f;
+    w[0][1] = 1.f - w[0][0] - w[0][2];
+
+    w[1][0] = t1 * t1 * 0.5f;
+    w[1][2] = (1.f - t1) * (1.f - t1) * 0.5f;
+    w[1][1] = 1.f - w[1][0] - w[1][2];
+
+    w[2][0] = t2 * t2 * 0.5f;
+    w[2][2] = (1.f - t2) * (1.f - t2) * 0.5f;
+    w[2][1] = 1.f - w[2][0] - w[2][2];
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // x derivative
+    ///////////////////////////////////////////////////////////////////////////////////////
+    result = 0.0f;
+    ADD_WEIGHTEDX(-1, -1, -1); ADD_WEIGHTEDX(0, -1, -1); ADD_WEIGHTEDX(1, -1, -1);
+    ADD_WEIGHTEDX(-1, 0, -1); ADD_WEIGHTEDX(0, 0, -1); ADD_WEIGHTEDX(1, 0, -1);
+    ADD_WEIGHTEDX(-1, 1, -1); ADD_WEIGHTEDX(0, 1, -1); ADD_WEIGHTEDX(1, 1, -1);
+
+    ADD_WEIGHTEDX(-1, -1, 0);  ADD_WEIGHTEDX(0, -1, 0);  ADD_WEIGHTEDX(1, -1, 0);
+    ADD_WEIGHTEDX(-1, 0, 0);  ADD_WEIGHTEDX(0, 0, 0);  ADD_WEIGHTEDX(1, 0, 0);
+    ADD_WEIGHTEDX(-1, 1, 0);  ADD_WEIGHTEDX(0, 1, 0);  ADD_WEIGHTEDX(1, 1, 0);
+
+    ADD_WEIGHTEDX(-1, -1, 1);  ADD_WEIGHTEDX(0, -1, 1);  ADD_WEIGHTEDX(1, -1, 1);
+    ADD_WEIGHTEDX(-1, 0, 1);  ADD_WEIGHTEDX(0, 0, 1);  ADD_WEIGHTEDX(1, 0, 1);
+    ADD_WEIGHTEDX(-1, 1, 1);  ADD_WEIGHTEDX(0, 1, 1);  ADD_WEIGHTEDX(1, 1, 1);
+    final.x = result;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // y derivative
+    ///////////////////////////////////////////////////////////////////////////////////////
+    result = 0.0f;
+    ADD_WEIGHTEDY(-1, -1, -1); ADD_WEIGHTEDY(0, -1, -1); ADD_WEIGHTEDY(1, -1, -1);
+    ADD_WEIGHTEDY(-1, 0, -1); ADD_WEIGHTEDY(0, 0, -1); ADD_WEIGHTEDY(1, 0, -1);
+    ADD_WEIGHTEDY(-1, 1, -1); ADD_WEIGHTEDY(0, 1, -1); ADD_WEIGHTEDY(1, 1, -1);
+
+    ADD_WEIGHTEDY(-1, -1, 0);  ADD_WEIGHTEDY(0, -1, 0);  ADD_WEIGHTEDY(1, -1, 0);
+    ADD_WEIGHTEDY(-1, 0, 0);  ADD_WEIGHTEDY(0, 0, 0);  ADD_WEIGHTEDY(1, 0, 0);
+    ADD_WEIGHTEDY(-1, 1, 0);  ADD_WEIGHTEDY(0, 1, 0);  ADD_WEIGHTEDY(1, 1, 0);
+
+    ADD_WEIGHTEDY(-1, -1, 1);  ADD_WEIGHTEDY(0, -1, 1);  ADD_WEIGHTEDY(1, -1, 1);
+    ADD_WEIGHTEDY(-1, 0, 1);  ADD_WEIGHTEDY(0, 0, 1);  ADD_WEIGHTEDY(1, 0, 1);
+    ADD_WEIGHTEDY(-1, 1, 1);  ADD_WEIGHTEDY(0, 1, 1);  ADD_WEIGHTEDY(1, 1, 1);
+    final.y = result;
+
+    ///////////////////////////////////////////////////////////////////////////////////////
+    // z derivative
+    ///////////////////////////////////////////////////////////////////////////////////////
+    result = 0.0f;
+    ADD_WEIGHTEDZ(-1, -1, -1); ADD_WEIGHTEDZ(0, -1, -1); ADD_WEIGHTEDZ(1, -1, -1);
+    ADD_WEIGHTEDZ(-1, 0, -1); ADD_WEIGHTEDZ(0, 0, -1); ADD_WEIGHTEDZ(1, 0, -1);
+    ADD_WEIGHTEDZ(-1, 1, -1); ADD_WEIGHTEDZ(0, 1, -1); ADD_WEIGHTEDZ(1, 1, -1);
+
+    ADD_WEIGHTEDZ(-1, -1, 0);  ADD_WEIGHTEDZ(0, -1, 0);  ADD_WEIGHTEDZ(1, -1, 0);
+    ADD_WEIGHTEDZ(-1, 0, 0);  ADD_WEIGHTEDZ(0, 0, 0);  ADD_WEIGHTEDZ(1, 0, 0);
+    ADD_WEIGHTEDZ(-1, 1, 0);  ADD_WEIGHTEDZ(0, 1, 0);  ADD_WEIGHTEDZ(1, 1, 0);
+
+    ADD_WEIGHTEDZ(-1, -1, 1);  ADD_WEIGHTEDZ(0, -1, 1);  ADD_WEIGHTEDZ(1, -1, 1);
+    ADD_WEIGHTEDZ(-1, 0, 1);  ADD_WEIGHTEDZ(0, 0, 1);  ADD_WEIGHTEDZ(1, 0, 1);
+    ADD_WEIGHTEDZ(-1, 1, 1);  ADD_WEIGHTEDZ(0, 1, 1);  ADD_WEIGHTEDZ(1, 1, 1);
+    final.z = result;
+
+    //std::cout << "FINAL at = " << final.x <<";"<< final.y << ";" << final.z << std::endl; // DEBUG
+    return final;
+}
+
+
+#undef ADD_WEIGHTEDX
+#undef ADD_WEIGHTEDY
+#undef ADD_WEIGHTEDZ
+
+
+inline __device__ float3 evaluateVectorGPU(float3 pos, int3 resolution, float* data, int NTS = 64, float offset = 0.5, float scale = 0.1,
+    float time_anim = 0.1, int tile = 0) {
+    pos.x *= resolution.x;
+    pos.y *= resolution.y;
+    pos.z *= resolution.z;
+    pos.x += 1; pos.y += 1; pos.z += 1;
+
+    // time anim
+    pos.x += time_anim; pos.y += time_anim; pos.z += time_anim;
+
+    pos.x *= scale;
+    pos.y *= scale;
+    pos.z *= scale;
+
+
+    const int n3 = NTS * NTS * NTS;
+    float3 v = WNoiseVecGPU(pos, &data[int(tile * NTS) % n3], NTS);
+
+    v.x += offset; v.y += offset; v.z += offset;
+    //v *= scale;//scale //0.1
+    return v;
+}
+
+inline __device__ float3 evaluateCurlGPU(float3 pos, int3 resolution, float* data, int NTS = 64, float offset = 0.5, float scale = 0.1,
+    float time_anim = 0.1, int tile = 0) {
+
+    offset *= 25;
+
+    float3 d0 = evaluateVectorGPU(pos, resolution, data, NTS, offset, scale, time_anim, 0);
+    float3 d1 = evaluateVectorGPU(pos, resolution, data, NTS, offset, scale, time_anim, 1);
+    float3 d2 = evaluateVectorGPU(pos, resolution, data, NTS, offset, scale, time_anim, 2);
+
+
+    return make_float3(d0.y - d1.z, d2.z - d0.x, d1.x - d2.y);
+}
+
+
+
+
+
+
+template <typename V, typename T>
+__global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
+    int3 vd, float intensity, float offset, float scale, int frame = 1)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+
+    v_dest[get_voxel(x, y, z, vd)] = v_src[get_voxel(x, y, z, vd)] + (evaluateCurlGPU(make_float3(x, y, z), vd, noise,
+            64, offset * 10.0, scale * 2.0, 0.1, frame % 128) * intensity * 1.5f);
+}

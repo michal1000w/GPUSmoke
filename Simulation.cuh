@@ -391,6 +391,17 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             frame);
         state.temperature->swap();
         state.density->swap();
+
+        applyNoiseV << <grid, block >> > (
+            state.velocity->readTarget(),
+            state.velocity->writeTarget(),
+            state.noise->readTarget(),
+            state.dim,
+            /*intensity=0.45f*/sintensity,
+            /*offset=0.075f*/soffset,
+            /*scale=0.7*/sscale,
+            frame);
+        state.velocity->swap();
     }
     /*
     */

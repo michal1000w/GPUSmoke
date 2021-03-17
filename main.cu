@@ -45,11 +45,11 @@ int main(int argc, char* args[]) {
     solver.Initialize();
 #ifdef OBJECTS_EXPERIMENTAL
     //std::cout << "Generating example scene" << std::endl;
-    //solver.ExampleScene(true);
+    solver.ExampleScene(true);
 #else
     solver.ExportVDBScene();
 #endif
-    //solver.ExampleScene();
+    //solver.ExampleScene(true);
     float Window_Resolution[2] = { 1600, 800 };
     float Image_Resolution[2] = { 700, 700 };
     std::cout << "Setting image resolution" << std::endl;
