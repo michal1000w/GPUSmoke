@@ -13,7 +13,6 @@
 
 
 
-
 // GPU helper functions
 inline __device__ int3 operator*(const dim3 a, const uint3 b) {
     return make_int3(a.x * b.x, a.y * b.y, a.z * b.z);
@@ -677,4 +676,149 @@ __global__ void buoyancy(V* v_src, T* t_src, T* d_src, V* v_dest,
     }
 
     v_dest[get_voxel(x, y, z, vd)] = vel;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+static inline __host__ __device__ int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }
+
+inline __host__ __device__ float minf(const float a, const float b)
+{
+    return (a < b) ? a : b;
+}
+inline __host__ __device__ float maxf(const float a, const float b)
+{
+    return (a > b) ? a : b;
+}
+
+#define ADD_WEIGHTED(x, y, z) \
+  weight = 1.0f; \
+  xC = Mod(midX + (x),NOISE_TILE_SIZE); \
+  weight *= w[0][(x) + 1]; \
+  yC = Mod(midY + (y),NOISE_TILE_SIZE); \
+  weight *= w[1][(y) + 1]; \
+  zC = Mod(midZ + (z),NOISE_TILE_SIZE); \
+  weight *= w[2][(z) + 1]; \
+  result += weight * data[(zC * NOISE_TILE_SIZE + yC) * NOISE_TILE_SIZE + xC];
+
+
+//Wavelet Noise Kernels
+inline __device__ float getWNoiseDx(float3& p, float* data, int max_dim) {
+    float w[3][3], t, result = 0;
+    const int NOISE_TILE_SIZE = max_dim;
+
+
+
+    // Evaluate quadratic B-spline basis functions
+    int midX = (int)ceilf(p.x - 0.5f);
+    t = midX - (p.x - 0.5f);
+    w[0][0] = -t;
+    w[0][2] = (1.f - t);
+    w[0][1] = 2.0f * t - 1.0f;
+
+    int midY = (int)ceilf(p.y - 0.5f);
+    t = midY - (p.y - 0.5f);
+    w[1][0] = t * t * 0.5f;
+    w[1][2] = (1.f - t) * (1.f - t) * 0.5f;
+    w[1][1] = 1.f - w[1][0] - w[1][2];
+
+    int midZ = (int)ceilf(p.z - 0.5f);
+    t = midZ - (p.z - 0.5f);
+    w[2][0] = t * t * 0.5f;
+    w[2][2] = (1.f - t) * (1.f - t) * 0.5f;
+    w[2][1] = 1.f - w[2][0] - w[2][2];
+
+    // Evaluate noise by weighting noise coefficients by basis function values
+    int xC, yC, zC;
+    float weight = 1;
+
+    ADD_WEIGHTED(-1, -1, -1); ADD_WEIGHTED(0, -1, -1); ADD_WEIGHTED(1, -1, -1);
+    ADD_WEIGHTED(-1, 0, -1); ADD_WEIGHTED(0, 0, -1); ADD_WEIGHTED(1, 0, -1);
+    ADD_WEIGHTED(-1, 1, -1); ADD_WEIGHTED(0, 1, -1); ADD_WEIGHTED(1, 1, -1);
+
+    ADD_WEIGHTED(-1, -1, 0);  ADD_WEIGHTED(0, -1, 0);  ADD_WEIGHTED(1, -1, 0);
+    ADD_WEIGHTED(-1, 0, 0);  ADD_WEIGHTED(0, 0, 0);  ADD_WEIGHTED(1, 0, 0);
+    ADD_WEIGHTED(-1, 1, 0);  ADD_WEIGHTED(0, 1, 0);  ADD_WEIGHTED(1, 1, 0);
+
+    ADD_WEIGHTED(-1, -1, 1);  ADD_WEIGHTED(0, -1, 1);  ADD_WEIGHTED(1, -1, 1);
+    ADD_WEIGHTED(-1, 0, 1);  ADD_WEIGHTED(0, 0, 1);  ADD_WEIGHTED(1, 0, 1);
+    ADD_WEIGHTED(-1, 1, 1);  ADD_WEIGHTED(0, 1, 1);  ADD_WEIGHTED(1, 1, 1);
+
+    return result;
+}
+
+#undef ADD_WEIGHTED
+
+inline __device__ float eevaluateNoise(float3 pos, int3 resolution, float* data, int NTS = 64, float offset = 0.5, float scale = 0.1,
+    float time_anim = 0.1, int tile = 0) {
+    pos.x *= resolution.x;
+    pos.y *= resolution.y;
+    pos.z *= resolution.z;
+    pos.x += 1; pos.y += 1; pos.z += 1;
+
+    // time anim
+    pos.x += time_anim; pos.y += time_anim; pos.z += time_anim;
+
+    pos.x *= scale;
+    pos.y *= scale;
+    pos.z *= scale;
+
+
+    const int n3 = NTS * NTS * NTS;
+    float v = getWNoiseDx(pos, &data[int(tile * NTS) % n3], NTS);
+    //float v = WNoise(pos, &this->grid_noise[int(tile * n3 * 0.01) % n3], NOISE_TILE_SIZE);
+
+    v += offset;//offset //0.5
+    //v *= scale;//scale //0.1
+    return v;
+}
+
+
+
+template <typename V, typename T>
+__global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
+    int3 vd, float intensity, float offset, float scale, int frame = 1)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float temp = t_src[get_voxel(x, y, z, vd)];
+    float dens = d_src[get_voxel(x, y, z, vd)];
+    
+        
+
+
+    if (temp != 0) {
+        t_dest[get_voxel(x, y, z, vd)] = t_src[get_voxel(x, y, z, vd)] + (eevaluateNoise(make_float3(x, y, z), vd, noise,
+            64, offset * 1.6f, scale, 0.1, frame % 128) * intensity * maxf(0.05, minf((t_src[get_voxel(x, y, z, vd)]), 1.0)));
+    }
+    else {
+        t_dest[get_voxel(x, y, z, vd)] = 0.0f;
+    }
+
+        
+    if (dens >= 0.01) {
+        d_dest[get_voxel(x, y, z, vd)] = d_src[get_voxel(x, y, z, vd)] + (eevaluateNoise(make_float3(x, y, z), vd, noise,
+            64, offset, scale, 0.1, frame % 128) * intensity * maxf(0.01, minf((d_src[get_voxel(x, y, z, vd)]), 1.0)));
+    }
+    else {
+        d_dest[get_voxel(x, y, z, vd)] = 0.0f;
+    }
 }

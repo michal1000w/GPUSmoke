@@ -17,6 +17,7 @@ extern Solver solver;
 
 
 int main(int argc, char* args[]) {
+    srand(1);
     int devicesCount;
     cudaGetDeviceCount(&devicesCount);
     std::cout << "Found " << devicesCount << " devices:" << std::endl;
@@ -44,6 +45,7 @@ int main(int argc, char* args[]) {
     solver.Initialize();
     //solver.ClearCache();
 #ifdef OBJECTS_EXPERIMENTAL
+    std::cout << "Generating example scene" << std::endl;
     solver.ExampleScene(true);
 #else
     solver.ExportVDBScene();
@@ -51,6 +53,7 @@ int main(int argc, char* args[]) {
     //solver.ExampleScene();
     float Window_Resolution[2] = { 1600, 800 };
     float Image_Resolution[2] = { 700, 700 };
+    std::cout << "Setting image resolution" << std::endl;
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 
     solver.Initialize_Simulation();

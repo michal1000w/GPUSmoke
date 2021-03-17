@@ -237,7 +237,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 		ImGui::Checkbox("Simulation Upsampling", &solver.Upsampling);
-		if (solver.Upsampling) {
+		if (solver.Upsampling || true) {
 			ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 0.3f);
 			ImGui::SliderFloat("Scale", &solver.SCALE, 0.01f, 4.0f);
 			ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);

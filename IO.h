@@ -272,6 +272,13 @@ struct Local {
     static inline void maks(const float& a, const float& b, float& result) {
         result = max(a,b);
     }
+
+    static inline void noise(const openvdb::FloatGrid::ValueAllIter& iter) {
+        float noise = float(rand() % 1000) / 1000.0;
+        float influence = 0.9f;
+        noise *= influence;
+        iter.setValue(*iter * noise);
+    }
 };
 
 
@@ -370,6 +377,22 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
     //std::cout << "In the eeeend\n";
     openvdb::tools::signedFloodFill(grid_dst->tree());
 
+
+
+    /////////Upsample
+    /*
+    openvdb::FloatGrid::Ptr dest = openvdb::FloatGrid::create();
+    const float voxelSize = 0.1;
+    dest->setTransform(openvdb::math::Transform::createLinearTransform(voxelSize));
+    // Resample the input grid into the output grid, reproducing
+    // the level-set sphere at a smaller voxel size.
+    openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*grid_dst, *dest);
+    ////////Upres
+    openvdb::tools::foreach(dest->beginValueAll(), Local::noise);
+    //TODO
+    */
+
+
     float voxel_size = 0.1;
     auto transform = openvdb::math::Transform::createLinearTransform(/*voxel size=*/voxel_size); //Skala œwiatowa
     const openvdb::math::Vec3d offset(float(-dim.x) / 2., 0, float(-dim.z) / 2.);
@@ -379,6 +402,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         transform
         ); 
 
+    //grid_dst = dest;
     
     return grid_dst;
 

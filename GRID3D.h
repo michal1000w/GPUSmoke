@@ -9,6 +9,7 @@
 #include <nanovdb/NanoVDB.h>
 #include <openvdb/openvdb.h>
 #include <openvdb/tools/GridTransformer.h>
+//#include <openvdb/tools/Interpolation.h>
 #include <openvdb/tools/LevelSetSphere.h>
 #include <openvdb/tools/SignedFloodFill.h>
 
@@ -350,6 +351,12 @@ public:
         //cudaCheckError();
     }
 #endif
+    void copyToDeviceNoise(int NTS = 64) {
+        checkCudaErrors(cudaMalloc((void**)&vdb_noise, sizeof(float) * NTS * NTS * NTS));
+        checkCudaErrors(cudaMemcpy(vdb_noise, grid_noise, sizeof(float) * NTS * NTS * NTS, cudaMemcpyHostToDevice));
+        //cudaCheckError();
+    }
+
 
     void set(int x, int y, int z, float value) {
         grid[z * resolution.y * resolution.x + y * resolution.x + x] = value;
@@ -386,6 +393,9 @@ public:
         cudaFree(vdb);
         cudaFree(vdb_temp);
     }
+    void freeNoise() {
+        cudaFree(vdb_noise);
+    }
 #ifdef VELOCITY_NOISE
     void freeCudaVel() {
         cudaFree(grid_vel_gpu);
@@ -407,6 +417,10 @@ public:
     }
     float* get_grid_device_temp() {
         return this->vdb_temp;
+    }
+
+    float* get_grid_device_noise() {
+        return this->vdb_noise;
     }
 
 #ifdef VELOCITY_NOISE
@@ -1066,6 +1080,7 @@ private:
     int3 resolution;
     float* vdb;
     float* vdb_temp;
+    float* vdb_noise;
     
 
 

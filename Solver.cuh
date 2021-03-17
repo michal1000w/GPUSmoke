@@ -451,6 +451,7 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
 
+        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -466,7 +467,9 @@ public:
                 object_list.push_back(temp2);
             }
         }
-        /*
+        * 
+        * 
+        * 
         if (!preserve_object_list || force) {
             object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
             //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
@@ -536,6 +539,8 @@ public:
 
         setLight(5.0, 1.0, -0.5);
 
+        std::cout << "Done\n";
+
     }
 
     Solver() {
@@ -549,11 +554,12 @@ public:
         EXPORT_VDB = false;
 
 
-        //ExampleScene(true);
+        ExampleScene(true);
         //Initialize();
         
         preserve_object_list = true;
         SIMULATE = true;
+        std::cout << "Done\n";
     }
     
     void setCamera(float x, float y, float z) {
@@ -580,10 +586,20 @@ public:
         return this->rotation;
     }
 
+    void InitGPUNoise(int NTS = 64) {
+        GRID->generateTile(NTS);
+        //TODO dodać na kartę
+        GRID->copyToDeviceNoise(NTS);
+        checkCudaErrors(cudaMemcpy(state->noise->writeTarget(), GRID->get_grid_device_noise(), sizeof(float) * NTS*NTS*NTS, cudaMemcpyDeviceToDevice));
+        state->noise->swap();
+    }
+
     void Initialize_Simulation() {
         state = new fluid_state(vol_d);
 
         GRID = new GRID3D();
+        InitGPUNoise(64);
+        
 
         state->f_weight = 0.05;
         state->time_step = time_step;// 0.1;
@@ -627,7 +643,8 @@ public:
         for (int st = 0; st < 1; st++) {
             simulate_fluid(*state, object_list, ACCURACY_STEPS, 
                 false, f, Smoke_Dissolve, Ambient_Temperature,
-                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve);
+                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
+                SCALE, noise_intensity, OFFSET);
             state->step++;
         }
 
@@ -680,7 +697,8 @@ public:
                 GRID = state->density->readToGrid();
                 GRID->free();
                 //std::cout << GRID->get_noise_status() << std::endl;
-                GRID->generateTile(NOISE_SC);
+                //GRID->generateTile(NOISE_SC);
+                InitGPUNoise(NOISE_SC);
             }
             std::cout << "D";
             grid->LoadNoise(GRID);

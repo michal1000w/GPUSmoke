@@ -18,6 +18,7 @@ struct fluid_state {
     DoubleBuffer<float>* temperature;
     DoubleBuffer<float>* flame;
     DoubleBuffer<float>* pressure;
+    DoubleBuffer<float>* noise;
     float* diverge;
 
     
@@ -37,6 +38,16 @@ struct fluid_state {
         flame = new DoubleBuffer<float>((int)nelems);
         flame->setDim(dims);
         cudaMalloc((void**)&diverge, sizeof(float) * nelems);
+
+
+
+
+        int noiseDim = 64;
+        int3 noiseDims = make_int3(noiseDim, noiseDim, noiseDim);
+        nelems = noiseDim * noiseDim * noiseDim;
+
+        noise = new DoubleBuffer<float>((int)nelems);
+        noise->setDim(noiseDims);
     }
 
     fluid_state() {

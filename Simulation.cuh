@@ -9,7 +9,8 @@
 void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
     float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
-    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f)
+    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
+    float sscale = 0.7, float sintensity = 1, float soffset = 0.07)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -372,6 +373,31 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, -1.0f * Pressure);//1.0
         //state.dim, 1.0f);//1.0
     state.velocity->swap();
+
+
+
+    //BETA
+    for (int i = 0; i < 1; i++) {
+        applyNoiseDT << <grid, block >> > (
+            state.temperature->readTarget(),
+            state.density->readTarget(),
+            state.temperature->writeTarget(),
+            state.density->writeTarget(),
+            state.noise->readTarget(),
+            state.dim,
+            /*intensity=0.45f*/sintensity,
+            /*offset=0.075f*/soffset,
+            /*scale=0.7*/sscale,
+            frame);
+        state.temperature->swap();
+        state.density->swap();
+    }
+    /*
+    */
+
+
+
+
 
     cudaEventRecord(stop, 0);
     cudaThreadSynchronize();
