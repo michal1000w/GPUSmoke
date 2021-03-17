@@ -7,7 +7,7 @@
 
 #define EXPERIMENTAL
 #define OBJECTS_EXPERIMENTAL
-
+#define CPU_WAVELET false
 
 
 
@@ -448,18 +448,20 @@ public:
         
     }
 
+
     void ExampleScene(bool force = false) {
         //adding emitters
 
-        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
             float positionz = vol_d.z * 0.5;
             for (int i = 0; i < 500; i++) {
-                temp += cosf(1.2123123f * float(i));
-                positionx += (vol_d.x * 0.25) * sinf(3.312313f * float(i));
-                positionz += (vol_d.z * 0.25) * cosf(2.1998443f * float(i));
+                
+                temp += std::cosf(1.2123123f * float(i));
+                positionx += ((vol_d.x * 0.25) * std::sinf(3.312313f * float(i)));
+                positionz += ((vol_d.z * 0.25) * std::cosf(2.1998443f * float(i)));
+                
                 OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
                     positionx, 5, positionz), object_list.size());
                 temp2.frame_range_min = i;
@@ -467,9 +469,7 @@ public:
                 object_list.push_back(temp2);
             }
         }
-        * 
-        * 
-        * 
+        /*
         if (!preserve_object_list || force) {
             object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
             //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
@@ -487,7 +487,7 @@ public:
         DOMAIN_RESOLUTION = make_int3(96, 490, 96);
         New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
-        object_list;
+        //object_list.push_back(OBJECT("explosion", 3.0f, 50, 0.3, 1, 0.9, make_float3(0, 0, 0), object_list.size()));
         Upsampling = false;
         TUpsampling = Upsampling;
         INFLUENCE_SIM = true;
@@ -554,7 +554,7 @@ public:
         EXPORT_VDB = false;
 
 
-        ExampleScene(true);
+        //ExampleScene(true);
         //Initialize();
         
         preserve_object_list = true;
@@ -588,7 +588,6 @@ public:
 
     void InitGPUNoise(int NTS = 64) {
         GRID->generateTile(NTS);
-        //TODO dodać na kartę
         GRID->copyToDeviceNoise(NTS);
         checkCudaErrors(cudaMemcpy(state->noise->writeTarget(), GRID->get_grid_device_noise(), sizeof(float) * NTS*NTS*NTS, cudaMemcpyDeviceToDevice));
         state->noise->swap();
@@ -599,6 +598,8 @@ public:
 
         GRID = new GRID3D();
         InitGPUNoise(64);
+
+        ExampleScene(true);
         
 
         state->f_weight = 0.05;
@@ -713,10 +714,10 @@ public:
             //Upsampling
             std::cout << "Upscaling:";
             std::cout << "Den";
-            if (UpsamplingDensity)
+            if (UpsamplingDensity && CPU_WAVELET)
                 grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1, noise_intensity, time_anim); //normal grid
             std::cout << ";Temp";
-            if (UpsamplingTemperature)
+            if (UpsamplingTemperature && CPU_WAVELET)
                 gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET * 1.6f, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
 
             std::cout << ";Vel";
@@ -751,11 +752,11 @@ public:
                 }
 
                 
-                if (UpsamplingDensity) {
+                if (UpsamplingDensity && CPU_WAVELET) {
                     cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
                     state->density->swap();
                 }
-                if (UpsamplingTemperature) {
+                if (UpsamplingTemperature && CPU_WAVELET) {
                     cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
                     state->temperature->swap();
                 }

@@ -17,7 +17,7 @@ extern Solver solver;
 
 
 int main(int argc, char* args[]) {
-    srand(1);
+    //srand(1);
     int devicesCount;
     cudaGetDeviceCount(&devicesCount);
     std::cout << "Found " << devicesCount << " devices:" << std::endl;
@@ -43,10 +43,9 @@ int main(int argc, char* args[]) {
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
 #ifdef EXPERIMENTAL
     solver.Initialize();
-    //solver.ClearCache();
 #ifdef OBJECTS_EXPERIMENTAL
-    std::cout << "Generating example scene" << std::endl;
-    solver.ExampleScene(true);
+    //std::cout << "Generating example scene" << std::endl;
+    //solver.ExampleScene(true);
 #else
     solver.ExportVDBScene();
 #endif

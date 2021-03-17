@@ -44,8 +44,8 @@ inline void __checkCudaErrors(cudaError err, const char* file, const int line)
 {
     if (cudaSuccess != err)
     {
-        printf("%s(%i) : CUDA Runtime API error %d: %s.\n", file, line, (int)err, cudaGetErrorString(err));
-        exit(-1);
+        printf("\n\n%s  line:(%i) : CUDA Runtime API error %d: %s.\n", file, line, (int)err, cudaGetErrorString(err));
+        //exit(-1);
     }
 }
 
@@ -390,15 +390,15 @@ public:
         deletep(grid_noise);
     }
     void freeCuda() {
-        cudaFree(vdb);
-        cudaFree(vdb_temp);
+        checkCudaErrors(cudaFree(vdb));
+        checkCudaErrors(cudaFree(vdb_temp));
     }
     void freeNoise() {
-        cudaFree(vdb_noise);
+        checkCudaErrors(cudaFree(vdb_noise));
     }
 #ifdef VELOCITY_NOISE
     void freeCudaVel() {
-        cudaFree(grid_vel_gpu);
+        checkCudaErrors(cudaFree(grid_vel_gpu));
         this->cuda_velocity_initialized = false;
     }
 #endif

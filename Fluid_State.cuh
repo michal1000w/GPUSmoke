@@ -44,9 +44,9 @@ struct fluid_state {
 
         int noiseDim = 64;
         int3 noiseDims = make_int3(noiseDim, noiseDim, noiseDim);
-        nelems = noiseDim * noiseDim * noiseDim;
+        int nnelems = noiseDim * noiseDim * noiseDim;
 
-        noise = new DoubleBuffer<float>((int)nelems);
+        noise = new DoubleBuffer<float>((int)nnelems);
         noise->setDim(noiseDims);
     }
 
@@ -60,6 +60,7 @@ struct fluid_state {
         delete temperature;
         delete pressure;
         delete flame;
+        delete noise;
         cudaFree(diverge);
     }
 };
