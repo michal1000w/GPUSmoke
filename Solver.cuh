@@ -51,6 +51,7 @@ std::string reduce(const std::string& str,
 
 class Solver {
 public:
+    int NOISE_SC = 64;
     int ACCURACY_STEPS;//
     float Smoke_Dissolve;//
     float Flame_Dissolve;
@@ -646,7 +647,7 @@ public:
             simulate_fluid(*state, object_list, ACCURACY_STEPS, 
                 false, f, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
-                SCALE, noise_intensity, OFFSET);
+                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity);
             state->step++;
         }
 
@@ -664,9 +665,15 @@ public:
 
 
 
+        if (Upsampling) {
+            if (!GRID->is_noise_grid()) {
+                //GRID = state->density->readToGrid();
+                //GRID->free();
+                InitGPUNoise(NOISE_SC);
+            }
+        }
 
-
-        
+        /*
         if (Upsampling && TUpsampling) {
             //Apply Wavelet Noise
             std::cout << "R:";
@@ -692,7 +699,7 @@ public:
 
             //std::cout << "Loaded";
 
-            int NOISE_SC = 64;
+            
 
             std::cout << "|L:";
             if (!GRID->is_noise_grid()) {
@@ -801,7 +808,7 @@ public:
                 grid->combine_with_temp_grid(state->flame->readToGrid());
             
                 export_openvdb(FOLDER,"frame." + std::to_string(f), grid->get_resolution(), 
-                                grid, /*DEBUG*/ false);
+                                grid, false);
             
                 if (frame >= EXPORT_END_FRAME)
                     EXPORT_VDB = false;
@@ -814,7 +821,7 @@ public:
             std::cout << "Freedom";
         }
         else {
-
+        */
             if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
 
                 render_fluid(
@@ -833,13 +840,13 @@ public:
 
 
             if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
-                std::cout << "C:";
+                //std::cout << "C:";
                 auto grid = state->density->readToGrid();
-                std::cout << "D";
-                auto gridt = state->flame->readToGrid(true); //tu się wysypuje
-                std::cout << ";T";
+                //std::cout << "D";
+                auto gridt = state->flame->readToGrid();
+                //std::cout << ";T";
                 grid->combine_with_temp_grid(gridt);
-                std::cout << ";";
+                //std::cout << ";";
 
 
                 std::string FOLDER = EXPORT_FOLDER;
@@ -856,7 +863,7 @@ public:
                 //grid->freeCuda1();
                 delete grid;
             }
-        }
+        //}
 
 
         frame++;

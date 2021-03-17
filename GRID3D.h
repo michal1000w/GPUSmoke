@@ -150,14 +150,8 @@ public:
         this->resolution = dim;
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         checkCudaErrors(cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost));
-        //grid_noise = new float[1];
-        //grid_noise[0] = 0.0;
 
-        if (false) { //tutaj
-            initNoiseGrid();
-            grid_temp = new float[1];
-            grid_temp[0] = 0.0;
-        }
+
 
         //cudaCheckError();
     }

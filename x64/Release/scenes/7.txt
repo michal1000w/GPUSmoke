@@ -22,5 +22,5 @@
 #simulation_upsampling=0
 #wn_offset=0.076000
 #wn_scale=0.700000
-#simulation_influence=0
+#simulation_influence=1
 #object={explosion;154.384003;13.425000;154.384003;16.471001;5.200000;0.000000;1.000000;0.000000;0.000000;0;4.510000;0;2}
