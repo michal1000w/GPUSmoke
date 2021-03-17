@@ -145,16 +145,20 @@ public:
         initNoiseGrid();
     }
 
-    void load_from_device(int3 dim, float* grid_src) {
-        free();
+    void load_from_device(int3 dim, float* grid_src,bool debug = false) {
+        freeOnlyGrid(); //free
         this->resolution = dim;
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         checkCudaErrors(cudaMemcpy(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost));
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        initNoiseGrid();
-        grid_temp = new float[1];
-        grid_temp[0] = 0.0;
+
+        if (false) { //tutaj
+            initNoiseGrid();
+            grid_temp = new float[1];
+            grid_temp[0] = 0.0;
+        }
+
         //cudaCheckError();
     }
 

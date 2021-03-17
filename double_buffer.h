@@ -15,10 +15,11 @@ public:
     T* writeTarget();
     inline GRID3D* readToGrid(bool debug = false) {
         if (debug)
-            std::cout << "  Reading Grid: ";
+            std::cout << "Reading Grid: ";
         clock_t startTime = clock();
         GRID3D* output = new GRID3D();
-        output->load_from_device(dim, readTarget());
+        if (debug) std::cout << "GRID3D->";
+        output->load_from_device(dim, readTarget(),debug);
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)
             std::cout << (clock() - startTime);

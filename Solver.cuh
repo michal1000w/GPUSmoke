@@ -312,6 +312,7 @@ public:
                 }
                 if (podzial[line * 2] == "simulation_upsampling") {
                     Upsampling = what_it_is(podzial[line * 2 + 1]);
+                    TUpsampling = Upsampling;
                 }
                 if (podzial[line * 2] == "wn_offset") {
                     OFFSET = stof(podzial[line * 2 + 1]);
@@ -832,9 +833,13 @@ public:
 
 
             if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
+                std::cout << "C:";
                 auto grid = state->density->readToGrid();
-                auto gridt = state->flame->readToGrid();
+                std::cout << "D";
+                auto gridt = state->flame->readToGrid(true); //tu się wysypuje
+                std::cout << ";T";
                 grid->combine_with_temp_grid(gridt);
+                std::cout << ";";
 
 
                 std::string FOLDER = EXPORT_FOLDER;
