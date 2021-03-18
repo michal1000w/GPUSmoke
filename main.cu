@@ -41,10 +41,17 @@ int main(int argc, char* args[]) {
     std::cout << "----------------------------------------" << std::endl;
     cudaSetDevice(Best_Device_Index);
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
+
+    cudaDeviceProp deviceProperties;
+    cudaGetDeviceProperties(&deviceProperties, Best_Device_Index);
+    cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, deviceProperties.persistingL2CacheMaxSize); /* Set aside max possible size of L2 cache for persisting accesses */
+    std::cout << "Setting L2 max cache: " << deviceProperties.persistingL2CacheMaxSize << std::endl;
+
 #ifdef EXPERIMENTAL
-    solver.Initialize();
+    solver.Initialize(devicesCount);
+    //solver.Initialize(1);
 #ifdef OBJECTS_EXPERIMENTAL
-    //std::cout << "Generating example scene" << std::endl;
+    std::cout << "Generating example scene" << std::endl;
     solver.ExampleScene(true);
 #else
     solver.ExportVDBScene();

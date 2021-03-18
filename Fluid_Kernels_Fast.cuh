@@ -14,7 +14,15 @@
 
 
 
+#define BLOCK_SIZE 8
+#define PADDING 1
+const long long LocLoc = std::pow(2 , (BLOCK_SIZE + (2 * PADDING)));
 
+
+//dla BLOCK_SIZE 8 ~240
+#define LOC_SIZE 1024
+//10
+//#define LOC_SIZE 4096
 
 
 
@@ -156,8 +164,8 @@ template <typename T>
 __global__ void pressure_solve(T* div, T* p_src, T* p_dst,
     int3 vd, float amount)
 {
-    __shared__ T loc[1024];
-    const int padding = 1; // How far to load past end of cube
+    __shared__ T loc[LOC_SIZE];
+    const int padding = PADDING; // How far to load past end of cube
     const int sdim = blockDim.x + 2 * padding; // 10 with blockdim 8
     const int3 s_dims = make_int3(sdim, sdim, sdim);
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -190,8 +198,8 @@ __global__ void pressure_solve(T* div, T* p_src, T* p_dst,
 template <typename V, typename T>
 __global__ void divergence(V* velocity, T* div, int3 vd, float half_cell)
 {
-    __shared__ V loc[1024];
-    const int padding = 1; // How far to load past end of cube
+    __shared__ V loc[LOC_SIZE];
+    const int padding = PADDING; // How far to load past end of cube
     const int sdim = blockDim.x + 2 * padding; // 10 with blockdim 8
     const int3 s_dims = make_int3(sdim, sdim, sdim);
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -220,8 +228,8 @@ template <typename V, typename T>
 __global__ void subtract_pressure(V* v_src, V* v_dest, T* pressure,
     int3 vd, float grad_scale)
 {
-    __shared__ T loc[1024];
-    const int padding = 1; // How far to load past end of cube
+    __shared__ T loc[LOC_SIZE];
+    const int padding = PADDING; // How far to load past end of cube
     const int sdim = blockDim.x + 2 * padding; // 10 with blockdim 8
     const int3 s_dims = make_int3(sdim, sdim, sdim);
     const int x = blockDim.x * blockIdx.x + threadIdx.x;

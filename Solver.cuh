@@ -84,6 +84,8 @@ public:
     float time_anim = 0.5;
     float density_cutoff = 0.01;
 
+    int devicesCount = 1;
+
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
@@ -431,7 +433,7 @@ public:
 
         clock_t startTime = clock();
         
-        GRID3D sphere(vol_d.x, vol_d.y, vol_d.z);
+        GRID3D sphere(vol_d.x, vol_d.y, vol_d.z, devicesCount);
         load_vdb("sphere", vol_d, sphere);
         std::cout << "Loaded in : " << double(clock() - startTime) << std::endl;
         if (SAMPLE_SCENE == 2) {
@@ -481,7 +483,7 @@ public:
         */
     }
 
-    void Initialize() {
+    void Initialize(int DevicesCount = 1) {
         openvdb::initialize();
         DONE_FRAME = true;
 
@@ -510,7 +512,9 @@ public:
         SCALE = 0.7f; //0.12
         noise_intensity = 0.45f;
 
-        GRID = new GRID3D();
+        GRID = new GRID3D(devicesCount);
+        devicesCount = DevicesCount;
+        GRID->deviceCount = this->devicesCount;
         //rendering settings
         
         FRAMES = 500;
@@ -528,7 +532,6 @@ public:
 
         vol_d = make_int3(DOMAIN_RESOLUTION.x, DOMAIN_RESOLUTION.y, DOMAIN_RESOLUTION.z); //Domain resolution
         img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
-
 
 
 
@@ -556,7 +559,7 @@ public:
             EXPORT_FOLDER[i] = folder[i];
         EXPORT_VDB = false;
 
-
+        
         //ExampleScene(true);
         //Initialize();
         
@@ -590,16 +593,22 @@ public:
     }
 
     void InitGPUNoise(int NTS = 64) {
+        GRID->deviceCount = this->devicesCount;
         GRID->generateTile(NTS);
+        std::cout << "Copy to Device";
         GRID->copyToDeviceNoise(NTS);
-        checkCudaErrors(cudaMemcpy(state->noise->writeTarget(), GRID->get_grid_device_noise(), sizeof(float) * NTS*NTS*NTS, cudaMemcpyDeviceToDevice));
+        std::cout << "Split to devices";
+        multiGPU_copy(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice);
+        std::cout << "Almost Done";
         state->noise->swap();
+        std::cout << ";";
     }
 
     void Initialize_Simulation() {
-        state = new fluid_state(vol_d);
+        state = new fluid_state(vol_d, devicesCount);
 
-        GRID = new GRID3D();
+        GRID = new GRID3D(devicesCount);
+        GRID->deviceCount = this->devicesCount;
         InitGPUNoise(NOISE_SC);
 
         
@@ -652,7 +661,8 @@ public:
                 time_anim, density_cutoff);
             state->step++;
         }
-
+        /* TODO
+        */
 
         if (Upsampling)
             TUpsampling = true;
@@ -828,8 +838,8 @@ public:
 
                 render_fluid(
                     img, img_d,
-                    state->density->readTarget(),
-                    state->flame->readTarget(),
+                    state->density->readTargett(),
+                    state->flame->readTargett(),
                     vol_d, 1.0, Light, Camera, rotation,
                     STEPS, Fire_Max_Temperature, Smoke_And_Fire);
 

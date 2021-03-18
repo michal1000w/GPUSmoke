@@ -10,16 +10,18 @@ class DoubleBuffer
 {
 public:
     DoubleBuffer();
-    DoubleBuffer(int nelements);
-    T* readTarget();
-    T* writeTarget();
+    DoubleBuffer(int nelements, int devicesCount);
+    std::vector<T*>* readTarget();
+    std::vector<T*>* writeTarget();
+    T* readTargett() { return A[0]; }
+    T* writeTargett() { return B[0]; }
     inline GRID3D* readToGrid(bool debug = false) {
         if (debug)
             std::cout << "Reading Grid: ";
         clock_t startTime = clock();
         GRID3D* output = new GRID3D();
         if (debug) std::cout << "GRID3D->";
-        output->load_from_device(dim, readTarget(),debug);
+        output->load_from_device(dim, readTargett(),debug);
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)
             std::cout << (clock() - startTime);
@@ -34,7 +36,7 @@ public:
         clock_t startTime = clock();
         GRID3D* output = new GRID3D(dim);
         if (debug) std::cout << "Copying..." << std::endl;
-        output->load_from_device3D(dim, readTarget());
+        output->load_from_device3D(dim, readTargett());
         //std::cout << "Done";
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)
@@ -47,11 +49,13 @@ public:
     void setDim(int3 dim);
     ~DoubleBuffer();
     void freeWriteTarget() {
-        cudaFree(B);
+        //cudaFree(B);
+        multiGPU_free(devicesCount, &B);
     }
 private:
     int nbytes;
-    T* A;
-    T* B;
+    int devicesCount;
+    std::vector<T*> A;
+    std::vector<T*> B;
     int3 dim;
 };

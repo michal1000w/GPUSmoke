@@ -8,26 +8,26 @@ DoubleBuffer<T>::DoubleBuffer()
     A = 0;
     B = 0;
     nbytes = 0;
+    devicesCount = 2;
 }
 
 template <typename T>
-DoubleBuffer<T>::DoubleBuffer(int nelements)
+DoubleBuffer<T>::DoubleBuffer(int nelements, int devicesCount)
 {
+    this->devicesCount = devicesCount;
     nbytes = sizeof(T)*nelements;
-    cudaMalloc( (void**)&A, nbytes );
-    cudaMalloc( (void**)&B, nbytes );
-    if( 0 == A || 0 == B )
-    {
-        printf("couldn't allocate GPU memory\n");
-        return;
-    }
+    //cudaMalloc( (void**)&A, nbytes );
+    //cudaMalloc( (void**)&B, nbytes );
+    A = multiGPU_malloc<T>(this->devicesCount, nelements);
+    B = multiGPU_malloc<T>(this->devicesCount, nelements);
+    
     printf("Allocated %.2f MB on GPU\n", 2*nbytes/(1024.f*1024.f));
 }
 
 template <typename T>
-T* DoubleBuffer<T>::readTarget()
+std::vector<T*>* DoubleBuffer<T>::readTarget()
 {
-    return A;
+    return &A;
 }
  
 
@@ -38,9 +38,9 @@ void DoubleBuffer<T>::setDim(int3 dim) {
 }
 
 template <typename T>
-T* DoubleBuffer<T>::writeTarget()
+std::vector<T*>* DoubleBuffer<T>::writeTarget()
 {
-    return B;
+    return &B;
 }
 
 template <typename T>
@@ -58,7 +58,8 @@ int DoubleBuffer<T>::byteCount()
 template <typename T>
 DoubleBuffer<T>::~DoubleBuffer()
 {
-    cudaFree(A);
-    cudaFree(B);
-    //grid->free();
+    //cudaFree(A);
+    //cudaFree(B);
+    multiGPU_free(this->devicesCount, A);
+    multiGPU_free(this->devicesCount, B);
 }
