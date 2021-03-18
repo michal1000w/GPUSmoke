@@ -250,6 +250,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Checkbox("Density&Temp", &solver.UpsamplingDensity);
 			//ImGui::SameLine();
 			//ImGui::Checkbox("Temperature", &solver.UpsamplingTemperature);
+			if (solver.UpsamplingDensity)
+				ImGui::SliderFloat("Density cutoff", &solver.density_cutoff, 0.0001f, 0.01f);
 		}
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 

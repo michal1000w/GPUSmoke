@@ -81,10 +81,11 @@ public:
     float SCALE;
     bool INFLUENCE_SIM;
     float noise_intensity;
-    float time_anim = 0.1;
+    float time_anim = 0.5;
+    float density_cutoff = 0.01;
 
-    bool UpsamplingVelocity = false;
-    bool UpsamplingDensity = false;
+    bool UpsamplingVelocity = true;
+    bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
 private:
     int3 DOMAIN_RESOLUTION;
@@ -599,7 +600,7 @@ public:
         state = new fluid_state(vol_d);
 
         GRID = new GRID3D();
-        InitGPUNoise(64);
+        InitGPUNoise(NOISE_SC);
 
         
         
@@ -647,7 +648,8 @@ public:
             simulate_fluid(*state, object_list, ACCURACY_STEPS, 
                 false, f, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
-                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity);
+                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
+                time_anim, density_cutoff);
             state->step++;
         }
 

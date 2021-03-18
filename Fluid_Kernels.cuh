@@ -791,7 +791,8 @@ inline __device__ float eevaluateNoise(float3 pos, int3 resolution, float* data,
 
 template <typename V, typename T>
 __global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
-    int3 vd, float intensity, float offset, float scale, int frame = 1)
+    int3 vd, float intensity, float offset, float scale, int frame = 1, float time_anim = 0.5f,
+    float density_cutoff = 0.01)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -814,9 +815,9 @@ __global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
     }
 
         
-    if (dens >= 0.01) {
+    if (dens >= density_cutoff) {
         d_dest[get_voxel(x, y, z, vd)] = d_src[get_voxel(x, y, z, vd)] + (eevaluateNoise(make_float3(x, y, z), vd, noise,
-            64, offset, scale, 0.1, frame % 128) * intensity * maxf(0.01, minf((d_src[get_voxel(x, y, z, vd)]), 1.0)));
+            64, offset, scale, time_anim * float(frame%256)/*Time Anim*/, 1/* frame % 128*/) * intensity * maxf(0.01, minf((d_src[get_voxel(x, y, z, vd)]), 1.0)));
     }
     else {
         d_dest[get_voxel(x, y, z, vd)] = 0.0f;
@@ -1000,7 +1001,7 @@ inline __device__ float3 evaluateCurlGPU(float3 pos, int3 resolution, float* dat
 
 template <typename V, typename T>
 __global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
-    int3 vd, float intensity, float offset, float scale, int frame = 1)
+    int3 vd, float intensity, float offset, float scale, int frame = 1, float time_anim = 0.5f)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -1010,5 +1011,5 @@ __global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
 
 
     v_dest[get_voxel(x, y, z, vd)] = v_src[get_voxel(x, y, z, vd)] + (evaluateCurlGPU(make_float3(x, y, z), vd, noise,
-            64, offset * 10.0, scale * 2.0, 0.1, frame % 128) * intensity * 1.5f);
+            64, offset * 10.0, scale * 2.0, time_anim * float(frame%256)/*Time Anim*/, 0/*frame % 128*/) * intensity * 1.5f);
 }
