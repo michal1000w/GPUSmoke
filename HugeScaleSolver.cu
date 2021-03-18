@@ -43,7 +43,8 @@
 
 
 
-#include "Fluid_Kernels.cuh"
+//#include "Fluid_Kernels.cuh" //old
+#include "Fluid_Kernels_Fast.cuh" //new
 #include "Unified_Buffer.cpp"
 
 //#define EXPERIMENTAL

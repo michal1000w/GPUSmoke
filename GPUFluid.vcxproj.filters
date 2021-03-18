@@ -112,6 +112,9 @@
     <ClInclude Include="APP_INFO.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="Fluid_Kernels_Fast.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
