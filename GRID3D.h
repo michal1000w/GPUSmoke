@@ -170,6 +170,23 @@ inline void multiGPU_copy(int devices_count, std::vector<float*>* dst, std::vect
         threads.push_back(std::thread([&, device_id]() {
             cudaSetDevice(device_id);
 
+            checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src->at(device_id), sizeof(float) * size, type));
+
+            cudaDeviceSynchronize();
+            }));
+    }
+
+    for (auto& thread : threads)
+        thread.join();
+}
+
+inline void multiGPU_copyn(int devices_count, std::vector<float*>* dst, std::vector<float*>* src, int size, cudaMemcpyKind type) { //dobre
+    std::vector<std::thread> threads;
+    for (unsigned int device_id = 0; device_id < devices_count; device_id++)
+    {
+        threads.push_back(std::thread([&, device_id]() {
+            cudaSetDevice(device_id);
+            std::cout << "Oł shieeeeeeeeeeeeeet";
 
             checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src->at(device_id), sizeof(float) * size, type));
 
@@ -205,6 +222,7 @@ inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, std::vec
 template <typename T>
 inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
     std::vector<std::thread> threads;
+
 
     std::vector<T*> _dst;
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
@@ -313,7 +331,8 @@ class GRID3D {
     }
     bool cuda_velocity_initialized = false;
 public:
-    GRID3D(int deviceCount = 2) {
+    GRID3D(int devicesCount = 1) {
+        this->deviceCount = devicesCount;
         resolution.x = resolution.y = resolution.z = 1;
         grid = new float[1];
         grid[0] = 0.0;
@@ -324,6 +343,7 @@ public:
         //grid_noise[0] = 0.0;
     }
     GRID3D(int x, int y, int z, int deviceCount) {
+        this->deviceCount = deviceCount;
         resolution.x = x;
         resolution.y = y;
         resolution.z = z;
@@ -339,6 +359,7 @@ public:
         initNoiseGrid();
     }
     GRID3D(int3 dim, int deviceCount) {
+        this->deviceCount = deviceCount;
         resolution.x = dim.x;
         resolution.y = dim.y;
         resolution.z = dim.z;
@@ -354,6 +375,7 @@ public:
         initNoiseGrid();
     }
     GRID3D(int elem, float* grid, int deviceCount) {
+        this->deviceCount = deviceCount;
         grid = new float[elem];
         grid_temp = new float[elem];
         for (int i = 0; i < elem; i++) {
@@ -365,6 +387,7 @@ public:
         initNoiseGrid();
     }
     GRID3D(int3 dim, float* grid_src, int deviceCount) {
+        this->deviceCount = deviceCount;
         this->resolution = dim;
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
         //cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0);
@@ -373,7 +396,7 @@ public:
         initNoiseGrid();
     }
 
-    void load_from_device(int3 dim, float* grid_src,bool debug = false, int deviceCount = 2) {
+    void load_from_device(int3 dim, float* grid_src,bool debug = false) {
         freeOnlyGrid(); //free
         this->resolution = dim;
         grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
@@ -593,10 +616,10 @@ public:
         std::cout << "Malloc";
         vdb_noise = multiGPU_malloc<float>(deviceCount, NTS*NTS*NTS);
 
-        this->generateTile(NTS);
+        //this->generateTile(NTS);
 
         //checkCudaErrors(cudaMemcpyAsync(vdb_noise, grid_noise, sizeof(float) * NTS * NTS * NTS, cudaMemcpyHostToDevice,0));
-        std::cout << "Copy";
+        std::cout << "Copy(" << deviceCount << ")";
         multiGPU_copyHTD(deviceCount, &vdb_noise, grid_noise, NTS*NTS*NTS);
         std::cout << "Endl\n";
         //cudaCheckError();
@@ -633,6 +656,8 @@ public:
 
     void free_noise() {
         deletep(grid_noise);
+        grid_noise = new float[0];
+        grid_noise[0] = SUPER_NULL;
     }
     void freeCuda() {
         multiGPU_free(deviceCount, vdb);
@@ -1318,7 +1343,7 @@ public:
     long long size() {
         return (long long)resolution.x * (long long)resolution.y * (long long)resolution.z;
     }
-    int deviceCount = 2;
+    int deviceCount = 1;
 private:
     float* grid;
     float* grid_temp;
@@ -1331,7 +1356,6 @@ private:
     std::vector<float*> vdb_noise;
     std::vector<float3*> grid_vel_gpu;
     
-
 
     static inline int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }
 

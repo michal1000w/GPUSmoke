@@ -9,7 +9,7 @@ template <typename T>
 class DoubleBuffer
 {
 public:
-    DoubleBuffer();
+    DoubleBuffer(int devices);
     DoubleBuffer(int nelements, int devicesCount);
     std::vector<T*>* readTarget();
     std::vector<T*>* writeTarget();
@@ -19,7 +19,8 @@ public:
         if (debug)
             std::cout << "Reading Grid: ";
         clock_t startTime = clock();
-        GRID3D* output = new GRID3D();
+        GRID3D* output = new GRID3D(devicesCount);
+        output->deviceCount = devicesCount;
         if (debug) std::cout << "GRID3D->";
         output->load_from_device(dim, readTargett(),debug);
         //output->set_pointer(new GRID3D(dim, readTarget()));
@@ -34,7 +35,8 @@ public:
             std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
         }
         clock_t startTime = clock();
-        GRID3D* output = new GRID3D(dim);
+        GRID3D* output = new GRID3D(dim,devicesCount);
+        output->deviceCount = devicesCount;
         if (debug) std::cout << "Copying..." << std::endl;
         output->load_from_device3D(dim, readTargett());
         //std::cout << "Done";

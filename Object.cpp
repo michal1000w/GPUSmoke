@@ -20,7 +20,7 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 }
 */
 
-OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float Temp, float Density, float3 location, int number) {
+OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float Temp, float Density, float3 location, int number, int deviceCount) {
 	this->set_type(type);
 	this->size = size;
 	this->initial_velocity = initial_velocity;
@@ -34,6 +34,7 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->selected = false;
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 	this->force_strength = 0.0f;
+	this->vdb_object = GRID3D(deviceCount);
 }
 
 

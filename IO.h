@@ -495,7 +495,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
     grid->setName("density");
     grid_temp2->setName("flame");
     ////////////////////////////////////////////////////////
-    GRID3D* grid_temp = new GRID3D();
+    GRID3D* grid_temp = new GRID3D(1);
     //grid_temp->set_pointer(grid_dst);
     //grid_temp = grid_dst;
 

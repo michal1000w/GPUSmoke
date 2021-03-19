@@ -468,7 +468,8 @@ public:
                 positionz += ((vol_d.z * 0.25) * std::cosf(2.1998443f * float(i)));
                 
                 OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
-                    positionx, 5, positionz), object_list.size());
+                    positionx, 5, positionz), object_list.size(),
+                    this->devicesCount);
                 temp2.frame_range_min = i;
                 temp2.frame_range_max = i + 20;
                 object_list.push_back(temp2);
@@ -486,6 +487,8 @@ public:
     void Initialize(int DevicesCount = 1) {
         openvdb::initialize();
         DONE_FRAME = true;
+
+        this->devicesCount = DevicesCount;
 
         srand(0);
         //simulation settings
@@ -513,8 +516,7 @@ public:
         noise_intensity = 0.45f;
 
         GRID = new GRID3D(devicesCount);
-        devicesCount = DevicesCount;
-        GRID->deviceCount = this->devicesCount;
+        GRID->deviceCount = devicesCount;
         //rendering settings
         
         FRAMES = 500;
@@ -593,12 +595,14 @@ public:
     }
 
     void InitGPUNoise(int NTS = 64) {
-        GRID->deviceCount = this->devicesCount;
         GRID->generateTile(NTS);
-        std::cout << "Copy to Device";
-        GRID->copyToDeviceNoise(NTS);
-        std::cout << "Split to devices";
-        multiGPU_copy(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice);
+        GRID->deviceCount = this->devicesCount;
+            std::cout << "Copy to Device";
+            GRID->copyToDeviceNoise(NTS);
+
+
+        std::cout << "Split to ("<<devicesCount<<") devices";
+        multiGPU_copyn(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice);
         std::cout << "Almost Done";
         state->noise->swap();
         std::cout << ";";
@@ -626,6 +630,7 @@ public:
 
     void Clear_Simulation_Data() {
         GRID->free_noise();
+        //GRID->freeNoise();
         delete state;
         delete[] img;
         delete GRID;
@@ -674,16 +679,6 @@ public:
             TUpsampling = true;
 
 
-
-
-
-        if (Upsampling) {
-            if (!GRID->is_noise_grid()) {
-                //GRID = state->density->readToGrid();
-                //GRID->free();
-                InitGPUNoise(NOISE_SC);
-            }
-        }
 
         /*
         if (Upsampling && TUpsampling) {
@@ -871,7 +866,7 @@ public:
 
                 delete gridt;
                 grid->free();
-                grid->free_noise();
+                //grid->free_noise();
                 //grid->freeCuda1();
                 delete grid;
             }

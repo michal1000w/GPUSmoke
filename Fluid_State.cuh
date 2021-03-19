@@ -20,7 +20,7 @@ struct fluid_state {
     DoubleBuffer<float>* pressure;
     DoubleBuffer<float>* noise;
     std::vector<float*> diverge;
-    int devicesCount = 2;
+    int devicesCount = 1;
 
     
 

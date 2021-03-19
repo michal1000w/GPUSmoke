@@ -16,7 +16,7 @@ extern Solver solver;
 
 
 
-int main(int argc, char* args[]) {
+int main(int argc, char* argv[]) {
     //srand(1);
     int devicesCount;
     cudaGetDeviceCount(&devicesCount);
@@ -42,14 +42,22 @@ int main(int argc, char* args[]) {
     cudaSetDevice(Best_Device_Index);
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
 
-    cudaDeviceProp deviceProperties;
-    cudaGetDeviceProperties(&deviceProperties, Best_Device_Index);
-    cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, deviceProperties.persistingL2CacheMaxSize); /* Set aside max possible size of L2 cache for persisting accesses */
-    std::cout << "Setting L2 max cache: " << deviceProperties.persistingL2CacheMaxSize << std::endl;
+    if (false) {
+        cudaDeviceProp deviceProperties;
+        cudaGetDeviceProperties(&deviceProperties, Best_Device_Index);
+        cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, deviceProperties.persistingL2CacheMaxSize); /* Set aside max possible size of L2 cache for persisting accesses */
+        std::cout << "Setting L2 max cache: " << deviceProperties.persistingL2CacheMaxSize << std::endl;
+    }
 
 #ifdef EXPERIMENTAL
-    solver.Initialize(devicesCount);
-    //solver.Initialize(1);
+    if (argc <= 1) {
+        std::cout << "Using All (" << devicesCount << ") devices" << std::endl;
+        solver.Initialize(devicesCount);
+    }
+    else {
+        std::cout << "Using " << int(argv[1] - 48) << " devices" << std::endl;
+        solver.Initialize(std::stoi(argv[1]));
+    }
 #ifdef OBJECTS_EXPERIMENTAL
     std::cout << "Generating example scene" << std::endl;
     solver.ExampleScene(true);

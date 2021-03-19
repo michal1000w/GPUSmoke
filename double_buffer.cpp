@@ -3,12 +3,12 @@
 
 
 template <typename T>
-DoubleBuffer<T>::DoubleBuffer()
+DoubleBuffer<T>::DoubleBuffer(int devices)
 {
     A = 0;
     B = 0;
     nbytes = 0;
-    devicesCount = 2;
+    devicesCount = devices;
 }
 
 template <typename T>
