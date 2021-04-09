@@ -86,6 +86,8 @@ public:
     float max_velocity = 256.0f;
     float influence_on_velocity = 2.0f;
     float render_step_size = 1.2f;
+    float density_influence = 1.0f;
+    float fire_multiply = 0.5;
 
     int devicesCount = 1;
 
@@ -528,7 +530,7 @@ public:
         //rendering settings
         
         FRAMES = 500;
-        Fire_Max_Temperature = 50.0f;
+        Fire_Max_Temperature = 2.0f;
         Image_Resolution[0] = 640;
         Image_Resolution[1] = 640;
         STEPS = 100; //512 Rendering Samples
@@ -681,7 +683,7 @@ public:
                 state->density->readTargett(device),
                 state->flame->readTargett(device),
                 vol_d, render_step_size, Light, Camera, rotation,
-                STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+                STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply);
 
             generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
         }

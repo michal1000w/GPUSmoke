@@ -9,11 +9,17 @@ __device__ float2 rotate(float2 p, float a)
         p.y * cos(a) + p.x * sin(a));
 }
 
+__device__ float mix(float a, float b, float inbetween = 0.5) {
+    a *= 1.0f - inbetween;
+    b *= inbetween;
+    return a + b;
+}
+
 
 __global__ void render_pixel(uint8_t* image, float* volume,
     float* temper, int3 img_dims, int3 vol_dims, float step_size,
     float3 light_dir, float3 cam_pos, float rotation, int steps,
-    float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false)
+    float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f)
 {
     step_size *= 512.0 / float(steps); //beta
 
@@ -45,16 +51,19 @@ __global__ void render_pixel(uint8_t* image, float* volume,
     const float3 dir_to_light = normalize(light_dir);
     const float occ_thresh = 0.001;
     float d_accum = 1.0;//1.0
-    float light_accum = 0.025;//0.0   background color
+    float light_accum = 0.0;//0.02   background color
     float temp_accum = 1;//0.0
 
     float MAX_DENSITY = 1.0f;
 
     float d_accum2 = 1.0;//1.0
-    float light_accum2 = 0.025;//0.0   background color
+    float light_accum2 = 0.0;//0.0   background color
 
     int empty_steps = steps/2;
     float empty_step_size = 1.0f * (256.0 / float(empty_steps));
+
+
+    
 
 
     bool _SMOKE = false;
@@ -65,13 +74,14 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 #pragma unroll
         for (int step = 0; step < empty_steps;) {
             // At each step, cast occlusion ray towards light source
-            float c_density = get_cellF2(ray_pos, vd, volume);
+            float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
+            float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
             ray_pos += ray_dir * empty_step_size * 3.0f;
             // Don't bother with occlusion ray if theres nothing there
-            if (c_density >= occ_thresh) break;
+            if (c_density >= occ_thresh || temp >= occ_thresh) break;
             step++;
             if (step == empty_steps) goto NOTHING;
-        }  
+        }
 
         ray_pos -= ray_dir * (empty_step_size * 3.0f);
 
@@ -81,8 +91,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 #pragma unroll
         for (int step = 0; step < steps; step++) {
             // At each step, cast occlusion ray towards light source
-            float c_density = get_cellF2(ray_pos, vd, volume);
-            float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+            float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
             if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
             float3 occ_pos = ray_pos;
             ray_pos += ray_dir * step_size;
@@ -97,20 +106,50 @@ __global__ void render_pixel(uint8_t* image, float* volume,
                 occ_pos += dir_to_light * step_size;
             }
 
-            d_accum2 *= fmax(temp / Fire_Max_temp, 0.0f);
-            light_accum2 += d_accum2;
-
-
             d_accum *= fmax(1.0 - c_density, 0.0);
             light_accum += d_accum * c_density * transparency;
             if (d_accum < occ_thresh) break;
         }
 
+        ray_pos -= ray_dir * step_size * steps;
+
         ///fire
+        float R, G, B;
+        R = G = B = 0.0f;
+
+        if (_SMOKE_AND_FIRE) {
+            float downresing = 2.0f;
+            float transparency = 1.0f;
+#pragma unroll
+            for (int step = 0; step < steps/downresing; step++) {
+                // At each step, cast occlusion ray towards light source
+                float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+                float3 occ_pos = ray_pos;
+                ray_pos += ray_dir * step_size * downresing;
+                // Don't bother with occlusion ray if theres nothing there
+                if (temp < occ_thresh) continue;
+
+                transparency -= float(step) / float(steps * downresing);
+                d_accum2 *= (fmax(1 - temp, 0.0f) / Fire_Max_temp);// *fmax(transparency, 0.0f);
+                R += d_accum2 * mix(1.0f,1.0f,transparency);
+                G += d_accum2 * mix(1.0f,0.45f,transparency);
+                B += d_accum2 * mix(1.0f,0.2f,transparency);
+            }
+        }
+
+
+
+
+        /*
         float light_accum_R = (light_accum)+fmax(0.0f, (light_accum2 * 0.7f) * (light_accum + 0.5f));
         float light_accum_G = (light_accum)+fmax(0.0f, (light_accum2 * 0.25f) * (light_accum + 0.5f));
         float light_accum_B = (light_accum)+fmax(0.0f, (light_accum2 * 0.1f) * (light_accum + 0.5f));
+        */
+        float light_accum_R = fmax(light_accum,0.0f)+fmax(0.0f, R * mix(light_accum, 1.0f, fire_multiply));
+        float light_accum_G = fmax(light_accum,0.0f)+fmax(0.0f, G * mix(light_accum, 1.0f, fire_multiply));
+        float light_accum_B = fmax(light_accum,0.0f)+fmax(0.0f, B * mix(light_accum, 1.0f, fire_multiply));
         ///////
+        
 
         const int pixel = 3 * (y * img_dims.x + x);
         image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum_R, 255.0));
@@ -297,7 +336,8 @@ __global__ void render_pixel_old(uint8_t* image, float* volume,
 
 void render_fluid(uint8_t* render_target, int3 img_dims,
     float* d_volume, float* temper, int3 vol_dims,
-    float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, bool Smoke_and_fire = false) {
+    float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, 
+    bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f) {
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -329,7 +369,8 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
 
     render_pixel << <grid, block >> > (
         device_img, d_volume, temper, img_dims, vol_dims,
-        step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire);
+        step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
+        density_influence, fire_multiply);
 
     // Read image back
     cudaMemcpy(render_target, device_img, img_bytes, cudaMemcpyDeviceToHost);
