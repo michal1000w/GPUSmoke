@@ -85,7 +85,7 @@ public:
     float density_cutoff = 0.01;
     float max_velocity = 256.0f;
     float influence_on_velocity = 2.0f;
-    float render_step_size = 1.0f;
+    float render_step_size = 1.2f;
 
     int devicesCount = 1;
 

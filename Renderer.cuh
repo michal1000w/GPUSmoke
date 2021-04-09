@@ -9,8 +9,124 @@ __device__ float2 rotate(float2 p, float a)
         p.y * cos(a) + p.x * sin(a));
 }
 
-// GPU volumetric raymarcher
+
 __global__ void render_pixel(uint8_t* image, float* volume,
+    float* temper, int3 img_dims, int3 vol_dims, float step_size,
+    float3 light_dir, float3 cam_pos, float rotation, int steps,
+    float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false)
+{
+    step_size *= 512.0 / float(steps); //beta
+
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    if (x >= img_dims.x || y >= img_dims.y) return;
+
+    int3 vd = make_int3(vol_dims.x, vol_dims.y, vol_dims.z);
+    // Create Normalized UV image coordinates
+    float uvx = float(x) / float(img_dims.x) - 0.5;
+    float uvy = -float(y) / float(img_dims.y) + 0.5;
+    uvx *= float(img_dims.x) / float(img_dims.y);
+
+    float3 v_center = make_float3(
+        0.5 * float(vol_dims.x),
+        0.5 * float(vol_dims.y),
+        0.5 * float(vol_dims.z));
+
+    // Set up ray originating from camera
+    float3 ray_pos = cam_pos - v_center;
+    float2 pos_rot = rotate(make_float2(ray_pos.x, ray_pos.z), rotation);
+    ray_pos.x = pos_rot.x;
+    ray_pos.z = pos_rot.y;
+    ray_pos += v_center;
+    float3 ray_dir = normalize(make_float3(uvx, uvy, 0.5));
+    float2 dir_rot = rotate(make_float2(ray_dir.x, ray_dir.z), rotation);
+    ray_dir.x = dir_rot.x;
+    ray_dir.z = dir_rot.y;
+    const float3 dir_to_light = normalize(light_dir);
+    const float occ_thresh = 0.001;
+    float d_accum = 1.0;//1.0
+    float light_accum = 0.025;//0.0   background color
+    float temp_accum = 1;//0.0
+
+    float MAX_DENSITY = 1.0f;
+
+
+
+    int empty_steps = 64;
+
+
+    bool _SMOKE = false;
+    bool _SMOKE_AND_FIRE = true;
+    //RENDER SMOKE
+    if (!Smoke_And_Fire || true) {
+        //Trace through empty space
+        for (int step = 0; step < empty_steps;) {
+            // At each step, cast occlusion ray towards light source
+            float c_density = get_cellF(ray_pos, vd, volume);
+            float3 occ_pos = ray_pos;
+            ray_pos += ray_dir * step_size * 3.0f;
+            // Don't bother with occlusion ray if theres nothing there
+            if (c_density >= occ_thresh) break;
+            step++;
+            if (step == empty_steps) goto NOTHING;
+        }  
+
+        ray_pos -= ray_dir * (step_size * 3.0f);
+
+        steps /= 2;
+
+        // Trace ray through volume
+        for (int step = 0; step < steps; step++) {
+            // At each step, cast occlusion ray towards light source
+            float c_density = get_cellF(ray_pos, vd, volume);
+            if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
+            float3 occ_pos = ray_pos;
+            ray_pos += ray_dir * step_size;
+            // Don't bother with occlusion ray if theres nothing there
+            if (c_density < occ_thresh) continue;
+            float transparency = 1.0;
+            for (int occ = 0; occ < steps; occ++) {
+                transparency *= fmax(1.0 - get_cellF(occ_pos, vd, volume), 0.0);
+                if (transparency > 1.0) transparency = 1.0; //beta
+                if (transparency < occ_thresh) break;
+                occ_pos += dir_to_light * step_size;
+            }
+            d_accum *= fmax(1.0 - c_density, 0.0);
+            light_accum += d_accum * c_density * transparency;
+            if (d_accum < occ_thresh) break;
+        }
+
+        const int pixel = 3 * (y * img_dims.x + x);
+        image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+        image[pixel + 1] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+        image[pixel + 2] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+    }
+
+    return;
+
+NOTHING:
+    const int pixel = 3 * (y * img_dims.x + x);
+    image[pixel + 0] = (uint8_t)(0);
+    image[pixel + 1] = (uint8_t)(0);
+    image[pixel + 2] = (uint8_t)(0);
+    return;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// GPU volumetric raymarcher
+__global__ void render_pixel_old(uint8_t* image, float* volume,
     float* temper, int3 img_dims, int3 vol_dims, float step_size,
     float3 light_dir, float3 cam_pos, float rotation, int steps,
     float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false)
@@ -171,9 +287,17 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
-
-    dim3 block(32, 32);
+    
+    /*
+    dim3 block(32, 32);//16
     dim3 grid((img_dims.x + 32 - 1) / 32, (img_dims.y + 32 - 1) / 32);
+
+    dim3 block(16, 16);//23
+    dim3 grid((img_dims.x + 16 - 1) / 16, (img_dims.y + 16 - 1) / 16);
+    */
+
+    dim3 block(8, 8);//30
+    dim3 grid((img_dims.x + 8 - 1) / 8, (img_dims.y + 8 - 1) / 8);
 
     cudaEventRecord(start, 0);
 
