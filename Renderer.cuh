@@ -64,7 +64,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 #pragma unroll
         for (int step = 0; step < empty_steps;) {
             // At each step, cast occlusion ray towards light source
-            float c_density = get_cellF(ray_pos, vd, volume);
+            float c_density = get_cellF2(ray_pos, vd, volume);
             ray_pos += ray_dir * empty_step_size * 3.0f;
             // Don't bother with occlusion ray if theres nothing there
             if (c_density >= occ_thresh) break;
@@ -80,7 +80,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 #pragma unroll
         for (int step = 0; step < steps; step++) {
             // At each step, cast occlusion ray towards light source
-            float c_density = get_cellF(ray_pos, vd, volume);
+            float c_density = get_cellF2(ray_pos, vd, volume);
             if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
             float3 occ_pos = ray_pos;
             ray_pos += ray_dir * step_size;
@@ -89,7 +89,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             float transparency = 1.0;
 #pragma unroll
             for (int occ = 0; occ < steps/2; occ++) {
-                transparency *= fmax(1.0 - get_cellF(occ_pos, vd, volume), 0.0);
+                transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
                 if (transparency > 1.0) transparency = 1.0; //beta
                 if (transparency < occ_thresh) break;
                 occ_pos += dir_to_light * step_size;

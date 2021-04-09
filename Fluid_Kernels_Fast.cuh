@@ -99,6 +99,7 @@ inline __host__ __device__ float3 floorr(const float3 v)
     return make_float3(floorf(v.x), floorf(v.y), floorf(v.z));
 }
 
+
 template <typename T>
 inline __device__ T get_cellF(float3 p, int3 d, T* vol) {
 
@@ -127,6 +128,8 @@ inline __device__ T get_cellF(float3 p, int3 d, T* vol) {
 
     return sum;
 }
+
+
 
 // Convert single index into 3D coordinates
 inline __device__ int3 mod_coords(int i, int d) {
@@ -1104,7 +1107,15 @@ __global__ void resize_sphere_vel(T* target, float3 c,
 
 ////////////////////////////////////////////////////////////////////////////
 
+template <typename T>
+inline __device__ T get_cellF2(float3 p, int3 d, T* vol) {
 
+    float3 l = floorr(p);
+    int3 rp = make_int3(l);
+    float sum = get_cell(rp, d, vol);
+
+    return sum;
+}
 
 
 

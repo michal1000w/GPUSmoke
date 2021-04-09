@@ -230,7 +230,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
 		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
 		ImGui::SliderFloat("Max Velocity", &solver.max_velocity, 0.0f, 500.0f);
-		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 2.0f);
+		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 4.0f);
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 96);
 		if (ImGui::Button("Simulate")) {
 			if (solver.SIMULATE == false)
