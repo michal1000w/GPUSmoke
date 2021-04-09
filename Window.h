@@ -264,7 +264,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Text("Render Settings:");
 		ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
 		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 1, 100);
-		ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
+		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 1024);
 		ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
 
 		if (ImGui::Button("Reset")) {

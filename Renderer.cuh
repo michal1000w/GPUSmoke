@@ -50,7 +50,8 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
     float MAX_DENSITY = 1.0f;
 
-
+    float d_accum2 = 1.0;//1.0
+    float light_accum2 = 0.025;//0.0   background color
 
     int empty_steps = steps/2;
     float empty_step_size = 1.0f * (256.0 / float(empty_steps));
@@ -81,6 +82,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
         for (int step = 0; step < steps; step++) {
             // At each step, cast occlusion ray towards light source
             float c_density = get_cellF2(ray_pos, vd, volume);
+            float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
             if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
             float3 occ_pos = ray_pos;
             ray_pos += ray_dir * step_size;
@@ -94,15 +96,26 @@ __global__ void render_pixel(uint8_t* image, float* volume,
                 if (transparency < occ_thresh) break;
                 occ_pos += dir_to_light * step_size;
             }
+
+            d_accum2 *= fmax(temp / Fire_Max_temp, 0.0f);
+            light_accum2 += d_accum2;
+
+
             d_accum *= fmax(1.0 - c_density, 0.0);
             light_accum += d_accum * c_density * transparency;
             if (d_accum < occ_thresh) break;
         }
 
+        ///fire
+        float light_accum_R = (light_accum)+fmax(0.0f, (light_accum2 * 0.7f) * (light_accum + 0.5f));
+        float light_accum_G = (light_accum)+fmax(0.0f, (light_accum2 * 0.25f) * (light_accum + 0.5f));
+        float light_accum_B = (light_accum)+fmax(0.0f, (light_accum2 * 0.1f) * (light_accum + 0.5f));
+        ///////
+
         const int pixel = 3 * (y * img_dims.x + x);
-        image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
-        image[pixel + 1] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
-        image[pixel + 2] = (uint8_t)(fmin(255.0 * light_accum, 255.0));
+        image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum_R, 255.0));
+        image[pixel + 1] = (uint8_t)(fmin(255.0 * light_accum_G, 255.0));
+        image[pixel + 2] = (uint8_t)(fmin(255.0 * light_accum_B, 255.0));
     }
 
     return;
