@@ -252,6 +252,8 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
     return _dst;
 }
 
+
+
 inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size = 1) {
     std::vector<std::thread> threads;
 
@@ -279,6 +281,7 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size =
 
     return _dst;
 }
+
 
 
 
@@ -675,6 +678,20 @@ public:
         this->cuda_velocity_initialized = false;
     }
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     ~GRID3D() {
         //free();
     }

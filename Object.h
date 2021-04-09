@@ -60,12 +60,14 @@ public:
 	void set_name(std::string);
 	void set_force_strength(float strength) { force_strength = strength; }
 	float get_force_strength() const { return force_strength; }
+	void reset();
 
 	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
 
 	bool selected;
 	float Location[3];
 	float size;
+	float initial_size;
 	float force_strength;
 	bool square = false;
 	int type;

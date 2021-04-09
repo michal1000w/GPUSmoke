@@ -5,13 +5,17 @@
 
 
 
+
+
+
 // Runs a single iteration of the simulation
 void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
     float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
     float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
     float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
-    bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f)
+    bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, float deviceCount = 1,
+    float max_velocity = 3.0f, float influence_on_velocity = 0.1f)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -123,8 +127,19 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
         //REAL ANIMATION
-        if (current.get_type() == "explosion") {
-
+        if (current.get_type() == "explosion") { // RESCALE
+            if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                /*
+                    */
+                float direction = 1.0f;
+                resize_sphere_vel << < grid, block >> > (
+                    state.velocity->readTargett(),
+                    current.get_location(), object_list[i].size, direction, max_velocity, influence_on_velocity,
+                    state.dim
+                    );
+                object_list[i].size += direction;
+                //std::cout << cudaGetErrorString(cudaGetLastError());
+            }
         }
 
 

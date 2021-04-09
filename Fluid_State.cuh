@@ -68,4 +68,16 @@ struct fluid_state {
         //cudaFree(diverge);
         multiGPU_free(devicesCount, diverge);
     }
+
+    void sync_devices() {
+        /*
+        for (int i = 0; i < devicesCount; i++) {
+            cudaSetDevice(i);
+            cudaThreadSynchronize();
+            cudaDeviceSynchronize();
+        }
+        */
+        checkCudaErrors(cudaMemcpyAsync(density->readTargett(1), density->readTargett(0), density->byteCount(), cudaMemcpyDeviceToDevice));
+        checkCudaErrors(cudaMemcpyAsync(flame->readTargett(1), flame->readTargett(0), flame->byteCount(), cudaMemcpyDeviceToDevice));
+    }
 };

@@ -1056,6 +1056,61 @@ __global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
 
 
 
+///////////////////////////////VELOCITY FOR ANIMATION//////////////////
+template <typename T>
+__global__ void resize_sphere_vel(T* target, float3 c,
+    float radius, float direction, float max_velocity, float influence_on_velocity , int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+
+
+    if (dist <= (radius + direction) * 1.2 && dist >= radius) {
+        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+
+        float3* current = &target[get_voxel(x, y, z, vd)];
+
+        float3 maxx = make_float3(max_velocity, max_velocity, max_velocity);
+        float3 minn = make_float3(-max_velocity, -max_velocity, -max_velocity);
+
+        //*current = *current + (vector * direction * -1.0f * 0.05f);
+        current->x = min(current->x, maxx.x);
+        current->y = min(current->y, maxx.y);
+        current->z = min(current->z, maxx.z);
+
+
+        *current = *current - (*current * vector * direction * influence_on_velocity);
+
+        current->x = max(current->x, 0.0f);
+        current->y = max(current->y, 0.0f);
+        current->z = max(current->z, 0.0f);
+
+        /*
+        */
+    }
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////
+
+
+
+
+
+
+
+
 
 
 

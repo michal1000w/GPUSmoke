@@ -26,10 +26,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 void UpdateSolver() {
 	std::cout << "\nRestarting\n";
+	solver.ThreadsJoin();
 	//clearing
 	//solver.ClearCache();
 	solver.frame = 0;
 	solver.Clear_Simulation_Data();
+	solver.ResetObjects();
 	//preparation
 	//solver.Initialize();
 	solver.UpdateDomainResolution();
@@ -105,6 +107,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("Enter filename");
 			ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
 			if (ImGui::Button("Open")) {
+				solver.ThreadsJoin();
 				std::string filename = solver.OPEN_FOLDER;
 				filename = trim(filename);
 				solver.LoadSceneFromFile(filename);
@@ -226,6 +229,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
 		ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
 		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
+		ImGui::SliderFloat("Max Velocity", &solver.max_velocity, 0.0f, 500.0f);
+		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 2.0f);
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 96);
 		if (ImGui::Button("Simulate")) {
 			if (solver.SIMULATE == false)
@@ -260,6 +265,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
 		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 1, 100);
 		ImGui::SliderInt("Render samples", &solver.STEPS, 1, 512);
+		//ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
 
 		if (ImGui::Button("Reset")) {
 			UpdateSolver();
@@ -319,7 +325,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			}
 		}
 		if (ImGui::Button("Add Emitter")) {
-			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.25, 0.0, 0.0), solver.object_list.size()));
+			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.5, 0.0, solver.getDomainResolution().z * 0.5), solver.object_list.size()));
 		}
 
 		ImGui::Text("Object list:");
@@ -333,6 +339,9 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			float maximum = max(max(solver.New_DOMAIN_RESOLUTION.x, solver.New_DOMAIN_RESOLUTION.y), solver.New_DOMAIN_RESOLUTION.z);
 			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, maximum);
 			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
+			if (ImGui::Button("Apply current size as initial")) {
+				solver.object_list[object].initial_size = solver.object_list[object].size;
+			}
 			if (solver.object_list[object].type >= 5 && solver.object_list[object].type < 9) {
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
 				ImGui::SameLine();

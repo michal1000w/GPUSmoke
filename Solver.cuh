@@ -83,6 +83,9 @@ public:
     float noise_intensity;
     float time_anim = 0.5;
     float density_cutoff = 0.01;
+    float max_velocity = 256.0f;
+    float influence_on_velocity = 2.0f;
+    float render_step_size = 1.0f;
 
     int devicesCount = 1;
 
@@ -453,6 +456,11 @@ public:
         
     }
 
+    void ResetObjects() {
+        for (int i = 0; i < this->object_list.size(); i++) {
+            object_list[i].reset();
+        }
+    }
 
     void ExampleScene(bool force = false) {
         //adding emitters
@@ -467,11 +475,11 @@ public:
                 positionx += ((vol_d.x * 0.25) * std::sinf(3.312313f * float(i)));
                 positionz += ((vol_d.z * 0.25) * std::cosf(2.1998443f * float(i)));
                 
-                OBJECT temp2("explosion", 3.0f, 50, 0.3, temp, 0.9, make_float3(
+                OBJECT temp2("explosion", 3.0f, /*size*/ 1, 0.3, temp, 0.9, make_float3(
                     positionx, 5, positionz), object_list.size(),
                     this->devicesCount);
                 temp2.frame_range_min = i;
-                temp2.frame_range_max = i + 20;
+                temp2.frame_range_max = i + 10;
                 object_list.push_back(temp2);
             }
         }
@@ -492,7 +500,7 @@ public:
 
         srand(0);
         //simulation settings
-        DOMAIN_RESOLUTION = make_int3(96, 490, 96);
+        DOMAIN_RESOLUTION = make_int3(128, 490, 128);
         New_DOMAIN_RESOLUTION = DOMAIN_RESOLUTION;
         ACCURACY_STEPS = 8; //8
         //object_list.push_back(OBJECT("explosion", 3.0f, 50, 0.3, 1, 0.9, make_float3(0, 0, 0), object_list.size()));
@@ -630,7 +638,6 @@ public:
 
     void Clear_Simulation_Data() {
         GRID->free_noise();
-        //GRID->freeNoise();
         delete state;
         delete[] img;
         delete GRID;
@@ -651,231 +658,101 @@ public:
         cudaThreadExit();
     }
 
+    void Simulate(int frame, int device = 0) {
+        cudaSetDevice(device);
+        for (int st = 0; st < 1; st++) {
+            simulate_fluid(*state, object_list, ACCURACY_STEPS,
+                false, frame, Smoke_Dissolve, Ambient_Temperature,
+                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
+                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
+                time_anim, density_cutoff, max_velocity, influence_on_velocity);
+            state->step++;
+        }
+        cudaDeviceSynchronize();
+    }
+
+    void Render(int frame, int device = 0) {
+        cudaSetDevice(device);
+
+
+        if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
+            render_fluid(
+                img, img_d,
+                state->density->readTargett(device),
+                state->flame->readTargett(device),
+                vol_d, render_step_size, Light, Camera, rotation,
+                STEPS, Fire_Max_Temperature, Smoke_And_Fire);
+
+            generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
+        }
+    }
+
+    void Save(int frame, int device = 0) {
+        cudaSetDevice(device);
+        if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
+            //std::cout << "C:";
+            auto grid = state->density->readToGrid(device);
+            //std::cout << "D";
+            auto gridt = state->flame->readToGrid(device);
+            //std::cout << ";T";
+            grid->combine_with_temp_grid(gridt);
+            //std::cout << ";";
+
+
+            std::string FOLDER = EXPORT_FOLDER;
+            FOLDER = trim(FOLDER);
+
+            export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, /*DEBUG*/ false);
+
+            if (frame >= EXPORT_END_FRAME)
+                EXPORT_VDB = false;
+
+            delete gridt;
+            grid->free();
+            delete grid;
+        }
+    }
+
+    void ThreadsJoin() {
+        for (auto& thread : threads)
+            thread.join();
+
+        threads.clear();
+    }
 
 
     void Simulation_Frame() {
+
+
         state->time_step = speed * 0.1; //beta
         DONE_FRAME = false;
-        unsigned int f = frame;
-        std::cout << "\rFrame " << f + 1 << "  -  ";
-        for (int st = 0; st < 1; st++) {
-            simulate_fluid(*state, object_list, ACCURACY_STEPS, 
-                false, f, Smoke_Dissolve, Ambient_Temperature,
-                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
-                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff);
-            state->step++;
-        }
-        /* TODO
-        */
-
-        if (Upsampling)
-            TUpsampling = true;
-
-
-        if (EXPORT_VDB && frame < EXPORT_START_FRAME)
-            TUpsampling = false;
-        else if (EXPORT_VDB && frame >= EXPORT_START_FRAME)
-            TUpsampling = true;
-
-
-
-        /*
-        if (Upsampling && TUpsampling) {
-            //Apply Wavelet Noise
-            std::cout << "R:";
-            std::cout << "D";
-            auto grid = state->density->readToGrid();
-            std::cout << ";T";
-            auto gridt = state->temperature->readToGrid();
-            std::cout << ";";
-            if (INFLUENCE_SIM && UpsamplingVelocity) {
-                //std::cout << "Reading grid";
-                auto velvel = state->velocity->readToGrid3D(true);
-                std::cout << "Cpd->";
-                grid->LoadVelocity(velvel);
-
-                std::cout << "Ldd->";
-                velvel->free();
-                std::cout << "Freed->";
-                velvel->freeCuda();
-                std::cout << "CUDA->";
-                velvel->freeCudaVel();
-            }
-            std::cout << "V";
-
-            //std::cout << "Loaded";
-
-            
-
-            std::cout << "|L:";
-            if (!GRID->is_noise_grid()) {
-                GRID = state->density->readToGrid();
-                GRID->free();
-                //std::cout << GRID->get_noise_status() << std::endl;
-                //GRID->generateTile(NOISE_SC);
-                InitGPUNoise(NOISE_SC);
-            }
-            std::cout << "D";
-            grid->LoadNoise(GRID);
-            std::cout << ";T";
-            gridt->LoadNoise(GRID);
-            std::cout << ";";
-
-            
-            //std::cout << "Upsampling";
-            int Upscale_Rate = 1;
-
-            //Upsampling
-            std::cout << "Upscaling:";
-            std::cout << "Den";
-            if (UpsamplingDensity && CPU_WAVELET)
-                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET, SCALE, NOISE_SC, 1, noise_intensity, time_anim); //normal grid
-            std::cout << ";Temp";
-            if (UpsamplingTemperature && CPU_WAVELET)
-                gridt->UpScale(Upscale_Rate, SEED, frame, OFFSET * 1.6f, SCALE, NOISE_SC, 0, noise_intensity, time_anim); //temperature grid -> 1
-
-            std::cout << ";Vel";
-            if (INFLUENCE_SIM && UpsamplingVelocity) {
-                grid->UpScale(Upscale_Rate, SEED, frame, OFFSET * 10, SCALE * 2, NOISE_SC, 2, noise_intensity * 1.5f, time_anim); //velocity grid
-            }
-
-            std::cout << ";Comb";
-            grid->combine_with_temp_grid(gridt);
-
-            delete gridt;
-
-            //std::cout << "Uploading";
-
-
-
-            grid->freeCuda();
-            grid->copyToDevice(false);
-            
-            if (INFLUENCE_SIM) {
-                auto wt = grid->get_grid_device();
-                auto wt2 = grid->get_grid_device_temp();
-                
-                
-                if (UpsamplingVelocity) {
-                    grid->freeCudaVel();
-                    grid->copyToDeviceVel();
-                    grid->free_velocity(); //new
-                    auto wt3 = grid->get_grid_device_vel();
-                    cudaMemcpy(state->velocity->writeTarget(), wt3, SIZEOF_FLOAT3 * grid->size(), cudaMemcpyDeviceToDevice);
-                    state->velocity->swap();
-                }
-
-                
-                if (UpsamplingDensity && CPU_WAVELET) {
-                    cudaMemcpy(state->density->writeTarget(), wt, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-                    state->density->swap();
-                }
-                if (UpsamplingTemperature && CPU_WAVELET) {
-                    cudaMemcpy(state->temperature->writeTarget(), wt2, sizeof(float) * grid->size(), cudaMemcpyDeviceToDevice);
-                    state->temperature->swap();
-                }
-                //std::cout << "\DOONE\n";
-
-                //std::cout << "Free wt, wt2, wt3" << std::endl;
-                //grid->freeCudaVel();
-                //delete wt, wt2, wt3;
-            }
-
-
-
-            if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
-
-                render_fluid(
-                    img, img_d,
-                    grid->get_grid_device(),
-                    //grid->get_grid_device_temp(),
-                    state->flame->readTarget(),
-                    //state->density->readTarget(),
-                    //state->temperature->readTarget(),
-                    vol_d, 1.0, Light, Camera, rotation,
-                    STEPS, Fire_Max_Temperature, Smoke_And_Fire);
-
-
-
-                generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
-
-
-            }
-            
-            
-            
-            
+        int device_id = 0;
+        std::cout << "\rFrame " << frame + 1 << "  -  ";
         
 
-            if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
-                std::string FOLDER = EXPORT_FOLDER;
-                FOLDER = trim(FOLDER);
+        device_id = 0;
+        Simulate(frame, device_id);
 
-                grid->combine_with_temp_grid(state->flame->readToGrid());
-            
-                export_openvdb(FOLDER,"frame." + std::to_string(f), grid->get_resolution(), 
-                                grid, false);
-            
-                if (frame >= EXPORT_END_FRAME)
-                    EXPORT_VDB = false;
-            }
+        /*
+        state->sync_devices();
+        ThreadsJoin();
 
-
-            grid->free();
-            grid->freeCuda();
-            grid->freeCudaVel();
-            std::cout << "Freedom";
-        }
-        else {
+        device_id = 1;
+        threads.push_back(std::thread([&, device_id]() {
+            Render(frame, device_id);
+            Save(frame, device_id);
+        }));
         */
-            if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
+        Render(frame, device_id);
+        Save(frame, device_id);
 
-                render_fluid(
-                    img, img_d,
-                    state->density->readTargett(),
-                    state->flame->readTargett(),
-                    vol_d, 1.0, Light, Camera, rotation,
-                    STEPS, Fire_Max_Temperature, Smoke_And_Fire);
-
-
-
-                generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(f + 1) + ".bmp").c_str());
-
-
-            }
-
-
-            if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
-                //std::cout << "C:";
-                auto grid = state->density->readToGrid();
-                //std::cout << "D";
-                auto gridt = state->flame->readToGrid();
-                //std::cout << ";T";
-                grid->combine_with_temp_grid(gridt);
-                //std::cout << ";";
-
-
-                std::string FOLDER = EXPORT_FOLDER;
-                FOLDER = trim(FOLDER);
-
-                export_openvdb(FOLDER, "frame." + std::to_string(f), grid->get_resolution(), grid, /*DEBUG*/ false);
-
-                if (frame >= EXPORT_END_FRAME)
-                    EXPORT_VDB = false;
-
-                delete gridt;
-                grid->free();
-                //grid->free_noise();
-                //grid->freeCuda1();
-                delete grid;
-            }
-        //}
-
+        //threads.push_back(std::thread([&, device_id]() {
+        //}));
 
         frame++;
         DONE_FRAME = true;
     }
+    std::vector<std::thread> threads;
     std::thread* spawn() {
         if (SIMULATE)
             return new std::thread([this] { this->Simulation_Frame(); });

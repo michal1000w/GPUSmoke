@@ -13,23 +13,23 @@ public:
     DoubleBuffer(int nelements, int devicesCount);
     std::vector<T*>* readTarget();
     std::vector<T*>* writeTarget();
-    T* readTargett() { return A[0]; }
-    T* writeTargett() { return B[0]; }
-    inline GRID3D* readToGrid(bool debug = false) {
+    T* readTargett(unsigned int device = 0) { return A[device]; }
+    T* writeTargett(unsigned int device = 0) { return B[device]; }
+    inline GRID3D* readToGrid(int device = 0, bool debug = false) {
         if (debug)
             std::cout << "Reading Grid: ";
         clock_t startTime = clock();
         GRID3D* output = new GRID3D(devicesCount);
         output->deviceCount = devicesCount;
         if (debug) std::cout << "GRID3D->";
-        output->load_from_device(dim, readTargett(),debug);
+        output->load_from_device(dim, readTargett(device),debug);
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)
             std::cout << (clock() - startTime);
         return output;
     }
     
-    inline GRID3D* readToGrid3D(bool debug = false) {
+    inline GRID3D* readToGrid3D(int device = 0,bool debug = false) {
         if (debug) {
             std::cout << " Reading Grid:";
             std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
@@ -38,7 +38,7 @@ public:
         GRID3D* output = new GRID3D(dim,devicesCount);
         output->deviceCount = devicesCount;
         if (debug) std::cout << "Copying..." << std::endl;
-        output->load_from_device3D(dim, readTargett());
+        output->load_from_device3D(dim, readTargett(device));
         //std::cout << "Done";
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)

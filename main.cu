@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
         solver.Initialize(devicesCount);
     }
     else {
-        std::cout << "Using " << int(argv[1] - 48) << " devices" << std::endl;
+        std::cout << "Using " << std::stoi(argv[1]) << " devices" << std::endl;
         solver.Initialize(std::stoi(argv[1]));
     }
 #ifdef OBJECTS_EXPERIMENTAL
