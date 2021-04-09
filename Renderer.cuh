@@ -52,7 +52,8 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
 
 
-    int empty_steps = 64;
+    int empty_steps = steps/2;
+    float empty_step_size = 1.0f * (256.0 / float(empty_steps));
 
 
     bool _SMOKE = false;
@@ -60,22 +61,23 @@ __global__ void render_pixel(uint8_t* image, float* volume,
     //RENDER SMOKE
     if (!Smoke_And_Fire || true) {
         //Trace through empty space
+#pragma unroll
         for (int step = 0; step < empty_steps;) {
             // At each step, cast occlusion ray towards light source
             float c_density = get_cellF(ray_pos, vd, volume);
-            float3 occ_pos = ray_pos;
-            ray_pos += ray_dir * step_size * 3.0f;
+            ray_pos += ray_dir * empty_step_size * 3.0f;
             // Don't bother with occlusion ray if theres nothing there
             if (c_density >= occ_thresh) break;
             step++;
             if (step == empty_steps) goto NOTHING;
         }  
 
-        ray_pos -= ray_dir * (step_size * 3.0f);
+        ray_pos -= ray_dir * (empty_step_size * 3.0f);
 
         steps /= 2;
 
         // Trace ray through volume
+#pragma unroll
         for (int step = 0; step < steps; step++) {
             // At each step, cast occlusion ray towards light source
             float c_density = get_cellF(ray_pos, vd, volume);
@@ -85,7 +87,8 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             // Don't bother with occlusion ray if theres nothing there
             if (c_density < occ_thresh) continue;
             float transparency = 1.0;
-            for (int occ = 0; occ < steps; occ++) {
+#pragma unroll
+            for (int occ = 0; occ < steps/2; occ++) {
                 transparency *= fmax(1.0 - get_cellF(occ_pos, vd, volume), 0.0);
                 if (transparency > 1.0) transparency = 1.0; //beta
                 if (transparency < occ_thresh) break;
