@@ -54,6 +54,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
 
+    std::cout << cudaGetErrorString(cudaGetLastError());
+
     advection << <grid, block >> > (
         state.velocity->readTargett(),
         state.temperature->readTargett(),

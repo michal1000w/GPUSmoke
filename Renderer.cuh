@@ -117,7 +117,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
         float R, G, B;
         R = G = B = 0.0f;
 
-        if (_SMOKE_AND_FIRE) {
+        if (Smoke_And_Fire) {
             float downresing = 2.0f;
             float transparency = 1.0f;
 #pragma unroll

@@ -13,16 +13,15 @@
 
 
 
-
+//block size jak najmniejszy
 #define BLOCK_SIZE 8
 #define PADDING 1
 const long long LocLoc = std::pow(2 , (BLOCK_SIZE + (2 * PADDING)));
 
 
-//dla BLOCK_SIZE 8 ~240
 #define LOC_SIZE 1024
-//10
-//#define LOC_SIZE 4096
+//dla BLOCK_SIZE 8 ~240
+//#define LOC_SIZE 1024
 
 
 
