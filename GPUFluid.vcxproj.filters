@@ -91,9 +91,6 @@
     <ClInclude Include="third_party\imgui\imgui.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui_impl_opengl3.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="third_party\imgui\imgui_internal.h">
       <Filter>ImGui</Filter>
     </ClInclude>
@@ -106,14 +103,17 @@
     <ClInclude Include="third_party\imgui\imstb_truetype.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\imgui_impl_glfw.h">
-      <Filter>ImGui</Filter>
-    </ClInclude>
     <ClInclude Include="APP_INFO.h">
       <Filter>Headers</Filter>
     </ClInclude>
     <ClInclude Include="Fluid_Kernels_Fast.cuh">
       <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>ImGui</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -197,13 +197,16 @@
     <ClCompile Include="third_party\imgui\imgui_draw.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_impl_opengl3.cpp">
-      <Filter>ImGui</Filter>
-    </ClCompile>
     <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\imgui\imgui_impl_glfw.cpp">
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
   </ItemGroup>
