@@ -145,9 +145,9 @@ __global__ void render_pixel(uint8_t* image, float* volume,
         float light_accum_G = (light_accum)+fmax(0.0f, (light_accum2 * 0.25f) * (light_accum + 0.5f));
         float light_accum_B = (light_accum)+fmax(0.0f, (light_accum2 * 0.1f) * (light_accum + 0.5f));
         */
-        float light_accum_R = fmax(light_accum,0.0f)+fmax(0.0f, R * mix(light_accum, 1.0f, fire_multiply));
-        float light_accum_G = fmax(light_accum,0.0f)+fmax(0.0f, G * mix(light_accum, 1.0f, fire_multiply));
-        float light_accum_B = fmax(light_accum,0.0f)+fmax(0.0f, B * mix(light_accum, 1.0f, fire_multiply));
+        float light_accum_R = fmax(light_accum,0.0f)+fmax(0.0f, R * mix(light_accum + 0.1f, 1.0f, fire_multiply));
+        float light_accum_G = fmax(light_accum,0.0f)+fmax(0.0f, G * mix(light_accum + 0.1f, 1.0f, fire_multiply));
+        float light_accum_B = fmax(light_accum,0.0f)+fmax(0.0f, B * mix(light_accum + 0.1f, 1.0f, fire_multiply));
         ///////
         
 

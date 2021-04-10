@@ -9,7 +9,9 @@
 
 #include <vector>
 
+#include <tbb/tbb.h>
 #include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 #include <tbb/atomic.h>
 
 
@@ -302,7 +304,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
     const auto processor_count = std::thread::hardware_concurrency();
 
-    int THREADS = 4 ; //4
+    int THREADS = 6 ; //4
 
     // Get a voxel accessor.
     float* grid_src_arr = nullptr;
@@ -333,7 +335,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
     
 
 
-    //////////////////////
+    ////////////////////// current ~720
     std::mutex mtx2;
     tbb::parallel_for(0, THREADS, [&](int i) {
         auto gd = grid_dst->deepCopy();
@@ -345,7 +347,18 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         if (end > dim.x) {
             end = dim.x;
         }
-        for (int x = i * sizee; x < end; x++)
+        for (int x = i * sizee; x < end; x++){
+    
+    /*
+    tbb::task_scheduler_init initt(2);
+    tbb::parallel_for(tbb::blocked_range<int>(0, dim.x), [&](tbb::blocked_range<int> tbbx) {
+        auto gd = grid_dst->deepCopy();
+        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
+        for (int x = tbbx.begin(); x < tbbx.end(); x++) {
+        */
+
+
+
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
                     float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
@@ -353,7 +366,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
                     accessors.setValue(openvdb::Coord(x, y, z), val);
                 }
             }
-
+        }
 
 
         gd->pruneGrid(0); //beta
