@@ -17,6 +17,13 @@ extern Solver solver;
 
 #include <thread>
 
+#include <imgui/imgui_internal.h>
+//#include <imgui_tables.cpp>
+#include <imgui/misc/cpp/imgui_stdlib.h>
+#include <imgui/misc/single_file/imgui_single_file.h>
+
+
+
 
 static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos);
 void cursorEnterCallback(GLFWwindow *window, int entered);
@@ -42,6 +49,93 @@ void UpdateSolver() {
 		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+static const ImGuiDataTypeInfo GDataTypeInfo[] =
+{
+	{ sizeof(char),             "S8",   "%d",   "%d"    },  // ImGuiDataType_S8
+	{ sizeof(unsigned char),    "U8",   "%u",   "%u"    },
+	{ sizeof(short),            "S16",  "%d",   "%d"    },  // ImGuiDataType_S16
+	{ sizeof(unsigned short),   "U16",  "%u",   "%u"    },
+	{ sizeof(int),              "S32",  "%d",   "%d"    },  // ImGuiDataType_S32
+	{ sizeof(unsigned int),     "U32",  "%u",   "%u"    },
+#ifdef _MSC_VER
+	{ sizeof(ImS64),            "S64",  "%I64d","%I64d" },  // ImGuiDataType_S64
+	{ sizeof(ImU64),            "U64",  "%I64u","%I64u" },
+#else
+	{ sizeof(ImS64),            "S64",  "%lld", "%lld"  },  // ImGuiDataType_S64
+	{ sizeof(ImU64),            "U64",  "%llu", "%llu"  },
+#endif
+	{ sizeof(float),            "float", "%.3f","%f"    },  // ImGuiDataType_Float (float are promoted to double in va_arg)
+	{ sizeof(double),           "double","%f",  "%lf"   },  // ImGuiDataType_Double
+};
+
+
+
+
+
+bool SliderPos(const char* label, ImGuiDataType data_type, void* v, int components, const void* v_min, const void* v_max, const char* format = "%.3f", float power = 1)
+{
+	using namespace ImGui;
+	ImGuiWindow* window = GetCurrentWindow();
+	if (window->SkipItems)
+		return false;
+
+	ImGuiContext& g = *GImGui;
+	bool value_changed = false;
+	BeginGroup();
+	PushID(label);
+	PushMultiItemsWidths(components, CalcItemWidth());
+	size_t type_size = GDataTypeInfo[data_type].Size;
+	for (int i = 0; i < components; i++)
+	{
+		PushID(i);
+		if (i > 0)
+			SameLine(0, g.Style.ItemInnerSpacing.x);
+		value_changed |= SliderScalar("", data_type, v, v_min, v_max, format, power);
+		PopID();
+		PopItemWidth();
+		v = (void*)((char*)v + type_size);
+		v_min = (void*)((char*)v_min + type_size);
+		v_max = (void*)((char*)v_max + type_size);
+	}
+	PopID();
+
+	const char* label_end = FindRenderedTextEnd(label);
+	if (label != label_end)
+	{
+		SameLine(0, g.Style.ItemInnerSpacing.x);
+		TextEx(label, label_end);
+	}
+
+	EndGroup();
+    return value_changed;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -333,7 +427,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			}
 		}
 		if (ImGui::Button("Add Emitter")) {
-			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(solver.getDomainResolution().x * 0.5, 0.0, solver.getDomainResolution().z * 0.5), solver.object_list.size()));
+			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 7.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
 		}
 
 		ImGui::Text("Object list:");
@@ -344,8 +438,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text(name.c_str());
 			ImGui::SameLine();
 			ImGui::Checkbox(std::to_string(object).c_str(), &solver.object_list[object].selected);
-			float maximum = max(max(solver.New_DOMAIN_RESOLUTION.x, solver.New_DOMAIN_RESOLUTION.y), solver.New_DOMAIN_RESOLUTION.z);
-			ImGui::SliderFloat3(("position-" + std::to_string(object)).c_str(), solver.object_list[object].Location, 0, maximum);
+			
+			
+			float maxs[] = { solver.New_DOMAIN_RESOLUTION.x,solver.New_DOMAIN_RESOLUTION.y,solver.New_DOMAIN_RESOLUTION.z };
+			float minns[] = { 0.0f,0.0f,0.0f };
+			
+			
+			SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
 			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
 			if (ImGui::Button("Apply current size as initial")) {
 				solver.object_list[object].initial_size = solver.object_list[object].size;
