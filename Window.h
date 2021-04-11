@@ -271,6 +271,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
 		if (!solver.render_shadows)
 			ImGui::SliderFloat("Transparency Compensation", &solver.transparency_compensation, 0.01, 1);
+		else
+			ImGui::SliderFloat("Shadow Quality", &solver.shadow_quality, 0.1, 2);
 		ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
 
 		if (ImGui::Button("Reset")) {

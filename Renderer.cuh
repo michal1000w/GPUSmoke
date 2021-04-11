@@ -20,7 +20,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
     float* temper, int3 img_dims, int3 vol_dims, float step_size,
     float3 light_dir, float3 cam_pos, float rotation, int steps,
     float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
-    bool render_shadows = true, float transparency_compensation = 1.0f)
+    bool render_shadows = true, float transparency_compensation = 1.0f, float shadow_quality = 1.0f)
 {
     step_size *= 512.0 / float(steps); //beta
 
@@ -105,7 +105,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
             if (render_shadows) {
 #pragma unroll
-                for (int occ = 0; occ < steps / 2; occ++) {
+                for (int occ = 0; occ < int((steps / 2) * shadow_quality); occ++) {
                     transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
                     if (transparency > 1.0) transparency = 1.0; //beta
                     if (transparency < occ_thresh) break;
@@ -481,7 +481,8 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
     float* d_volume, float* temper, int3 vol_dims,
     float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, 
     bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
-    bool legacy_renderer = false, bool render_shadows = true, float transparency_compensation = 1.0f) {
+    bool legacy_renderer = false, bool render_shadows = true, float transparency_compensation = 1.0f,
+    float shadow_quality = 1.0f) {
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -520,7 +521,8 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
         render_pixel << <grid, block >> > (
             device_img, d_volume, temper, img_dims, vol_dims,
             step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
-            density_influence, fire_multiply, render_shadows, transparency_compensation);
+            density_influence, fire_multiply, render_shadows, transparency_compensation,
+            shadow_quality);
     }
 
     // Read image back

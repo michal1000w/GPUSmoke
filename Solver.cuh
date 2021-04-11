@@ -91,6 +91,7 @@ public:
     bool legacy_renderer = false;
     bool render_shadows = true;
     float transparency_compensation = 1.0f;
+    float shadow_quality = 1.0f;
 
     int devicesCount = 1;
 
@@ -687,7 +688,7 @@ public:
                 state->flame->readTargett(device),
                 vol_d, render_step_size, Light, Camera, rotation,
                 STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
-                legacy_renderer, render_shadows, transparency_compensation);
+                legacy_renderer, render_shadows, transparency_compensation, shadow_quality);
             /*
             PrepareRender(img, img_d);
                 */
