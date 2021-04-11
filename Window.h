@@ -263,11 +263,14 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 		ImGui::Text("Render Settings:");
 		ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
+		ImGui::Checkbox("Shadows render", &solver.render_shadows);
 		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 0.9, 2);
 		ImGui::SliderFloat("Fire Multiply", &solver.fire_multiply, 0, 1);
 		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 1024);
 		ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
 		ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
+		if (!solver.render_shadows)
+			ImGui::SliderFloat("Transparency Compensation", &solver.transparency_compensation, 0.01, 1);
 		ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
 
 		if (ImGui::Button("Reset")) {
