@@ -161,6 +161,56 @@ NOTHING:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 __global__ void render_pixel_old2(uint8_t* image, float* volume,
     float* temper, int3 img_dims, int3 vol_dims, float step_size,
     float3 light_dir, float3 cam_pos, float rotation, int steps,

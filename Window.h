@@ -266,7 +266,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Checkbox("Shadows render", &solver.render_shadows);
 		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 0.9, 2);
 		ImGui::SliderFloat("Fire Multiply", &solver.fire_multiply, 0, 1);
-		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 1024);
+		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 2048);
 		ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
 		ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
 		if (!solver.render_shadows)
