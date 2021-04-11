@@ -421,15 +421,20 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
 
 #include "RendererCommon.h"
 
+#include <algorithm>
+#include <iostream>
+#include <nanovdb/util/GridBuilder.h>
 
-void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height,
-    BufferT& imageBuffer, uint8_t* render_target) {
+using BufferT = nanovdb::CudaDeviceBuffer;
+
+
+void runNanoVDB2(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height, BufferT& imageBuffer)
+{
     using GridT = nanovdb::FloatGrid;
     using CoordT = nanovdb::Coord;
     using RealT = float;
     using Vec3T = nanovdb::Vec3<RealT>;
     using RayT = nanovdb::Ray<RealT>;
-
 
     auto* h_grid = handle.grid<float>();
     if (!h_grid)
@@ -446,6 +451,7 @@ void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int wid
 
     RayGenOp<Vec3T> rayGenOp(wBBoxDimZ, wBBoxCenter);
     CompositeOp     compositeOp;
+
     auto renderOp = [width, height, rayGenOp, compositeOp, treeIndexBbox] __hostdev__(int start, int end, float* image, const GridT * grid) {
         // get an accessor.
         auto acc = grid->tree().getAccessor();
@@ -474,9 +480,21 @@ void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int wid
             compositeOp(image, i, width, height, 0.0f, 1.0f - transmittance);
         }
     };
+    /*
+    {
+        float durationAvg = 0;
+        for (int i = 0; i < numIterations; ++i) {
+            float duration = renderImage(false, renderOp, width, height, h_outImage, h_grid);
+            //std::cout << "Duration(NanoVDB-Host) = " << duration << " ms" << std::endl;
+            durationAvg += duration;
+        }
+        durationAvg /= numIterations;
+        std::cout << "Average Duration(NanoVDB-Host) = " << durationAvg << " ms" << std::endl;
 
+        saveImage("raytrace_fog_volume-nanovdb-host.pfm", width, height, (float*)imageBuffer.data());
+    }
+    */
     handle.deviceUpload();
-
 
     auto* d_grid = handle.deviceGrid<float>();
     if (!d_grid)
@@ -496,43 +514,44 @@ void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int wid
         std::cout << "Average Duration(NanoVDB-Cuda) = " << durationAvg << " ms" << std::endl;
 
         imageBuffer.deviceDownload();
-
-
-        
-        int j = 0;
-        for (int i = 0; i < width * height; i++) {
-            float value = imageBuffer.data()[i]; //doutimage?
-            value *= 255.0f;
-
-            render_target[j] = value;
-            render_target[j + 1] = value;
-            render_target[j + 2] = value;
-            j += 3;
-        }
-        
+        //saveImage("raytrace_fog_volume-nanovdb-cuda.pfm", width, height, (float*)imageBuffer.data());
+        //save_image((float*)imageBuffer.data(), height, width, "raytrace_fog_volume.bmp");
     }
 }
 
-#include <algorithm>
-#include <iostream>
-#include <nanovdb/util/IO.h>
-#include <nanovdb/util/GridBuilder.h>
-#include <nanovdb/util/CudaDeviceBuffer.h>
 
-using BufferT = nanovdb::CudaDeviceBuffer;
+void convert_image(float* image, int height, int width, uint8_t* imagee)
+{
+    int j = 0;
+    for (int i = 0; i < width * height; i++) {
+        image[i] *= 255.0f;
 
+
+        imagee[j] = image[i];
+        imagee[j + 1] = image[i];
+        imagee[j + 2] = image[i];
+        j += 3;
+    }
+}
+
+#include "nanovdb/util/GridBuilder.h"
 
 void PrepareRender(uint8_t* image, int3 dims) {
-    nanovdb::GridHandle<BufferT> handle;
-    handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(-20, 0, 0), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+    //nanovdb::GridHandle<BufferT> handle;
+    //handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(-20, 0, 0), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
 
-    const int numIterations = 50;
+    auto handle = nanovdb::createLevelSetSphere<float,BufferT>(/*radius*/25.0f,/*center*/nanovdb::Vec3R(-20, 0, 0),
+        /*voxelsize*/1.0f,/*halfwidth*/3.0f,/*origin*/nanovdb::Vec3R(0), "sphere",nanovdb::ChecksumMode::Partial);
+
+    const int numIterations = 5;
 
     const int width = dims.x;
     const int height = dims.y;
     BufferT   imageBuffer;
     imageBuffer.init(width * height * sizeof(float));
 
-    runNanoVDB(handle, numIterations, width, height, imageBuffer, image);
+    runNanoVDB2(handle, numIterations, width, height, imageBuffer);
+
+    convert_image((float*)imageBuffer.data(), height, width, image);
 }
 #endif

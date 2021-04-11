@@ -47,8 +47,8 @@ inline float renderImage(bool useCuda, const RenderFn renderOp, int width, int h
     using ClockT = std::chrono::high_resolution_clock;
     auto t0 = ClockT::now();
 
-    computeForEach(
-        useCuda, width * height, 512, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
+    computeForEach( /*512 BLOCK_SIZE*/
+        useCuda, width * height, /*BLOCK_SIZE*/512, __FILE__, __LINE__, [renderOp, image, grid] __hostdev__(int start, int end) {
         renderOp(start, end, image, grid);
     });
     computeSync(useCuda, __FILE__, __LINE__);

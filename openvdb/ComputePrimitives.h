@@ -1,6 +1,7 @@
 // Copyright Contributors to the OpenVDB Project
 // SPDX-License-Identifier: MPL-2.0
 
+
 #pragma once
 #define NANOVDB_USE_CUDA
 #define __CUDACC__
