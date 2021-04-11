@@ -88,6 +88,7 @@ public:
     float render_step_size = 1.2f;
     float density_influence = 1.0f;
     float fire_multiply = 0;
+    bool legacy_renderer = false;
 
     int devicesCount = 1;
 
@@ -683,7 +684,8 @@ public:
                 state->density->readTargett(device),
                 state->flame->readTargett(device),
                 vol_d, render_step_size, Light, Camera, rotation,
-                STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply);
+                STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
+                legacy_renderer);
             /*
             PrepareRender(img, img_d);
                 */

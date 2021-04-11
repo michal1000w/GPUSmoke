@@ -268,6 +268,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 1024);
 		ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
 		ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
+		ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
 
 		if (ImGui::Button("Reset")) {
 			UpdateSolver();

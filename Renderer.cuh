@@ -473,7 +473,8 @@ __global__ void render_pixel_old(uint8_t* image, float* volume,
 void render_fluid(uint8_t* render_target, int3 img_dims,
     float* d_volume, float* temper, int3 vol_dims,
     float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, 
-    bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f) {
+    bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
+    bool legacy_renderer = false) {
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -503,10 +504,17 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
         return;
     }
 
-    render_pixel << <grid, block >> > (
-        device_img, d_volume, temper, img_dims, vol_dims,
-        step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
-        density_influence, fire_multiply);
+    if (legacy_renderer) {
+        render_pixel_old << <grid, block >> > (
+            device_img, d_volume, temper, img_dims, vol_dims,
+            step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire);
+    }
+    else {
+        render_pixel << <grid, block >> > (
+            device_img, d_volume, temper, img_dims, vol_dims,
+            step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
+            density_influence, fire_multiply);
+    }
 
     // Read image back
     cudaMemcpy(render_target, device_img, img_bytes, cudaMemcpyDeviceToHost);
