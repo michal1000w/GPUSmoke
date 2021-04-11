@@ -28,7 +28,6 @@
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
     <ClInclude Include="Renderer.h" />
-    <ClInclude Include="RendererCommon.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Solver.cuh" />
     <ClInclude Include="Texture.h" />
