@@ -44,6 +44,9 @@
 #include <type_traits>
 #include <vector>
 
+#undef min
+#undef max
+
 namespace openvdb {
 OPENVDB_USE_VERSION_NAMESPACE
 namespace OPENVDB_VERSION_NAME {

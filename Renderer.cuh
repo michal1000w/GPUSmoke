@@ -386,3 +386,153 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
     cudaFree(device_img);
 }
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#ifndef NEW_RENDERER
+#define NEW_RENDERER
+
+
+
+#define _USE_MATH_DEFINES
+#include <cmath>
+#include <chrono>
+
+#include <nanovdb/util/IO.h>
+#include <nanovdb/util/CudaDeviceBuffer.h>
+#include <nanovdb/util/Ray.h>
+
+#include "RendererCommon.h"
+
+
+void runNanoVDB(nanovdb::GridHandle<BufferT>& handle, int numIterations, int width, int height,
+    BufferT& imageBuffer, uint8_t* render_target) {
+    using GridT = nanovdb::FloatGrid;
+    using CoordT = nanovdb::Coord;
+    using RealT = float;
+    using Vec3T = nanovdb::Vec3<RealT>;
+    using RayT = nanovdb::Ray<RealT>;
+
+
+    auto* h_grid = handle.grid<float>();
+    if (!h_grid)
+        throw std::runtime_error("GridHandle does not contain a valid host grid");
+
+    float* h_outImage = reinterpret_cast<float*>(imageBuffer.data());
+
+    float              wBBoxDimZ = (float)h_grid->worldBBox().dim()[2] * 2;
+    Vec3T              wBBoxCenter = Vec3T(h_grid->worldBBox().min() + h_grid->worldBBox().dim() * 0.5f);
+    nanovdb::CoordBBox treeIndexBbox = h_grid->tree().bbox();
+    std::cout << "Bounds: "
+        << "[" << treeIndexBbox.min()[0] << "," << treeIndexBbox.min()[1] << "," << treeIndexBbox.min()[2] << "] -> ["
+        << treeIndexBbox.max()[0] << "," << treeIndexBbox.max()[1] << "," << treeIndexBbox.max()[2] << "]" << std::endl;
+
+    RayGenOp<Vec3T> rayGenOp(wBBoxDimZ, wBBoxCenter);
+    CompositeOp     compositeOp;
+    auto renderOp = [width, height, rayGenOp, compositeOp, treeIndexBbox] __hostdev__(int start, int end, float* image, const GridT * grid) {
+        // get an accessor.
+        auto acc = grid->tree().getAccessor();
+
+        for (int i = start; i < end; ++i) {
+            Vec3T rayEye;
+            Vec3T rayDir;
+            rayGenOp(i, width, height, rayEye, rayDir);
+            // generate ray.
+            RayT wRay(rayEye, rayDir);
+            // transform the ray to the grid's index-space.
+            RayT iRay = wRay.worldToIndexF(*grid);
+            // clip to bounds.
+            if (iRay.clip(treeIndexBbox) == false) {
+                compositeOp(image, i, width, height, 0.0f, 0.0f);
+                return;
+            }
+            // integrate...
+            const float dt = 0.5f;
+            float       transmittance = 1.0f;
+            for (float t = iRay.t0(); t < iRay.t1(); t += dt) {
+                float sigma = acc.getValue(CoordT::Floor(iRay(t))) * 0.1f;
+                transmittance *= 1.0f - sigma * dt;
+            }
+            // write transmittance.
+            compositeOp(image, i, width, height, 0.0f, 1.0f - transmittance);
+        }
+    };
+
+    handle.deviceUpload();
+
+
+    auto* d_grid = handle.deviceGrid<float>();
+    if (!d_grid)
+        throw std::runtime_error("GridHandle does not contain a valid device grid");
+
+    imageBuffer.deviceUpload();
+    float* d_outImage = reinterpret_cast<float*>(imageBuffer.deviceData());
+
+    {
+        float durationAvg = 0;
+        for (int i = 0; i < numIterations; ++i) {
+            float duration = renderImage(true, renderOp, width, height, d_outImage, d_grid);
+            //std::cout << "Duration(NanoVDB-Cuda) = " << duration << " ms" << std::endl;
+            durationAvg += duration;
+        }
+        durationAvg /= numIterations;
+        std::cout << "Average Duration(NanoVDB-Cuda) = " << durationAvg << " ms" << std::endl;
+
+        imageBuffer.deviceDownload();
+
+
+        
+        int j = 0;
+        for (int i = 0; i < width * height; i++) {
+            float value = imageBuffer.data()[i]; //doutimage?
+            value *= 255.0f;
+
+            render_target[j] = value;
+            render_target[j + 1] = value;
+            render_target[j + 2] = value;
+            j += 3;
+        }
+        
+    }
+}
+
+#include <algorithm>
+#include <iostream>
+#include <nanovdb/util/IO.h>
+#include <nanovdb/util/GridBuilder.h>
+#include <nanovdb/util/CudaDeviceBuffer.h>
+
+using BufferT = nanovdb::CudaDeviceBuffer;
+
+
+void PrepareRender(uint8_t* image, int3 dims) {
+    nanovdb::GridHandle<BufferT> handle;
+    handle = nanovdb::createFogVolumeSphere<float, BufferT>(100.0f, nanovdb::Vec3R(-20, 0, 0), 1.0f, 3.0f, nanovdb::Vec3R(0), "sphere");
+
+    const int numIterations = 50;
+
+    const int width = dims.x;
+    const int height = dims.y;
+    BufferT   imageBuffer;
+    imageBuffer.init(width * height * sizeof(float));
+
+    runNanoVDB(handle, numIterations, width, height, imageBuffer, image);
+}
+#endif

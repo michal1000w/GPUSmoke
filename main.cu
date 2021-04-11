@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
 #endif
     //solver.ExampleScene(true);
     float Window_Resolution[2] = { 1600, 800 };
-    float Image_Resolution[2] = { 700, 700 };
+    float Image_Resolution[2] = { 700, 900 };
     std::cout << "Setting image resolution" << std::endl;
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 

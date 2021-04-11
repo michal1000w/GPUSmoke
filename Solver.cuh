@@ -684,8 +684,10 @@ public:
                 state->flame->readTargett(device),
                 vol_d, render_step_size, Light, Camera, rotation,
                 STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply);
-
-            generateBitmapImage(img, img_d.x, img_d.y, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
+            /*
+            PrepareRender(img, img_d);
+                */
+            generateBitmapImage(img, img_d.y, img_d.x, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
         }
     }
 
