@@ -111,12 +111,19 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
             d_accum *= fmax(1.0 - c_density, 0.0);
             d_accum2 *= (fmax(1 - temp, 0.0f) / Fire_Max_temp);
-            light_accum += d_accum * c_density * transparency;
 
             if (Smoke_And_Fire) {
-                R += d_accum2 * 1.0f * temp;
-                G += d_accum2 * 0.45f * temp;
-                B += d_accum2 * 0.2f * temp;
+                if (fire_multiply == 0) {
+                    R += d_accum2 * 1.0f * temp;
+                    G += d_accum2 * 0.45f * temp;
+                    B += d_accum2 * 0.2f * temp;
+                }
+                else {
+                    R += d_accum2 * 1.0f * mix(temp, temp * temp, fire_multiply);
+                    G += d_accum2 * 0.45f * mix(temp, temp * temp, fire_multiply);
+                    B += d_accum2 * 0.2f * mix(temp, temp * temp, fire_multiply);
+                }
+                
             }
 
             R += d_accum * c_density * transparency;
