@@ -87,6 +87,137 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
         steps /= 2;
 
+        float R, G, B;
+        R = G = B = 0.0f;
+        // Trace ray through volume
+#pragma unroll
+        for (int step = 0; step < steps; step++) {
+            // At each step, cast occlusion ray towards light source
+            float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
+            float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+            if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
+            float3 occ_pos = ray_pos;
+            ray_pos += ray_dir * step_size;
+            // Don't bother with occlusion ray if theres nothing there
+            if (c_density < occ_thresh && temp < occ_thresh) continue;
+            float transparency = 1.0;
+#pragma unroll
+            for (int occ = 0; occ < steps/2; occ++) {
+                transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
+                if (transparency > 1.0) transparency = 1.0; //beta
+                if (transparency < occ_thresh) break;
+                occ_pos += dir_to_light * step_size;
+            }
+
+            d_accum *= fmax(1.0 - c_density, 0.0);
+            d_accum2 *= (fmax(1 - temp, 0.0f) / Fire_Max_temp);
+            light_accum += d_accum * c_density * transparency;
+
+            if (Smoke_And_Fire) {
+                R += d_accum2 * 1.0f * temp;
+                G += d_accum2 * 0.45f * temp;
+                B += d_accum2 * 0.2f * temp;
+            }
+
+            R += d_accum * c_density * transparency;
+            G += d_accum * c_density * transparency;
+            B += d_accum * c_density * transparency;
+
+
+            if (d_accum < occ_thresh) d_accum = 0;
+            if (d_accum < occ_thresh && d_accum2 < occ_thresh) break;
+        }
+        
+
+        const int pixel = 3 * (y * img_dims.x + x);
+        image[pixel + 0] = (uint8_t)(fmin(255.0 * R, 255.0));
+        image[pixel + 1] = (uint8_t)(fmin(255.0 * G, 255.0));
+        image[pixel + 2] = (uint8_t)(fmin(255.0 * B, 255.0));
+    }
+
+    return;
+
+NOTHING:
+    const int pixel = 3 * (y * img_dims.x + x);
+    image[pixel + 0] = (uint8_t)(0);
+    image[pixel + 1] = (uint8_t)(0);
+    image[pixel + 2] = (uint8_t)(0);
+    return;
+}
+
+
+
+__global__ void render_pixel_old2(uint8_t* image, float* volume,
+    float* temper, int3 img_dims, int3 vol_dims, float step_size,
+    float3 light_dir, float3 cam_pos, float rotation, int steps,
+    float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f)
+{
+    step_size *= 512.0 / float(steps); //beta
+
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    if (x >= img_dims.x || y >= img_dims.y) return;
+
+    int3 vd = make_int3(vol_dims.x, vol_dims.y, vol_dims.z);
+    // Create Normalized UV image coordinates
+    float uvx = float(x) / float(img_dims.x) - 0.5;
+    float uvy = -float(y) / float(img_dims.y) + 0.5;
+    uvx *= float(img_dims.x) / float(img_dims.y);
+
+    float3 v_center = make_float3(
+        0.5 * float(vol_dims.x),
+        0.5 * float(vol_dims.y),
+        0.5 * float(vol_dims.z));
+
+    // Set up ray originating from camera
+    float3 ray_pos = cam_pos - v_center;
+    float2 pos_rot = rotate(make_float2(ray_pos.x, ray_pos.z), rotation);
+    ray_pos.x = pos_rot.x;
+    ray_pos.z = pos_rot.y;
+    ray_pos += v_center;
+    float3 ray_dir = normalize(make_float3(uvx, uvy, 0.5));
+    float2 dir_rot = rotate(make_float2(ray_dir.x, ray_dir.z), rotation);
+    ray_dir.x = dir_rot.x;
+    ray_dir.z = dir_rot.y;
+    const float3 dir_to_light = normalize(light_dir);
+    const float occ_thresh = 0.001;
+    float d_accum = 1.0;//1.0
+    float light_accum = 0.0;//0.02   background color
+    float temp_accum = 1;//0.0
+
+    float MAX_DENSITY = 1.0f;
+
+    float d_accum2 = 1.0;//1.0
+    float light_accum2 = 0.0;//0.0   background color
+
+    int empty_steps = steps / 2;
+    float empty_step_size = 1.0f * (256.0 / float(empty_steps));
+
+
+
+
+
+    bool _SMOKE = false;
+    bool _SMOKE_AND_FIRE = true;
+    //RENDER SMOKE
+    if (!Smoke_And_Fire || true) {
+        //Trace through empty space
+#pragma unroll
+        for (int step = 0; step < empty_steps;) {
+            // At each step, cast occlusion ray towards light source
+            float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
+            float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+            ray_pos += ray_dir * empty_step_size * 3.0f;
+            // Don't bother with occlusion ray if theres nothing there
+            if (c_density >= occ_thresh || temp >= occ_thresh) break;
+            step++;
+            if (step == empty_steps) goto NOTHING;
+        }
+
+        ray_pos -= ray_dir * (empty_step_size * 3.0f);
+
+        steps /= 2;
+
         // Trace ray through volume
 #pragma unroll
         for (int step = 0; step < steps; step++) {
@@ -99,7 +230,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             if (c_density < occ_thresh) continue;
             float transparency = 1.0;
 #pragma unroll
-            for (int occ = 0; occ < steps/2; occ++) {
+            for (int occ = 0; occ < steps / 2; occ++) {
                 transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
                 if (transparency > 1.0) transparency = 1.0; //beta
                 if (transparency < occ_thresh) break;
@@ -121,7 +252,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             float downresing = 2.0f;
             float transparency = 1.0f;
 #pragma unroll
-            for (int step = 0; step < steps/downresing; step++) {
+            for (int step = 0; step < steps / downresing; step++) {
                 // At each step, cast occlusion ray towards light source
                 float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
                 float3 occ_pos = ray_pos;
@@ -131,9 +262,9 @@ __global__ void render_pixel(uint8_t* image, float* volume,
 
                 transparency -= float(step) / float(steps * downresing);
                 d_accum2 *= (fmax(1 - temp, 0.0f) / Fire_Max_temp);// *fmax(transparency, 0.0f);
-                R += d_accum2 * mix(1.0f,1.0f,transparency);
-                G += d_accum2 * mix(1.0f,0.45f,transparency);
-                B += d_accum2 * mix(1.0f,0.2f,transparency);
+                R += d_accum2 * mix(1.0f, 1.0f, transparency);
+                G += d_accum2 * mix(1.0f, 0.45f, transparency);
+                B += d_accum2 * mix(1.0f, 0.2f, transparency);
             }
         }
 
@@ -145,11 +276,11 @@ __global__ void render_pixel(uint8_t* image, float* volume,
         float light_accum_G = (light_accum)+fmax(0.0f, (light_accum2 * 0.25f) * (light_accum + 0.5f));
         float light_accum_B = (light_accum)+fmax(0.0f, (light_accum2 * 0.1f) * (light_accum + 0.5f));
         */
-        float light_accum_R = fmax(light_accum,0.0f)+fmax(0.0f, R * mix(light_accum + 0.1f, 1.0f, fire_multiply));
-        float light_accum_G = fmax(light_accum,0.0f)+fmax(0.0f, G * mix(light_accum + 0.1f, 1.0f, fire_multiply));
-        float light_accum_B = fmax(light_accum,0.0f)+fmax(0.0f, B * mix(light_accum + 0.1f, 1.0f, fire_multiply));
+        float light_accum_R = fmax(light_accum, 0.0f) + fmax(0.0f, R * mix(light_accum + 0.1f, 1.0f, fire_multiply));
+        float light_accum_G = fmax(light_accum, 0.0f) + fmax(0.0f, G * mix(light_accum + 0.1f, 1.0f, fire_multiply));
+        float light_accum_B = fmax(light_accum, 0.0f) + fmax(0.0f, B * mix(light_accum + 0.1f, 1.0f, fire_multiply));
         ///////
-        
+
 
         const int pixel = 3 * (y * img_dims.x + x);
         image[pixel + 0] = (uint8_t)(fmin(255.0 * light_accum_R, 255.0));
@@ -166,8 +297,6 @@ NOTHING:
     image[pixel + 2] = (uint8_t)(0);
     return;
 }
-
-
 
 
 
