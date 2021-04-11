@@ -87,7 +87,7 @@ public:
     float influence_on_velocity = 2.0f;
     float render_step_size = 1.2f;
     float density_influence = 1.0f;
-    float fire_multiply = 0;
+    float fire_multiply = 0.8f;
     bool legacy_renderer = false;
     bool render_shadows = true;
     float transparency_compensation = 1.0f;
@@ -534,7 +534,7 @@ public:
         //rendering settings
         
         FRAMES = 500;
-        Fire_Max_Temperature = 1.0f;
+        Fire_Max_Temperature = 1.1f;
         Image_Resolution[0] = 640;
         Image_Resolution[1] = 640;
         STEPS = 100; //512 Rendering Samples
