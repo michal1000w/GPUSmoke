@@ -4,6 +4,7 @@
 //#include "Solver.cuh"
 #include "Window.h"
 
+
 extern Solver solver;
 
 
@@ -96,13 +97,52 @@ int main(int argc, char* argv[]) {
     solver.ExportVDBScene();
 #endif
     //solver.ExampleScene(true);
-    float Window_Resolution[2] = { 1600, 800 };
-    float Image_Resolution[2] = { 700, 900 };
+
+
+
+
+
+    HWND hd = GetDesktopWindow();
+    RECT rect;
+    int no_menu_bar_width = GetSystemMetrics(SM_CXFULLSCREEN);
+    int no_menu_bar__height = GetSystemMetrics(SM_CYFULLSCREEN);
+    int zoom = GetDpiForWindow(hd);
+    double dpi = 0;
+    switch (zoom) {
+    case 96:
+        dpi = 1;
+        std::cout << "100%" << std::endl;
+        break;
+    case 120:
+        dpi = 1.25;
+        std::cout << "125%" << std::endl;
+        break;
+    case 144:
+        dpi = 1.5;
+        std::cout << "150%" << std::endl;
+        break;
+    case 192:
+        dpi = 2;
+        std::cout << "200%" << std::endl;
+        break;
+    default:
+        std::cout << "error" << std::endl;
+        break;
+    }
+
+    int width = no_menu_bar_width * dpi;
+    int height = no_menu_bar__height * dpi;
+
+
+    std::cout << width << "x" << height << std::endl;
+
+    float Window_Resolution[2] = { width, height };
+    float Image_Resolution[2] = { 900, 1024 };
     std::cout << "Setting image resolution" << std::endl;
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 
     solver.Initialize_Simulation();
-    Window(Window_Resolution);
+    Window(Window_Resolution, dpi);
     solver.Clear_Simulation_Data();
     //std::cout << "Rendering animation video..." << std::endl;
     //std::system("make_video.sh");

@@ -508,10 +508,10 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 #include <Windows.h>
 #include <WinUser.h>
 
-int Window(float* Img_res) {
-	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); //skalowanie globalne //bez _V2 chyba lepsze
+int Window(float* Img_res, float dpi) {
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE); //skalowanie globalne //bez _V2 chyba lepsze
 	
-	
+	InterfaceScale = dpi;
 	
 	GLFWwindow* window;
 
