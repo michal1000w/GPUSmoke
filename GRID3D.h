@@ -8,7 +8,7 @@
 
 
 //#define HOSTALLOC
-#define NEW_HOST_ALLOC
+//#define NEW_HOST_ALLOC
 
 
 

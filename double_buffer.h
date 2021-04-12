@@ -55,10 +55,12 @@ public:
         multiGPU_free(devicesCount, &B);
     }
     T* temporary;
+
+
 private:
+    std::vector<T*> B;
+    std::vector<T*> A;
     int nbytes;
     int devicesCount;
-    std::vector<T*> A;
-    std::vector<T*> B;
     int3 dim;
 };

@@ -70,8 +70,16 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     cudaEventRecord(start, 0);
 
-
-
+    
+    
+    
+      
+    
+    
+    
+    
+    
+    
     current_device = 0;
     cudaSetDevice(current_device);
 
@@ -84,6 +92,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
         
+
 
     for (int i = 0; i < deviceCount; i++) {
         current_device = i;
@@ -116,7 +125,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     current_device = 0;
     cudaSetDevice(current_device);
     
-    //combining grids
+
 
 
 
