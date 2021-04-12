@@ -1,5 +1,19 @@
 #include "Object.h"
 
+
+template <typename T>
+__global__ void combine(T* left, T* right, int3 vd) {
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    left[z * vd.y * vd.x + y * vd.x + x] += right[z * vd.y * vd.x + y * vd.x + x];
+}
+
+
+
 // Container for simulation state
 struct fluid_state {
 
@@ -69,10 +83,8 @@ struct fluid_state {
         multiGPU_free(devicesCount, diverge);
     }
 
-    void sync_devices() {
-        cudaThreadSynchronize();
-        cudaSetDevice(1);
-        checkCudaErrors(cudaMemcpyAsync(density->readTargett(0), density->readTargett(1), density->byteCount(), cudaMemcpyDeviceToDevice));
-        checkCudaErrors(cudaMemcpyAsync(flame->readTargett(0), flame->readTargett(1), flame->byteCount(), cudaMemcpyDeviceToDevice));
+    void sync_devices(int devicesCount = 1) {
+        //todo
+        
     }
 };

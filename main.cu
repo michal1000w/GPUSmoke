@@ -66,8 +66,14 @@ int main(int argc, char* argv[]) {
 
 #ifdef EXPERIMENTAL
     if (argc <= 1) {
-        std::cout << "Using All (" << devicesCount << ") devices" << std::endl;
-        solver.Initialize(devicesCount);
+        if (false) {
+            std::cout << "Using All (" << devicesCount << ") devices" << std::endl;
+            solver.Initialize(devicesCount);
+        }
+        else {
+            std::cout << "Using (" << 1 << ") device" << std::endl;
+            solver.Initialize(1);
+        }
     }
     else {
         std::cout << "Using " << std::stoi(argv[1]) << " devices" << std::endl;

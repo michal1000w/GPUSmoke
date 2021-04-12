@@ -83,8 +83,8 @@ public:
     float noise_intensity;
     float time_anim = 0.5;
     float density_cutoff = 0.01;
-    float max_velocity = 256.0f;
-    float influence_on_velocity = 2.0f;
+    float max_velocity = 1.0f;
+    float influence_on_velocity = 0.1f;
     float render_step_size = 1.2f;
     float density_influence = 1.0f;
     float fire_multiply = 0.8f;
@@ -671,7 +671,7 @@ public:
                 false, frame, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
                 SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff, max_velocity, influence_on_velocity);
+                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity);
             state->step++;
         }
         cudaDeviceSynchronize();

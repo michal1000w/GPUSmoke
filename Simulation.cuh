@@ -28,6 +28,27 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     unsigned char current_device = 0;
 
+    int3* dim_start, * dim_end;
+    dim_start = new int3[deviceCount];
+    dim_end = new int3[deviceCount];
+    if (deviceCount == 1) {
+        dim_start[0] = make_int3(0, 0, 0);
+        dim_end[0] = state.dim;
+    }
+    else if (deviceCount == 2) {
+        dim_start[0] = make_int3(0, 0, 0);
+        dim_end[0] = make_int3(state.dim.x, state.dim.y / 2, state.dim.z);
+        dim_start[1] = dim_end[0];
+        dim_end[1] = state.dim;
+
+        std::cout << "Mulit-GPU simulating is currently work in progress" << std::endl;
+        exit(1);
+    }
+    else {
+        std::cout << "More gpus are not supported yet" << std::endl;
+        exit(1);
+    }
+
 
     //cudaStream_t stream1; cudaStreamCreate(&stream1); 
     //cudaStream_t stream2; cudaStreamCreate(&stream2);
@@ -54,39 +75,48 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     current_device = 0;
     cudaSetDevice(current_device);
 
+    
+
     advection << <grid, block >> > (
         state.velocity->readTargett(current_device),
         state.velocity->readTargett(current_device),
         state.velocity->writeTargett(current_device),
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
+        
+
+    for (int i = 0; i < deviceCount; i++) {
+        current_device = i;
+        cudaSetDevice(current_device);
+
+        advection << <grid, block >> > (
+            state.velocity->readTargett(current_device),
+            state.temperature->readTargett(current_device),
+            state.temperature->writeTargett(current_device),
+            dim_start[i], dim_end[i], state.dim, state.time_step, 0.998);//0.998
+        state.temperature->swap();
 
 
-    advection << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.temperature->readTargett(current_device),
-        state.temperature->writeTargett(current_device),
-        state.dim, state.time_step, 0.998);//0.998
-    state.temperature->swap();
+        advection << <grid, block >> > (
+            state.velocity->readTargett(current_device),
+            state.flame->readTargett(current_device),
+            state.flame->writeTargett(current_device),
+            dim_start[i], dim_end[i], state.dim, state.time_step, Flame_Dissolve);
+        state.flame->swap();
 
 
-    advection << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.flame->readTargett(current_device),
-        state.flame->writeTargett(current_device),
-        state.dim, state.time_step, Flame_Dissolve);
-    state.flame->swap();
+        advection << <grid, block >> > (  //zanikanie
+            state.velocity->readTargett(current_device),
+            state.density->readTargett(current_device),
+            state.density->writeTargett(current_device),
+            dim_start[i], dim_end[i], state.dim, state.time_step, Dissolve_rate);//0.995
+        state.density->swap();
+    }
 
-
-    advection << <grid, block >> > (  //zanikanie
-        state.velocity->readTargett(current_device),
-        state.density->readTargett(current_device),
-        state.density->writeTargett(current_device),
-        state.dim, state.time_step, Dissolve_rate);//0.995
-    state.density->swap();
-
-
-
+    current_device = 0;
+    cudaSetDevice(current_device);
+    
+    //combining grids
 
 
 
@@ -385,8 +415,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
-    for (int i = 0; i < ACCURACY_STEPS; i++)
-    {
+    for (int i = 0; i < ACCURACY_STEPS; i++) {
         pressure_solve << <grid, block >> > (
             state.diverge[0],
             state.pressure->readTargett(current_device),
@@ -394,6 +423,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             state.dim, Pressure); //-1.0
         state.pressure->swap();
     }
+    
+
 
     subtract_pressure << <grid, block >> > (
         state.velocity->readTargett(current_device),

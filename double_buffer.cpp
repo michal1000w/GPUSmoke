@@ -9,6 +9,7 @@ DoubleBuffer<T>::DoubleBuffer(int devices)
     B = 0;
     nbytes = 0;
     devicesCount = devices;
+    temporary = 0;
 }
 
 template <typename T>
@@ -20,6 +21,8 @@ DoubleBuffer<T>::DoubleBuffer(int nelements, int devicesCount)
     //cudaMalloc( (void**)&B, nbytes );
     A = multiGPU_malloc<T>(this->devicesCount, nelements);
     B = multiGPU_malloc<T>(this->devicesCount, nelements);
+
+    checkCudaErrors(cudaHostAlloc(&temporary, nbytes, cudaHostAllocMapped));
     
     printf("Allocated %.2f MB on GPU\n", 2*nbytes/(1024.f*1024.f));
 }

@@ -1125,6 +1125,27 @@ inline __device__ T get_cellF2(float3 p, int3 d, T* vol) {
 
 
 template <typename V, typename T>
+__global__ void advection(V* velocity, T* source, T* dest,int3 vds,int3 vde, int3 vd,
+    float time_step, float dissipation)
+{
+
+    const int x = blockDim.x * blockIdx.x + threadIdx.x + vds.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z + vds.z;
+
+    if (x >= vde.x || y >= vde.y || z >= vde.z) return;
+    if (x <= vds.x || y <= vds.y || z <= vds.z) return;
+
+    int vox = z * vd.y * vd.x + y * vd.x + x;
+
+    V vel = velocity[vox];
+
+    float3 np = make_float3(float(x), float(y), float(z)) - time_step * vel;
+    dest[vox] = dissipation * get_cellF(np, vd, source);
+}
+
+
+template <typename V, typename T>
 __global__ void advection(V* velocity, T* source, T* dest, int3 vd,
     float time_step, float dissipation)
 {
@@ -1142,4 +1163,3 @@ __global__ void advection(V* velocity, T* source, T* dest, int3 vd,
     float3 np = make_float3(float(x), float(y), float(z)) - time_step * vel;
     dest[vox] = dissipation * get_cellF(np, vd, source);
 }
-

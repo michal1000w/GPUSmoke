@@ -54,6 +54,7 @@ public:
         //cudaFree(B);
         multiGPU_free(devicesCount, &B);
     }
+    T* temporary;
 private:
     int nbytes;
     int devicesCount;
