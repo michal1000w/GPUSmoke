@@ -141,7 +141,7 @@ bool SliderPos(const char* label, ImGuiDataType data_type, void* v, int componen
 
 
 float InterfaceScale = 1.0f;
-
+float ImageScale = 1.0f;
 
 
 
@@ -162,7 +162,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("F - stop exporting");
 
 			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
-			
+
+					
 			if (ImGui::Button("Close")) {
 				helper_window = false;
 			}
@@ -499,12 +500,6 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
-
-
-
-
-
-
 #include <Windows.h>
 #include <WinUser.h>
 
@@ -558,14 +553,16 @@ int Window(float* Img_res, float dpi) {
 	int2 Window = make_int2(Img_res[0], Img_res[1]);
 
 	
-	float range_x = ((float)Image.x / (float)Window.x);
-	range_x = 2.0 * range_x - 1.0;
-
-	float range_y = ((float)Image.y / (float)Window.y);
-	range_y = 2.0 * range_y - 1.0;
-	if (Image.x == Window.x) range_x = 1.0f;
-	if (Image.y == Window.y) range_y = 1.0f;
 	{
+		float range_x = ((float)Image.x / (float)Window.x);
+		range_x = 2.0 * range_x - 1.0;
+
+		float range_y = ((float)Image.y / (float)Window.y);
+		range_y = 2.0 * range_y - 1.0;
+
+
+		if (Image.x == Window.x) range_x = 1.0f;
+		if (Image.y == Window.y) range_y = 1.0f;
 		float positions[] = {
 			-1.0f,	    -1.0f,		0.0f, 0.0f, //lewy dó³
 			 range_x,   -1.0f,		1.0f, 0.0f,
