@@ -61,18 +61,11 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
 
-    cudaMemcpyAsync(state.velocity->readTargett(1), state.velocity->readTargett(0), state.velocity->byteCount(), cudaMemcpyDeviceToDevice);
-
-    std::cout << cudaGetErrorString(cudaGetLastError());
-
-
-    //current_device = 1;
-    cudaSetDevice(1);
 
     advection << <grid, block >> > (
         state.velocity->readTargett(current_device),
         state.temperature->readTargett(current_device),
-        state.temperature->writeTargett(0),
+        state.temperature->writeTargett(current_device),
         state.dim, state.time_step, 0.998);//0.998
     state.temperature->swap();
 
@@ -80,7 +73,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     advection << <grid, block >> > (
         state.velocity->readTargett(current_device),
         state.flame->readTargett(current_device),
-        state.flame->writeTargett(0),
+        state.flame->writeTargett(current_device),
         state.dim, state.time_step, Flame_Dissolve);
     state.flame->swap();
 
@@ -91,9 +84,6 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.density->writeTargett(current_device),
         state.dim, state.time_step, Dissolve_rate);//0.995
     state.density->swap();
-
-    cudaSetDevice(0);
-
 
 
 
@@ -458,11 +448,6 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     
 
 
-    cudaThreadSynchronize();
-    checkCudaErrors(cudaMemcpyAsync(state.density->readTargett(0), state.density->readTargett(1), state.density->byteCount(), cudaMemcpyDeviceToDevice));
-    checkCudaErrors(cudaMemcpyAsync(state.flame->readTargett(0), state.flame->readTargett(1), state.flame->byteCount(), cudaMemcpyDeviceToDevice));
-    current_device = 0;
-    cudaSetDevice(0);
 
 
     cudaEventRecord(stop, 0);

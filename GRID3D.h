@@ -2,6 +2,19 @@
 //VDB
 
 
+
+
+
+
+
+//#define HOSTALLOC
+#define NEW_HOST_ALLOC
+
+
+
+
+
+
 #include "cutil_math.h"
 
 
@@ -234,8 +247,11 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
 
             std::cout << device_id;
 
+#ifndef HOSTALLOC
             checkCudaErrors(cudaMalloc((void**)&_dst[device_id], sizeof(T) * size));
-
+#else
+            checkCudaErrors(cudaHostAlloc(&_dst[device_id], size * sizeof(T), cudaHostAllocMapped));
+#endif
 
             cudaDeviceSynchronize();
             std::cout << device_id;
@@ -269,7 +285,11 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size =
             cudaSetDevice(device_id);
             std::cout << device_id;
 
+#ifndef HOSTALLOC
             checkCudaErrors(cudaMalloc((void**)&_dst[device_id], SIZEOF_FLOAT3 * size));
+#else
+            checkCudaErrors(cudaHostAlloc(&_dst[device_id], size * SIZEOF_FLOAT3, cudaHostAllocMapped));
+#endif
 
             cudaDeviceSynchronize();
             }));
@@ -355,8 +375,13 @@ public:
 
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
         grid = new float[(long long)x * (long long)y * (long long)z];
         grid_temp = new float[(long long)x * (long long)y * (long long)z];
+#endif
         for (long long i = 0; i < size(); i++) {
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
@@ -371,8 +396,13 @@ public:
 
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
         grid = new float[size()];
         grid_temp = new float[size()];
+#endif
         for (long long i = 0; i < size(); i++) {
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
@@ -381,8 +411,14 @@ public:
     }
     GRID3D(int elem, float* grid, int deviceCount) {
         this->deviceCount = deviceCount;
+
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, elem * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, elem * sizeof(float), cudaHostAllocMapped));
+#else
         grid = new float[elem];
         grid_temp = new float[elem];
+#endif
         for (int i = 0; i < elem; i++) {
             this->grid[i] = grid[i];
             this->grid_temp[i] = grid[i];
@@ -394,7 +430,14 @@ public:
     GRID3D(int3 dim, float* grid_src, int deviceCount) {
         this->deviceCount = deviceCount;
         this->resolution = dim;
-        grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+        //grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
+        grid = new float[size()];
+        grid_temp = new float[size()];
+#endif
         //cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0);
         multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost);
         grid_temp = new float[1];
@@ -404,7 +447,13 @@ public:
     void load_from_device(int3 dim, float* grid_src,bool debug = false) {
         freeOnlyGrid(); //free
         this->resolution = dim;
-        grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
+        grid = new float[size()];
+        grid_temp = new float[size()];
+#endif
         //checkCudaErrors(cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0));
         multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost);
 
@@ -441,8 +490,13 @@ public:
         resolution.y = y;
         resolution.z = z;
 
-        grid = new float[(long long)x * (long long)y * (long long)z];
-        grid_temp = new float[(long long)x * (long long)y * (long long)z];
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
+        grid = new float[size()];
+        grid_temp = new float[size()];
+#endif
         for (long long i = 0; i < size(); i++) {
             grid[i] = vdb[i];
             grid_temp[i] = vdb[i];
@@ -505,8 +559,13 @@ public:
         resolution.y = rhs.resolution.y;
         resolution.z = rhs.resolution.z;
 
-        grid = new float[(long long)rhs.resolution.x * (long long)rhs.resolution.y * (long long)rhs.resolution.z];
-        grid_temp = new float[(long long)rhs.resolution.x * (long long)rhs.resolution.y * (long long)rhs.resolution.z];
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
+        grid = new float[size()];
+        grid_temp = new float[size()];
+#endif
         for (long long i = 0; i < size(); i++) {
             grid[i] = rhs.grid[i];
             grid_temp[i] = rhs.grid_temp[i];
@@ -549,8 +608,13 @@ public:
         resolution.y = rhs->resolution.y;
         resolution.z = rhs->resolution.z;
 
-        grid = new float[(long long)rhs->resolution.x * (long long)rhs->resolution.y * (long long)rhs->resolution.z];
-        grid_temp = new float[(long long)rhs->resolution.x * (long long)rhs->resolution.y * (long long)rhs->resolution.z];
+#ifdef NEW_HOST_ALLOC
+        checkCudaErrors(cudaHostAlloc(&grid, size() * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&grid_temp, size() * sizeof(float), cudaHostAllocMapped));
+#else
+        grid = new float[size()];
+        grid_temp = new float[size()];
+#endif
         for (long long i = 0; i < size(); i++) {
             grid[i] = rhs->grid[i];
             grid_temp[i] = rhs->grid_temp[i];
@@ -1370,6 +1434,8 @@ private:
     float3* grid_vel;
 
     int3 resolution;
+    
+
     std::vector<float*> vdb;
     std::vector<float*> vdb_temp;
     std::vector<float*> vdb_noise;
