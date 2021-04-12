@@ -93,6 +93,8 @@ public:
     float transparency_compensation = 1.0f;
     float shadow_quality = 1.0f;
 
+    int deviceIndex = 0;
+
     int devicesCount = 1;
 
     bool UpsamplingVelocity = true;
@@ -442,18 +444,18 @@ public:
 
         clock_t startTime = clock();
         
-        GRID3D sphere(vol_d.x, vol_d.y, vol_d.z, devicesCount);
+        GRID3D sphere(vol_d.x, vol_d.y, vol_d.z, devicesCount, deviceIndex);
         load_vdb("sphere", vol_d, sphere);
         std::cout << "Loaded in : " << double(clock() - startTime) << std::endl;
         if (SAMPLE_SCENE == 2) {
             OBJECT SPHERE("vdb", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
-            SPHERE.load_density_grid(sphere, 3.0);
+            SPHERE.load_density_grid(sphere, 3.0, deviceIndex);
             object_list.push_back(SPHERE);
             SPHERE.free();
         }
         else if (SAMPLE_SCENE == 1){
             OBJECT SPHERE("vdbsingle", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, 200.0));
-            SPHERE.load_density_grid(sphere, 6.0);
+            SPHERE.load_density_grid(sphere, 6.0, deviceIndex);
             object_list.push_back(SPHERE);
             SPHERE.free();
         }
@@ -498,9 +500,11 @@ public:
         */
     }
 
-    void Initialize(int DevicesCount = 1) {
+    void Initialize(int DevicesCount = 1, int Best_Device_Index = 0) {
         openvdb::initialize();
         DONE_FRAME = true;
+
+        this->deviceIndex = Best_Device_Index;
 
         this->devicesCount = DevicesCount;
 
@@ -612,18 +616,18 @@ public:
         GRID->generateTile(NTS);
         GRID->deviceCount = this->devicesCount;
             std::cout << "Copy to Device";
-            GRID->copyToDeviceNoise(NTS);
+            GRID->copyToDeviceNoise(NTS, deviceIndex);
 
 
         std::cout << "Split to ("<<devicesCount<<") devices";
-        multiGPU_copyn(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice);
+        multiGPU_copyn(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice, deviceIndex);
         std::cout << "Almost Done";
         state->noise->swap();
         std::cout << ";";
     }
 
     void Initialize_Simulation() {
-        state = new fluid_state(vol_d, devicesCount);
+        state = new fluid_state(vol_d, devicesCount, deviceIndex);
 
         GRID = new GRID3D(devicesCount);
         GRID->deviceCount = this->devicesCount;
@@ -665,20 +669,20 @@ public:
     }
 
     void Simulate(int frame, int device = 0) {
-        cudaSetDevice(device);
+        cudaSetDevice(deviceIndex);
         for (int st = 0; st < 1; st++) {
             simulate_fluid(*state, object_list, ACCURACY_STEPS,
                 false, frame, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
                 SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity);
+                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, device);
             state->step++;
         }
         cudaDeviceSynchronize();
     }
 
     void Render(int frame, int device = 0) {
-        cudaSetDevice(device);
+        cudaSetDevice(deviceIndex);
 
 
         if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
@@ -735,12 +739,10 @@ public:
 
         state->time_step = speed * 0.1; //beta
         DONE_FRAME = false;
-        int device_id = 0;
         std::cout << "\rFrame " << frame + 1 << "  -  ";
         
 
-        device_id = 0;
-        Simulate(frame, device_id);
+        Simulate(frame, this->deviceIndex);
 
         /*
         state->sync_devices();
@@ -752,8 +754,8 @@ public:
             Save(frame, device_id);
         }));
         */
-        Render(frame, device_id);
-        Save(frame, device_id);
+        Render(frame, 0);
+        Save(frame, 0);
 
         //threads.push_back(std::thread([&, device_id]() {
         //}));

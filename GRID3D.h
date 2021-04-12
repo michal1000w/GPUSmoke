@@ -62,7 +62,7 @@ inline void __checkCudaErrors(cudaError err, const char* file, const int line)
     }
 }
 
-inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float* src, int size) {
+inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float* src, int size, int deviceIndex) {
     std::vector<std::thread> threads;
 
     std::cout << "CPPPPPP(" << dst->size() << ")";
@@ -70,7 +70,7 @@ inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float*
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            checkCudaErrors(cudaSetDevice(device_id));
+            checkCudaErrors(cudaSetDevice(device_id + deviceIndex));
 
 
             std::cout << device_id;
@@ -86,13 +86,13 @@ inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float*
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, float3* src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, float3* src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst[device_id], src, SIZEOF_FLOAT3 * size, type));
 
@@ -104,13 +104,13 @@ inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, float3* 
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, float* dst, std::vector<float*>& src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, float* dst, std::vector<float*>& src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst, src[device_id], sizeof(float) * size, type));
 
@@ -122,13 +122,13 @@ inline void multiGPU_copy(int devices_count, float* dst, std::vector<float*>& sr
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, float3* dst, std::vector<float3*>& src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, float3* dst, std::vector<float3*>& src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst, src[device_id], SIZEOF_FLOAT3 * size, type));
 
@@ -140,13 +140,13 @@ inline void multiGPU_copy(int devices_count, float3* dst, std::vector<float3*>& 
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, float* dst, float* src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, float* dst, float* src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst, src, sizeof(float) * size, type));
 
@@ -158,13 +158,13 @@ inline void multiGPU_copy(int devices_count, float* dst, float* src, int size, c
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, float3* dst, float3* src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, float3* dst, float3* src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst, src, SIZEOF_FLOAT3 * size, type));
 
@@ -176,12 +176,12 @@ inline void multiGPU_copy(int devices_count, float3* dst, float3* src, int size,
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, std::vector<float*>* dst, std::vector<float*>* src, int size, cudaMemcpyKind type) { //dobre
+inline void multiGPU_copy(int devices_count, std::vector<float*>* dst, std::vector<float*>* src, int size, cudaMemcpyKind type, int deviceIndex) { //dobre
     std::vector<std::thread> threads;
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src->at(device_id), sizeof(float) * size, type));
 
@@ -193,12 +193,12 @@ inline void multiGPU_copy(int devices_count, std::vector<float*>* dst, std::vect
         thread.join();
 }
 
-inline void multiGPU_copyn(int devices_count, std::vector<float*>* dst, std::vector<float*>* src, int size, cudaMemcpyKind type) { //dobre
+inline void multiGPU_copyn(int devices_count, std::vector<float*>* dst, std::vector<float*>* src, int size, cudaMemcpyKind type, int deviceIndex) { //dobre
     std::vector<std::thread> threads;
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
             std::cout << "Oł shieeeeeeeeeeeeeet";
 
             checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src->at(device_id), sizeof(float) * size, type));
@@ -211,13 +211,13 @@ inline void multiGPU_copyn(int devices_count, std::vector<float*>* dst, std::vec
         thread.join();
 }
 
-inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, std::vector<float3*>& src, int size, cudaMemcpyKind type) {
+inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, std::vector<float3*>& src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
 
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             checkCudaErrors(cudaMemcpyAsync(dst[device_id], src[device_id], SIZEOF_FLOAT3 * size, type));
 
@@ -231,7 +231,7 @@ inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, std::vec
 
 
 template <typename T>
-inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
+inline std::vector<T*> multiGPU_malloc(int devices_count, int deviceIndex, long long size) {
     std::vector<std::thread> threads;
 
 
@@ -243,7 +243,7 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
 
             std::cout << device_id;
 
@@ -270,7 +270,7 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
 
 
 
-inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size = 1) {
+inline std::vector<float3*> multiGPU_malloc3(int devices_count, int deviceIndex, long long size) {
     std::vector<std::thread> threads;
 
     std::vector<float3*> _dst;
@@ -282,7 +282,7 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size =
     for (unsigned int device_id = 0; device_id < devices_count; device_id++)
     {
         threads.push_back(std::thread([&, device_id]() {
-            cudaSetDevice(device_id);
+            cudaSetDevice(device_id + deviceIndex);
             std::cout << device_id;
 
 #ifndef HOSTALLOC
@@ -339,7 +339,7 @@ class GRID3D {
         delete[] ptr;
         ptr = nullptr;
     }
-    void initNoiseGrid(bool vell = true) {
+    void initNoiseGrid(int deviceIndex, bool vell = true) {
         grid_noise = new float[1];
         grid_noise[0] = SUPER_NULL;
 
@@ -349,25 +349,26 @@ class GRID3D {
         }
         if (!cuda_velocity_initialized) {
             cuda_velocity_initialized = true;
-            grid_vel_gpu = multiGPU_malloc3(deviceCount, size());
+            grid_vel_gpu = multiGPU_malloc3(deviceCount, deviceIndex, size());
         }
 
         
     }
     bool cuda_velocity_initialized = false;
 public:
-    GRID3D(int devicesCount = 1) {
+    GRID3D(int devicesCount=1) {
         this->deviceCount = devicesCount;
         resolution.x = resolution.y = resolution.z = 1;
         grid = new float[1];
         grid[0] = 0.0;
         grid_temp = new float[1];
         grid_temp[0] = 0.0;
-        initNoiseGrid();
+        int deviceIndex = 0;
+        initNoiseGrid(deviceIndex);
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
     }
-    GRID3D(int x, int y, int z, int deviceCount) {
+    GRID3D(int x, int y, int z, int deviceCount, int deviceIndex) {
         this->deviceCount = deviceCount;
         resolution.x = x;
         resolution.y = y;
@@ -386,9 +387,9 @@ public:
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
         }
-        initNoiseGrid();
+        initNoiseGrid(deviceIndex);
     }
-    GRID3D(int3 dim, int deviceCount) {
+    GRID3D(int3 dim, int deviceCount, int deviceIndex) {
         this->deviceCount = deviceCount;
         resolution.x = dim.x;
         resolution.y = dim.y;
@@ -407,9 +408,9 @@ public:
             grid[i] = 0.0;
             grid_temp[i] = 0.0;
         }
-        initNoiseGrid();
+        initNoiseGrid(deviceIndex);
     }
-    GRID3D(int elem, float* grid, int deviceCount) {
+    GRID3D(int elem, float* grid, int deviceCount, int deviceIndex) {
         this->deviceCount = deviceCount;
 
 #ifdef NEW_HOST_ALLOC
@@ -425,9 +426,9 @@ public:
         }
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        initNoiseGrid();
+        initNoiseGrid(deviceIndex);
     }
-    GRID3D(int3 dim, float* grid_src, int deviceCount) {
+    GRID3D(int3 dim, float* grid_src, int deviceCount, int deviceIndex) {
         this->deviceCount = deviceCount;
         this->resolution = dim;
         //grid = new float[(long long)dim.x * (long long)dim.y * (long long)dim.z];
@@ -439,12 +440,12 @@ public:
         grid_temp = new float[size()];
 #endif
         //cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0);
-        multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost);
+        multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
         grid_temp = new float[1];
-        initNoiseGrid();
+        initNoiseGrid(deviceIndex);
     }
 
-    void load_from_device(int3 dim, float* grid_src,bool debug = false) {
+    void load_from_device(int3 dim, float* grid_src, int deviceIndex,bool debug = false) {
         freeOnlyGrid(); //free
         this->resolution = dim;
 #ifdef NEW_HOST_ALLOC
@@ -455,7 +456,7 @@ public:
         grid_temp = new float[size()];
 #endif
         //checkCudaErrors(cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0));
-        multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost);
+        multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
 
 
 
@@ -463,12 +464,12 @@ public:
     }
 
 #ifdef VELOCITY_NOISE
-    void load_from_device3D(int3 dim, float3* grid_src) {
+    void load_from_device3D(int3 dim, float3* grid_src, int deviceIndex) {
 
         if (this->resolution.x == dim.x && this->resolution.y == dim.y && this->resolution.z == dim.z) {
             //std::cout << "Copying";
             //checkCudaErrors(cudaMemcpyAsync(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost,0));
-            multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost);
+            multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
         }
         else {
             //std::cout << "Free data";
@@ -478,14 +479,14 @@ public:
             grid_vel = new float3[size()];
             //std::cout << "Copying";
             //checkCudaErrors(cudaMemcpyAsync(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost,0));
-            multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost);
+            multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
         }
         //cudaCheckError();
         //std::cout << "Copied from device" << std::endl;
     }
 #endif
 
-    GRID3D(int x, int y, int z, float* vdb, int deviceCount) {
+    GRID3D(int x, int y, int z, float* vdb, int deviceCount, int deviceIndex) {
         resolution.x = x;
         resolution.y = y;
         resolution.z = z;
@@ -503,7 +504,7 @@ public:
         }
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        initNoiseGrid();
+        initNoiseGrid(deviceIndex);
     }
     float operator()(int x, int y, int z) {
         float output = 0.0;
@@ -653,43 +654,43 @@ public:
         }
     }
 
-    void copyToDevice(bool addNoise = true) {
+    void copyToDevice(int deviceIndex, bool addNoise = true) {
         if (addNoise)
             this->addNoise();
         //checkCudaErrors(cudaMalloc((void**)&vdb_temp, sizeof(float) * size()));
         std::cout << "Malloc";
-        vdb_temp = multiGPU_malloc<float>(deviceCount, size());
+        vdb_temp = multiGPU_malloc<float>(deviceCount, deviceIndex, size());
         //checkCudaErrors(cudaMemcpyAsync(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice,0));
         std::cout << "Copy";
-        multiGPU_copyHTD(deviceCount, &vdb_temp, grid_temp, size());
+        multiGPU_copyHTD(deviceCount, &vdb_temp, grid_temp, size(), deviceIndex);
 
         normalizeData();
         //copy to device
         //checkCudaErrors(cudaMalloc((void**)&vdb, sizeof(float) * size()));
-        vdb = multiGPU_malloc<float>(deviceCount, size());
+        vdb = multiGPU_malloc<float>(deviceCount, deviceIndex, size());
         //checkCudaErrors(cudaMemcpyAsync(vdb, grid, sizeof(float) * size(), cudaMemcpyHostToDevice,0));
-        multiGPU_copyHTD(deviceCount, &vdb, grid, size());
+        multiGPU_copyHTD(deviceCount, &vdb, grid, size(), deviceIndex);
         //cudaCheckError();
     }
 #ifdef VELOCITY_NOISE
-    void copyToDeviceVel() {
+    void copyToDeviceVel(int deviceIndex) {
         //checkCudaErrors(cudaMalloc((void**)&grid_vel_gpu, SIZEOF_FLOAT3 * size()));
-        grid_vel_gpu = multiGPU_malloc3(deviceCount, size());
+        grid_vel_gpu = multiGPU_malloc3(deviceCount, deviceIndex, size());
         //checkCudaErrors(cudaMemcpyAsync(grid_vel_gpu, grid_vel, SIZEOF_FLOAT3 * size(), cudaMemcpyHostToDevice,0));
-        multiGPU_copy(deviceCount, grid_vel_gpu, grid_vel, size(), cudaMemcpyHostToDevice);
+        multiGPU_copy(deviceCount, grid_vel_gpu, grid_vel, size(), cudaMemcpyHostToDevice, deviceIndex);
         //cudaCheckError();
     }
 #endif
-    void copyToDeviceNoise(int NTS = 64) {
+    void copyToDeviceNoise(int NTS, int deviceIndex) {
         //checkCudaErrors(cudaMalloc((void**)&vdb_noise, sizeof(float) * NTS * NTS * NTS));
         std::cout << "Malloc";
-        vdb_noise = multiGPU_malloc<float>(deviceCount, NTS*NTS*NTS);
+        vdb_noise = multiGPU_malloc<float>(deviceCount, deviceIndex, NTS*NTS*NTS);
 
         //this->generateTile(NTS);
 
         //checkCudaErrors(cudaMemcpyAsync(vdb_noise, grid_noise, sizeof(float) * NTS * NTS * NTS, cudaMemcpyHostToDevice,0));
         std::cout << "Copy(" << deviceCount << ")";
-        multiGPU_copyHTD(deviceCount, &vdb_noise, grid_noise, NTS*NTS*NTS);
+        multiGPU_copyHTD(deviceCount, &vdb_noise, grid_noise, NTS*NTS*NTS, deviceIndex);
         std::cout << "Endl\n";
         //cudaCheckError();
     }

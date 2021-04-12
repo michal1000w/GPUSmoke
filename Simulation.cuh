@@ -15,7 +15,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
     float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
     bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, float deviceCount = 1,
-    float max_velocity = 3.0f, float influence_on_velocity = 0.1f)
+    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -25,8 +25,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     /////////////GLOBAL EVALUATE//////////////////////
     //Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
     //////////////////////////////////////////////////
+    unsigned char current_device = deviceIndex;
+    
 
-    unsigned char current_device = 0;
 
     int3* dim_start, * dim_end;
     dim_start = new int3[deviceCount];
@@ -34,6 +35,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     if (deviceCount == 1) {
         dim_start[0] = make_int3(0, 0, 0);
         dim_end[0] = state.dim;
+        cudaSetDevice(deviceIndex);
+        current_device = 0;
     }
     else if (deviceCount == 2) {
         dim_start[0] = make_int3(0, 0, 0);
@@ -80,8 +83,6 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     
     
     
-    current_device = 0;
-    cudaSetDevice(current_device);
 
     
 

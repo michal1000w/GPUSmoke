@@ -13,14 +13,14 @@ DoubleBuffer<T>::DoubleBuffer(int devices)
 }
 
 template <typename T>
-DoubleBuffer<T>::DoubleBuffer(int nelements, int devicesCount)
+DoubleBuffer<T>::DoubleBuffer(int nelements, int devicesCount, int deviceIndex)
 {
     this->devicesCount = devicesCount;
     nbytes = sizeof(T)*nelements;
     //cudaMalloc( (void**)&A, nbytes );
     //cudaMalloc( (void**)&B, nbytes );
-    A = multiGPU_malloc<T>(this->devicesCount, nelements);
-    B = multiGPU_malloc<T>(this->devicesCount, nelements);
+    A = multiGPU_malloc<T>(this->devicesCount, deviceIndex, nelements);
+    B = multiGPU_malloc<T>(this->devicesCount, deviceIndex, nelements);
 
     //checkCudaErrors(cudaHostAlloc(&temporary, nbytes, cudaHostAllocMapped));
     

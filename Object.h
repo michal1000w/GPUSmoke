@@ -50,7 +50,7 @@ public:
 	float3 get_location();
 	void set_location(float x = 0, float y = 0, float z = 0);
 	void set_location(float3 location);
-    void load_density_grid(GRID3D obj,float temp = 1.0);
+    void load_density_grid(GRID3D obj,float temp,int deviceIndex);
     GRID3D get_density_grid();
     float get_initial_temp();
     void cudaFree() { vdb_object.freeCuda(); }

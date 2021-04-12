@@ -51,6 +51,8 @@ int main(int argc, char* argv[]) {
             Best_Device_Index = deviceIndex;
         }
     }
+
+
     std::cout << "----------------------------------------" << std::endl;
     cudaSetDevice(Best_Device_Index);
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
@@ -63,22 +65,30 @@ int main(int argc, char* argv[]) {
     }
 
     EnableP2Psharing(devicesCount);
+    cudaSetDevice(Best_Device_Index);
 
 #ifdef EXPERIMENTAL
     if (argc <= 1) {
         if (false) {
             std::cout << "Using All (" << devicesCount << ") devices" << std::endl;
-            solver.Initialize(devicesCount);
+            solver.Initialize(devicesCount, Best_Device_Index);
         }
         else {
             std::cout << "Using (" << 1 << ") device" << std::endl;
-            solver.Initialize(1);
+            solver.Initialize(1, Best_Device_Index);
         }
     }
-    else {
+    else if ( argc == 2){
         std::cout << "Using " << std::stoi(argv[1]) << " devices" << std::endl;
-        solver.Initialize(std::stoi(argv[1]));
+        solver.Initialize(std::stoi(argv[1]),Best_Device_Index);
     }
+    else if (argc == 3) {
+        std::cout << "Using " << std::stoi(argv[1]) << " devices" << std::endl;
+        std::cout << "Using device: " << std::stoi(argv[2]);
+        cudaSetDevice(std::stoi(argv[2]));
+        solver.Initialize(std::stoi(argv[1]), std::stoi(argv[2]));
+    }
+
 #ifdef OBJECTS_EXPERIMENTAL
     std::cout << "Generating example scene" << std::endl;
     solver.ExampleScene(true);

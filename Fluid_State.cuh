@@ -38,24 +38,24 @@ struct fluid_state {
 
     
 
-    fluid_state(int3 dims, int devicesCount) {
+    fluid_state(int3 dims, int devicesCount, int deviceIndex) {
         this->devicesCount = devicesCount;
         step = 0;
         dim = dims;
         nelems = dims.x * dims.y * dims.z;
-        velocity = new DoubleBuffer<float3>((int)nelems, devicesCount);
+        velocity = new DoubleBuffer<float3>((int)nelems, devicesCount, deviceIndex);
         velocity->setDim(dims);
-        density = new DoubleBuffer<float>((int)nelems, devicesCount);
+        density = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
         density->setDim(dims);
-        temperature = new DoubleBuffer<float>((int)nelems, devicesCount);
+        temperature = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
         temperature->setDim(dims);
-        pressure = new DoubleBuffer<float>((int)nelems, devicesCount);
+        pressure = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
         pressure->setDim(dims);
-        flame = new DoubleBuffer<float>((int)nelems, devicesCount);
+        flame = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
         flame->setDim(dims);
 
         //cudaMalloc((void**)&diverge, sizeof(float) * nelems);
-        diverge = multiGPU_malloc<float>(devicesCount, nelems);
+        diverge = multiGPU_malloc<float>(devicesCount,deviceIndex, nelems);
 
 
 
@@ -64,7 +64,7 @@ struct fluid_state {
         int3 noiseDims = make_int3(noiseDim, noiseDim, noiseDim);
         int nnelems = noiseDim * noiseDim * noiseDim;
 
-        noise = new DoubleBuffer<float>((int)nnelems, devicesCount);
+        noise = new DoubleBuffer<float>((int)nnelems, devicesCount, deviceIndex);
         noise->setDim(noiseDims);
     }
 

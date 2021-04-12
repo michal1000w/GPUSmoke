@@ -10,7 +10,7 @@ class DoubleBuffer
 {
 public:
     DoubleBuffer(int devices);
-    DoubleBuffer(int nelements, int devicesCount);
+    DoubleBuffer(int nelements, int devicesCount, int deviceIndex);
     std::vector<T*>* readTarget();
     std::vector<T*>* writeTarget();
     T* readTargett(unsigned int device = 0) { return A[device]; }
@@ -38,7 +38,7 @@ public:
         GRID3D* output = new GRID3D(dim,devicesCount);
         output->deviceCount = devicesCount;
         if (debug) std::cout << "Copying..." << std::endl;
-        output->load_from_device3D(dim, readTargett(device));
+        output->load_from_device3D(dim, readTargett(device),device);
         //std::cout << "Done";
         //output->set_pointer(new GRID3D(dim, readTarget()));
         if (debug)
