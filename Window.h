@@ -140,17 +140,19 @@ bool SliderPos(const char* label, ImGuiDataType data_type, void* v, int componen
 
 
 
-
+float InterfaceScale = 1.0f;
 
 
 
 
 void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
-	float& progress, bool& save_panel, bool& helper_window, bool& confirm_button) {
+	float& progress, bool& save_panel, bool& helper_window, bool& confirm_button, int2 Image) {
 
 	if (helper_window) {
 		ImGui::Begin("Helper Panel");
 		{
+			ImGui::SetWindowFontScale(InterfaceScale);
+
 			ImGui::Text("Useful shortcuts:");
 
 			ImGui::Text("W/A/S/D - Camera movement");
@@ -159,6 +161,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("R - reset simulation");
 			ImGui::Text("F - stop exporting");
 
+			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
+			
 			if (ImGui::Button("Close")) {
 				helper_window = false;
 			}
@@ -172,6 +176,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	if (SAVE_FILE_TAB) {
 		ImGui::Begin("Save Panel");
 		{
+			ImGui::SetWindowFontScale(InterfaceScale);
 			ImGui::Text("Enter filename");
 			ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
 			if (ImGui::Button("Save")) {
@@ -198,6 +203,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	if (OPEN_FILE_TAB) {
 		ImGui::Begin("Open Panel");
 		{
+			ImGui::SetWindowFontScale(InterfaceScale);
 			ImGui::Text("Enter filename");
 			ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
 			if (ImGui::Button("Open")) {
@@ -227,6 +233,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 	ImGui::Begin("IO Panel", &save_panel, ImGuiWindowFlags_MenuBar);
 	{
+		ImGui::SetWindowFontScale(InterfaceScale);
 		if (ImGui::BeginMenuBar())
 		{
 			if (ImGui::BeginMenu("File"))
@@ -309,6 +316,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::End();
 	ImGui::Begin("Properties Panel");
 	{
+		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Domain Resolution");
 		ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, 490);
 		ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, 490);
@@ -382,6 +390,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 	ImGui::Begin("Objects Panel");
 	{
+		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Emitter type");
 		const char* items[] = { "emitter", "explosion" , "force", "power", 
 			"turbulance", "wind", "sphere" };// , "vdb", "vdbs" };
@@ -496,10 +505,14 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
-
-
+#include <Windows.h>
+#include <WinUser.h>
 
 int Window(float* Img_res) {
+	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2); //skalowanie globalne //bez _V2 chyba lepsze
+	
+	
+	
 	GLFWwindow* window;
 
 	//initialize
@@ -530,6 +543,8 @@ int Window(float* Img_res) {
 	////////////
 
 	glfwMakeContextCurrent(window);
+
+	
 
 	if (glewInit() != GLEW_OK)
 		std::cout << "Error: glewInit\n";
@@ -647,10 +662,10 @@ int Window(float* Img_res) {
 			ImGui_ImplGlfw_NewFrame();
 			ImGui::NewFrame();
 
+
 			//std::thread GUI_THR( RenderGUI ,std::ref(SAVE_FILE_TAB), std::ref(OPEN_FILE_TAB), std::ref(fps), std::ref(progress), std::ref(save_panel));
-			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window, confirm_button);
+			RenderGUI(SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window, confirm_button, Image);
 			//New Frame//////////////////
-			
 
 			renderer.Draw(va, ib, shader);
 
