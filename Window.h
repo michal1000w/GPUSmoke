@@ -427,7 +427,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			}
 		}
 		if (ImGui::Button("Add Emitter")) {
-			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 7.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
+			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
 		}
 
 		ImGui::Text("Object list:");
