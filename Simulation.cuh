@@ -92,8 +92,30 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
         
+    advection << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.temperature->readTargett(current_device),
+        state.temperature->writeTargett(current_device),
+        state.dim, state.time_step, 0.998);//0.998
+    state.temperature->swap();
 
 
+    advection << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.flame->readTargett(current_device),
+        state.flame->writeTargett(current_device),
+        state.dim, state.time_step, Flame_Dissolve);
+    state.flame->swap();
+
+
+    advection << <grid, block >> > (  //zanikanie
+        state.velocity->readTargett(current_device),
+        state.density->readTargett(current_device),
+        state.density->writeTargett(current_device),
+        state.dim, state.time_step, Dissolve_rate);//0.995
+    state.density->swap();
+
+    /*
     for (int i = 0; i < deviceCount; i++) {
         current_device = i;
         cudaSetDevice(current_device);
@@ -124,7 +146,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     current_device = 0;
     cudaSetDevice(current_device);
-    
+    */
 
 
 
