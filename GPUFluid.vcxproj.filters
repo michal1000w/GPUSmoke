@@ -153,6 +153,9 @@
     <Filter Include="OpenGL\Textures">
       <UniqueIdentifier>{a1f19660-5e7e-47f4-ad63-56722b0fb0f1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Dll">
+      <UniqueIdentifier>{2889f796-11fd-4c69-a0d1-710028ba09bf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">
@@ -230,6 +233,24 @@
   <ItemGroup>
     <None Include="x64\Release\Shaders.shader">
       <Filter>OpenGL\Shaders</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\boost_system-vc140-mt-1_63.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\Half.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\openvdb.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\tbb.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\zlib.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\blosc.dll">
+      <Filter>Dll</Filter>
     </None>
   </ItemGroup>
 </Project>

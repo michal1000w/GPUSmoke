@@ -10,7 +10,20 @@ extern Solver solver;
 
 /////////////////////////////////
 //section experimental
-
+void EnableP2Psharing(unsigned int devices_count = 1) {
+    std::cout << "Enabling P2P sharing..." << std::endl;
+    for (unsigned int i = 0; i < devices_count; i++) {
+        for (unsigned int j = 0; j < devices_count; j++) {
+            int is_able = NULL;
+            cudaSetDevice(i);
+            cudaDeviceCanAccessPeer(&is_able, i, j);
+            if (is_able) {
+                checkCudaErrors(cudaDeviceEnablePeerAccess(j, 0));
+                std::cout << "Enabled P2P sharing for: " << i << std::endl;
+            }
+        }
+    }
+}
 
 /////////////////////////////////
 
@@ -48,6 +61,8 @@ int main(int argc, char* argv[]) {
         cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, deviceProperties.persistingL2CacheMaxSize); /* Set aside max possible size of L2 cache for persisting accesses */
         std::cout << "Setting L2 max cache: " << deviceProperties.persistingL2CacheMaxSize << std::endl;
     }
+
+    EnableP2Psharing(devicesCount);
 
 #ifdef EXPERIMENTAL
     if (argc <= 1) {

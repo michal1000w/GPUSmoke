@@ -217,8 +217,6 @@ inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, std::vec
 }
 
 
-
-
 template <typename T>
 inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
     std::vector<std::thread> threads;
@@ -249,6 +247,8 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, long long size = 1) {
         thread.join();
     std::cout << "Done";
 
+    //allow_p2p_sharing(devices_count);
+
     return _dst;
 }
 
@@ -278,6 +278,8 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, long long size =
     for (auto& thread : threads)
         thread.join();
     std::cout << "Done";
+
+    //allow_p2p_sharing(devices_count);
 
     return _dst;
 }

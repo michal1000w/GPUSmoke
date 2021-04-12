@@ -26,9 +26,11 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     //Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
     //////////////////////////////////////////////////
 
+    unsigned char current_device = 0;
 
 
-
+    //cudaStream_t stream1; cudaStreamCreate(&stream1); 
+    //cudaStream_t stream2; cudaStreamCreate(&stream2);
 
 
     float measured_time = 0.0f;
@@ -47,42 +49,64 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     cudaEventRecord(start, 0);
 
+
+
+    current_device = 0;
+    cudaSetDevice(current_device);
+
     advection << <grid, block >> > (
-        state.velocity->readTargett(),
-        state.velocity->readTargett(),
-        state.velocity->writeTargett(),
+        state.velocity->readTargett(current_device),
+        state.velocity->readTargett(current_device),
+        state.velocity->writeTargett(current_device),
         state.dim, state.time_step, 1.0);//1.0
     state.velocity->swap();
 
+    cudaMemcpyAsync(state.velocity->readTargett(1), state.velocity->readTargett(0), state.velocity->byteCount(), cudaMemcpyDeviceToDevice);
+
     std::cout << cudaGetErrorString(cudaGetLastError());
 
+
+    //current_device = 1;
+    cudaSetDevice(1);
+
     advection << <grid, block >> > (
-        state.velocity->readTargett(),
-        state.temperature->readTargett(),
-        state.temperature->writeTargett(),
+        state.velocity->readTargett(current_device),
+        state.temperature->readTargett(current_device),
+        state.temperature->writeTargett(0),
         state.dim, state.time_step, 0.998);//0.998
     state.temperature->swap();
 
+
     advection << <grid, block >> > (
-        state.velocity->readTargett(),
-        state.flame->readTargett(),
-        state.flame->writeTargett(),
+        state.velocity->readTargett(current_device),
+        state.flame->readTargett(current_device),
+        state.flame->writeTargett(0),
         state.dim, state.time_step, Flame_Dissolve);
     state.flame->swap();
 
+
     advection << <grid, block >> > (  //zanikanie
-        state.velocity->readTargett(),
-        state.density->readTargett(),
-        state.density->writeTargett(),
+        state.velocity->readTargett(current_device),
+        state.density->readTargett(current_device),
+        state.density->writeTargett(current_device),
         state.dim, state.time_step, Dissolve_rate);//0.995
     state.density->swap();
 
+    cudaSetDevice(0);
+
+
+
+
+
+
+
+
     //wznoszenie siê dymu
     buoyancy << <grid, block >> > (
-        state.velocity->readTargett(),
-        state.temperature->readTargett(),
-        state.density->readTargett(),
-        state.velocity->writeTargett(),
+        state.velocity->readTargett(current_device),
+        state.temperature->readTargett(current_device),
+        state.density->readTargett(current_device),
+        state.velocity->writeTargett(current_device),
         AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight, state.dim); //1.0f
     state.velocity->swap();
 
@@ -135,7 +159,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     */
                 float direction = 1.0f;
                 resize_sphere_vel << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), object_list[i].size, direction, max_velocity, influence_on_velocity,
                     state.dim
                     );
@@ -155,15 +179,15 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
         if (current.get_type() == "emitter") {
             wavey_impulse_temperature_new << < grid, block >> > (
-                state.temperature->readTargett(),
-                state.velocity->readTargett(),
+                state.temperature->readTargett(current_device),
+                state.velocity->readTargett(current_device),
                 current.get_location(), SIZEE,
                 current.get_impulseTemp(), current.get_initial_velocity(), current.get_velocity_frequence(),
                 state.dim,
                 frame
                 );
             wavey_impulse_density_new << < grid, block >> > (
-                state.density->readTargett(),
+                state.density->readTargett(current_device),
                 current.get_location(), SIZEE,
                 current.get_impulseDensity(), 1.0f, current.get_velocity_frequence(),
                 state.dim,
@@ -172,13 +196,13 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         }
         else if (current.get_type() == "smoke"){
             impulse << <grid, block >> > (
-                state.temperature->readTargett(),
+                state.temperature->readTargett(current_device),
                 current.get_location(), current.get_size(),
                 current.get_impulseTemp(),
                 state.dim
                 );
             impulse << <grid, block >> > (
-                state.density->readTargett(),
+                state.density->readTargett(current_device),
                 current.get_location(), current.get_size(),
                 current.get_impulseDensity(),
                 state.dim
@@ -187,19 +211,19 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         else if (current.get_type() == "explosion") {
             if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
                 impulse << <grid, block >> > (
-                    state.flame->readTargett(),
+                    state.flame->readTargett(current_device),
                     current.get_location(), current.get_size(),
                     current.get_impulseTemp(),
                     state.dim
                     );
                 impulse << <grid, block >> > (
-                    state.temperature->readTargett(),
+                    state.temperature->readTargett(current_device),
                     current.get_location(), current.get_size(),
                     current.get_impulseTemp(),
                     state.dim
                     );
                 impulse << <grid, block >> > (
-                    state.density->readTargett(),
+                    state.density->readTargett(current_device),
                     current.get_location(), current.get_size(),
                     current.get_impulseDensity(),
                     state.dim
@@ -245,7 +269,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         else if (current.get_type() == "fff") {
             if (current.square) {
                 force_field_force << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength * current.force_strength,
                     state.dim
@@ -253,7 +277,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
             else {
                 force_field_force << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength,
                     state.dim
@@ -263,7 +287,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         else if (current.get_type() == "ffp") {
             if (current.square) {
                 force_field_power << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength * current.force_strength,
                     state.dim
@@ -271,7 +295,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
             else {
                 force_field_power << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength,
                     state.dim
@@ -281,7 +305,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         else if (current.get_type() == "fft") {
             if (current.square) {
                 force_field_turbulance << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength*current.force_strength, current.set_vel_freq + current.velocity_frequence,
                     state.dim,
@@ -290,7 +314,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
             else {
                 force_field_turbulance << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength, current.set_vel_freq + current.velocity_frequence,
                     state.dim,
@@ -312,7 +336,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             if (current.square) {
                 float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
                 force_field_wind << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength * current.force_strength,
                     direction,
@@ -322,7 +346,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             else {
                 float3 direction = make_float3(current.force_direction[0], current.force_direction[1], current.force_direction[2]);
                 force_field_wind << < grid, block >> > (
-                    state.velocity->readTargett(),
+                    state.velocity->readTargett(current_device),
                     current.get_location(), current.size,
                     current.force_strength,
                     direction,
@@ -339,9 +363,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 );
             */
             collision_sphere2 << <grid, block >> > (
-                state.velocity->readTargett(),
-                state.temperature->readTargett(),
-                state.density->readTargett(),
+                state.velocity->readTargett(current_device),
+                state.temperature->readTargett(current_device),
+                state.density->readTargett(current_device),
                 state.dim, current.get_location(), current.size,
                 AMBIENT_TEMPERATURE);
         }
@@ -355,7 +379,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     //environment turbulance
     divergence << <grid, block >> > (
-        state.velocity->readTargett(),
+        state.velocity->readTargett(current_device),
         state.diverge[0], state.dim, Diverge_Rate);//0.5
     /*
         */
@@ -365,7 +389,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 // clear pressure
     impulse << <grid, block >> > (
-        state.pressure->readTargett(),
+        state.pressure->readTargett(current_device),
         make_float3(0.0), 1000000.0f,
         0.0f, state.dim);
 
@@ -375,16 +399,16 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     {
         pressure_solve << <grid, block >> > (
             state.diverge[0],
-            state.pressure->readTargett(),
-            state.pressure->writeTargett(),
+            state.pressure->readTargett(current_device),
+            state.pressure->writeTargett(current_device),
             state.dim, Pressure); //-1.0
         state.pressure->swap();
     }
 
     subtract_pressure << <grid, block >> > (
-        state.velocity->readTargett(),
-        state.velocity->writeTargett(),
-        state.pressure->readTargett(),
+        state.velocity->readTargett(current_device),
+        state.velocity->writeTargett(current_device),
+        state.pressure->readTargett(current_device),
         state.dim, -1.0f * Pressure);//1.0
         //state.dim, 1.0f);//1.0
     state.velocity->swap();
@@ -399,11 +423,11 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         for (int i = 0; i < 1; i++) {
             if (UpsamplingDensity) {
                 applyNoiseDT << <grid, block >> > (
-                    state.temperature->readTargett(),
-                    state.density->readTargett(),
-                    state.temperature->writeTargett(),
-                    state.density->writeTargett(),
-                    state.noise->readTargett(),
+                    state.temperature->readTargett(current_device),
+                    state.density->readTargett(current_device),
+                    state.temperature->writeTargett(current_device),
+                    state.density->writeTargett(current_device),
+                    state.noise->readTargett(current_device),
                     state.dim,
                     /*intensity=0.45f*/sintensity,
                     /*offset=0.075f*/soffset,
@@ -418,9 +442,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
             if (UpsamplingVelocity) {
                 applyNoiseV << <grid, block >> > (
-                    state.velocity->readTargett(),
-                    state.velocity->writeTargett(),
-                    state.noise->readTargett(),
+                    state.velocity->readTargett(current_device),
+                    state.velocity->writeTargett(current_device),
+                    state.noise->readTargett(current_device),
                     state.dim,
                     /*intensity=0.45f*/sintensity,
                     /*offset=0.075f*/soffset,
@@ -434,7 +458,11 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     
 
 
-
+    cudaThreadSynchronize();
+    checkCudaErrors(cudaMemcpyAsync(state.density->readTargett(0), state.density->readTargett(1), state.density->byteCount(), cudaMemcpyDeviceToDevice));
+    checkCudaErrors(cudaMemcpyAsync(state.flame->readTargett(0), state.flame->readTargett(1), state.flame->byteCount(), cudaMemcpyDeviceToDevice));
+    current_device = 0;
+    cudaSetDevice(0);
 
 
     cudaEventRecord(stop, 0);
