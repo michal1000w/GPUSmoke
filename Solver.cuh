@@ -51,7 +51,7 @@ std::string reduce(const std::string& str,
 
 class Solver {
 public:
-    int NOISE_SC = 64;
+    int NOISE_SC = 128; //128
     int ACCURACY_STEPS;//
     float Smoke_Dissolve;//
     float Flame_Dissolve;
@@ -675,7 +675,8 @@ public:
                 false, frame, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
                 SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, device);
+                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, device,
+                NOISE_SC);
             state->step++;
         }
         cudaDeviceSynchronize();
@@ -710,15 +711,18 @@ public:
             //std::cout << ";T";
             grid->combine_with_temp_grid(gridt);
             //std::cout << ";";
-
+            auto gridf = state->temperature->readToGrid(device);
 
             std::string FOLDER = EXPORT_FOLDER;
             FOLDER = trim(FOLDER);
 
-            export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, /*DEBUG*/ false);
+            export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
 
             if (frame >= EXPORT_END_FRAME)
                 EXPORT_VDB = false;
+
+            gridf->free();
+            delete gridf;
 
             delete gridt;
             grid->free();

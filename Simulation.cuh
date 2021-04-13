@@ -15,7 +15,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
     float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
     bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, float deviceCount = 1,
-    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0)
+    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0, int NOISE_R = 64)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
     //float BUOYANCY = buoancy; //1.0f
@@ -487,7 +487,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     /*scale=0.7*/sscale,
                     frame,
                     time_anim,
-                    density_cutoff
+                    density_cutoff,
+                    NOISE_R
                     );
                 state.temperature->swap();
                 state.density->swap();
@@ -503,7 +504,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     /*offset=0.075f*/soffset,
                     /*scale=0.7*/sscale,
                     frame,
-                    time_anim);
+                    time_anim,
+                    NOISE_R);
                 state.velocity->swap();
             }
         }
