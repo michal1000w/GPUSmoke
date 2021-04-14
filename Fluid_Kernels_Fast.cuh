@@ -1153,19 +1153,22 @@ template <typename T>
 __global__ void pressure_solve(T* div, T* p_src, T* p_dst, int3 vds, int3 vde,
     int3 vd, float amount)
 {
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+    if (x >= vde.x || y >= vde.y || z >= vde.z) return;
+
+
+
     __shared__ T loc[LOC_SIZE];
     const int padding = PADDING; // How far to load past end of cube
     const int sdim = blockDim.x + 2 * padding; // 10 with blockdim 8
     const int3 s_dims = make_int3(sdim, sdim, sdim);
-    const int x = blockDim.x * blockIdx.x + threadIdx.x;
-    const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
-    const int z = blockDim.z * blockIdx.z + threadIdx.z;
 
     load_shared(
         blockDim, blockIdx, threadIdx, vd, sdim, loc, p_src);
     __syncthreads();
 
-    if (x >= vde.x || y >= vde.y || z >= vde.z) return;
 
     T d = div[get_voxel(x, y, z, vd)];
 
