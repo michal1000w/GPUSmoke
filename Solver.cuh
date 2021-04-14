@@ -684,7 +684,7 @@ public:
         }
         else {
             for (int st = 0; st < 1; st++) {
-                simulate_fluid2(*state, object_list, ACCURACY_STEPS,
+                SimulateMultiGPU(*state, object_list, ACCURACY_STEPS,
                     false, frame, Smoke_Dissolve, Ambient_Temperature,
                     DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
                     SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
