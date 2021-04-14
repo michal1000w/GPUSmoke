@@ -1,18 +1,6 @@
 #include "Object.h"
 
 
-template <typename T>
-__global__ void combine(T* left, T* right, int3 vd) {
-    const int x = blockDim.x * blockIdx.x + threadIdx.x;
-    const int y = blockDim.y * blockIdx.y + threadIdx.y;
-    const int z = blockDim.z * blockIdx.z + threadIdx.z;
-
-    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
-
-    left[z * vd.y * vd.x + y * vd.x + x] += right[z * vd.y * vd.x + y * vd.x + x];
-}
-
-
 
 // Container for simulation state
 struct fluid_state {

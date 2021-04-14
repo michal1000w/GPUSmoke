@@ -846,6 +846,7 @@ __global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
     //if (temp <= -density_cutoff/20.0f && temp >= density_cutoff/20.0) {
         t_dest[get_voxel(x, y, z, vd)] = t_src[get_voxel(x, y, z, vd)] + (eevaluateNoise(make_float3(x, y, z), vd, noise,
             NOISE_R, offset * 1.6f, scale, 0.1, frame % 128) * intensity * maxf(0.05, minf((t_src[get_voxel(x, y, z, vd)]), 1.0)));
+        
         if (fabs(t_dest[get_voxel(x, y, z, vd)]) <= density_cutoff)
             t_dest[get_voxel(x, y, z, vd)] = 0;
     }
@@ -1132,12 +1133,12 @@ __global__ void advection(V* velocity, T* source, T* dest,int3 vds,int3 vde, int
     float time_step, float dissipation)
 {
 
-    const int x = blockDim.x * blockIdx.x + threadIdx.x + vds.x;
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
-    const int z = blockDim.z * blockIdx.z + threadIdx.z + vds.z;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
 
     if (x >= vde.x || y >= vde.y || z >= vde.z) return;
-    if (x <= vds.x || y <= vds.y || z <= vds.z) return;
+    //if (x <= vds.x || y <= vds.y || z <= vds.z) return;
 
     int vox = z * vd.y * vd.x + y * vd.x + x;
 
@@ -1145,7 +1146,16 @@ __global__ void advection(V* velocity, T* source, T* dest,int3 vds,int3 vde, int
 
     float3 np = make_float3(float(x), float(y), float(z)) - time_step * vel;
     dest[vox] = dissipation * get_cellF(np, vd, source);
+
 }
+
+
+
+
+
+
+
+
 
 
 template <typename V, typename T>
@@ -1165,4 +1175,17 @@ __global__ void advection(V* velocity, T* source, T* dest, int3 vd,
 
     float3 np = make_float3(float(x), float(y), float(z)) - time_step * vel;
     dest[vox] = dissipation * get_cellF(np, vd, source);
+}
+
+template <typename T>
+__global__ void combine(T* dst, T* src, int3 vd) {
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    int vox = z * vd.y * vd.x + y * vd.x + x;
+
+    dst[vox] += src[vox];
 }

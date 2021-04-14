@@ -51,7 +51,7 @@ std::string reduce(const std::string& str,
 
 class Solver {
 public:
-    int NOISE_SC = 128; //128
+    int NOISE_SC = 64; //128
     int ACCURACY_STEPS;//
     float Smoke_Dissolve;//
     float Flame_Dissolve;
@@ -616,11 +616,11 @@ public:
         GRID->generateTile(NTS);
         GRID->deviceCount = this->devicesCount;
             std::cout << "Copy to Device";
-            GRID->copyToDeviceNoise(NTS, deviceIndex);
+            GRID->copyToDeviceNoise(NTS, deviceIndex, devicesCount);
 
 
         std::cout << "Split to ("<<devicesCount<<") devices";
-        multiGPU_copyn(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice, deviceIndex);
+        multiGPU_copyn(devicesCount, state->noise->writeTarget(), GRID->get_grid_device_noise(), NTS * NTS * NTS, cudaMemcpyDeviceToDevice, deviceIndex,"Noise");
         std::cout << "Almost Done";
         state->noise->swap();
         std::cout << ";";
