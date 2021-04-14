@@ -1125,7 +1125,34 @@ inline __device__ T get_cellF2(float3 p, int3 d, T* vol) {
 
 
 
+template <typename V, typename T>
+__global__ void divergence(V* velocity, T* div, int3 vds, int3 vde, int3 vd, float half_cell)
+{
+    __shared__ V loc[LOC_SIZE];
+    const int padding = PADDING; // How far to load past end of cube
+    const int sdim = blockDim.x + 2 * padding; // 10 with blockdim 8
+    const int3 s_dims = make_int3(sdim, sdim, sdim);
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
 
+    load_shared(
+        blockDim, blockIdx, threadIdx, vd, sdim, loc, velocity);
+    __syncthreads();
+
+    if (x >= vde.x || y >= vde.y || z >= vde.z) return;
+
+    T d =
+        read_shared(loc, threadIdx, s_dims, padding, 1, 0, 0).x;
+    d -= read_shared(loc, threadIdx, s_dims, padding, -1, 0, 0).x;
+    d += read_shared(loc, threadIdx, s_dims, padding, 0, 1, 0).y;
+    d -= read_shared(loc, threadIdx, s_dims, padding, 0, -1, 0).y;
+    d += read_shared(loc, threadIdx, s_dims, padding, 0, 0, 1).z;
+    d -= read_shared(loc, threadIdx, s_dims, padding, 0, 0, -1).z;
+    d *= half_cell;
+
+    div[get_voxel(x, y, z, vd)] = d;
+}
 
 
 template <typename V, typename T>

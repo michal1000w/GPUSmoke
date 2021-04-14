@@ -26,7 +26,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     //////////////////////////////////////////////////
     unsigned char current_device = 0;
 
-    std::cout << "deviceIndex: " << deviceIndex << std::endl;
+    //std::cout << "deviceIndex: " << deviceIndex << std::endl;
 
     int3* dim_start, * dim_end;
     dim_start = new int3[deviceCount];
@@ -424,7 +424,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
     //environment turbulance
     divergence << <grid, block >> > (
         state.velocity->readTargett(current_device),
-        state.diverge[0], state.dim, Diverge_Rate);//0.5
+        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
     /*
         */
 
@@ -441,7 +441,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 #pragma unroll
     for (int i = 0; i < ACCURACY_STEPS; i++) {
         pressure_solve << <grid, block >> > (
-            state.diverge[current_device],
+            state.diverge->readTargett(current_device),
             state.pressure->readTargett(current_device),
             state.pressure->writeTargett(current_device),
             state.dim, Pressure); //-1.0
@@ -824,6 +824,357 @@ void AddObjects(fluid_state& state, std::vector<OBJECT>& object_list, bool DEBUG
 
 
 
+void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
+    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
+    float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
+    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
+    float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
+    bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, int deviceCount = 1,
+    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0, int NOISE_R = 64, dim3 grid = NULL, dim3 block = NULL
+    , dim3 grid2 = NULL)
+{
+    float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
+   //float BUOYANCY = buoancy; //1.0f
+
+
+
+   /////////////GLOBAL EVALUATE//////////////////////
+   //Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
+   //////////////////////////////////////////////////
+    unsigned char current_device = 0;
+
+    auto lista = enumerate(deviceIndex, deviceCount);
+
+    int3* dim_start, * dim_end;
+    dim_start = new int3[deviceCount];
+    dim_end = new int3[deviceCount];
+    if (deviceCount == 1) {
+        dim_start[0] = make_int3(0, 0, 0);
+        dim_end[0] = state.dim;
+        cudaSetDevice(deviceIndex);
+        current_device = 0;
+    }
+    else if (deviceCount == 2) {
+        dim_start[0] = make_int3(0, 0, 0);
+        dim_end[0] = make_int3(state.dim.x, state.dim.y / 2, state.dim.z);
+        dim_start[1] = make_int3(0, (state.dim.y / 2), 0);
+        dim_end[1] = state.dim;
+
+        std::cout << "Mulit-GPU simulating is currently work in progress" << std::endl;
+        //exit(1);
+    }
+    else {
+        std::cout << "More gpus are not supported yet" << std::endl;
+        exit(1);
+    }
+
+
+    //////ADVECTION
+    {
+        unsigned int main_device = lista[0];
+        unsigned int second_device = lista[1];
+
+        //checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->readTargett(1), second_device, state.velocity->readTargett(0), main_device, state.velocity->byteCount()));
+#pragma unroll
+        for (int i = 0; i < deviceCount; i++) {
+            current_device = i;
+            cudaSetDevice(lista[i]);
+
+            advection << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.velocity->readTargett(current_device),
+                state.velocity->writeTargett(current_device),
+                dim_start[i], dim_end[i], state.dim, state.time_step, 1.0);//1.0
+
+            advection << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.temperature->readTargett(current_device),
+                state.temperature->writeTargett(current_device),
+                dim_start[i], dim_end[i], state.dim, state.time_step, 0.998);//0.998
+
+
+            advection << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.flame->readTargett(current_device),
+                state.flame->writeTargett(current_device),
+                dim_start[i], dim_end[i], state.dim, state.time_step, Flame_Dissolve);
+
+
+            advection << <grid2, block >> > (  //zanikanie
+                state.velocity->readTargett(current_device),
+                state.density->readTargett(current_device),
+                state.density->writeTargett(current_device),
+                dim_start[i], dim_end[i], state.dim, state.time_step, Dissolve_rate);//0.995
+
+            // clear pressure
+            checkCudaErrors(cudaMemsetAsync(state.pressure->readTargett(current_device), 0, state.density->byteCount()));
+        }
+        state.temperature->swap();
+        state.flame->swap();
+        state.density->swap();
+        state.velocity->swap();
+
+#pragma unroll
+        for (int i = 0; i < deviceCount; i++) {
+            current_device = i;
+            cudaSetDevice(lista[i]);
+
+            //wznoszenie się dymu
+            buoyancy << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.temperature->readTargett(current_device),
+                state.density->readTargett(current_device),
+                state.velocity->readTargett(current_device), //write target
+                AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight,
+                dim_start[i], dim_end[i], state.dim); //1.0f
+
+
+        }
+
+
+
+        current_device = 0;
+        cudaSetDevice(deviceIndex);
+
+
+        cudaThreadSynchronize();
+
+        checkCudaErrors(cudaMemcpyPeerAsync(state.density->writeTargett(0), main_device, state.density->readTargett(1), second_device, state.density->byteCount()));
+        combine << < grid, block >> > (state.density->readTargett(0), state.density->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.flame->writeTargett(0), main_device, state.flame->readTargett(1), second_device, state.flame->byteCount()));
+        combine << < grid, block >> > (state.flame->readTargett(0), state.flame->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.temperature->writeTargett(0), main_device, state.temperature->readTargett(1), second_device, state.temperature->byteCount()));
+        combine << < grid, block >> > (state.temperature->readTargett(0), state.temperature->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->writeTargett(0), main_device, state.velocity->readTargett(1), second_device, state.velocity->byteCount()));
+        combine << < grid, block >> > (state.velocity->readTargett(0), state.velocity->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.diverge->writeTargett(0), main_device, state.diverge->readTargett(1), second_device, state.diverge->byteCount()));
+        combine << < grid, block >> > (state.diverge->readTargett(0), state.diverge->writeTargett(0), state.dim);
+
+
+
+        checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(0), 0, state.density->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.diverge->writeTargett(0), 0, state.diverge->byteCount()));
+    }
+
+
+    checkCudaErrors(cudaMemcpyPeerAsync(state.diverge->writeTargett(1), lista[1], state.diverge->readTargett(0), lista[0], state.diverge->byteCount()));
+    current_device = 0;
+    cudaSetDevice(deviceIndex);
+    divergence << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
+    current_device = 1;
+    cudaSetDevice(lista[1]);
+    divergence << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
+
+    ///////////////////PRESSURE
+    {
+        unsigned int main_device = lista[0];
+        unsigned int second_device = lista[1];
+
+        cudaSetDevice(lista[1]);
+        current_device = 1;
+#pragma unroll
+        for (int i = 0; i < ACCURACY_STEPS; i++) {
+            pressure_solve << <grid2, block >> > (
+                state.diverge->readTargett(current_device),
+                state.pressure->readTargett(current_device),
+                state.pressure->readTargett(current_device),
+                dim_start[1], dim_end[1], state.dim, Pressure); //-1.0
+        }
+
+
+        cudaSetDevice(lista[0]);
+        current_device = 0;
+#pragma unroll
+        for (int i = 0; i < ACCURACY_STEPS; i++) {
+            pressure_solve << <grid2, block >> > (
+                state.diverge->readTargett(current_device),
+                state.pressure->readTargett(current_device),
+                state.pressure->readTargett(current_device),
+                dim_start[0], dim_end[0], state.dim, Pressure); //-1.0
+        }
+
+
+
+        cudaThreadSynchronize();
+        checkCudaErrors(cudaMemcpyPeerAsync(state.pressure->writeTargett(0), main_device, state.pressure->readTargett(1), second_device, state.pressure->byteCount()));
+        combine << < grid, block >> > (state.pressure->readTargett(0), state.pressure->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemsetAsync(state.pressure->writeTargett(0), 0, state.pressure->byteCount()));
+    }
+
+
+
+    subtract_pressure << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.velocity->writeTargett(current_device),
+        state.pressure->readTargett(current_device),
+        state.dim, -1.0f * Pressure);//1.0
+        //state.dim, 1.0f);//1.0
+    state.velocity->swap();
+    /*
+    */
+
+
+
+
+    if (Upsampling) {
+        //BETA
+#pragma unroll
+        for (int i = 0; i < 1; i++) {
+            if (UpsamplingDensity) {
+                applyNoiseDT << <grid, block >> > (
+                    state.temperature->readTargett(current_device),
+                    state.density->readTargett(current_device),
+                    state.temperature->writeTargett(current_device),
+                    state.density->writeTargett(current_device),
+                    state.noise->readTargett(current_device),
+                    state.dim,
+                    /*intensity=0.45f*/sintensity,
+                    /*offset=0.075f*/soffset,
+                    /*scale=0.7*/sscale,
+                    frame,
+                    time_anim,
+                    density_cutoff,
+                    NOISE_R
+                    );
+                state.temperature->swap();
+                state.density->swap();
+            }
+
+            if (UpsamplingVelocity) {
+                applyNoiseV << <grid, block >> > (
+                    state.velocity->readTargett(current_device),
+                    state.velocity->writeTargett(current_device),
+                    state.noise->readTargett(current_device),
+                    state.dim,
+                    /*intensity=0.45f*/sintensity,
+                    /*offset=0.075f*/soffset,
+                    /*scale=0.7*/sscale,
+                    frame,
+                    time_anim,
+                    NOISE_R);
+                state.velocity->swap();
+            }
+        }
+    }
+
+}
+
+
+void SyncDevices(std::vector<int> lista, fluid_state& state) {
+    unsigned int main_device = lista[0];
+    unsigned int second_device = lista[1];
+
+    checkCudaErrors(cudaMemcpyPeerAsync(state.density->readTargett(1), second_device, state.density->readTargett(0), main_device, state.density->byteCount()));
+    checkCudaErrors(cudaMemcpyPeerAsync(state.flame->readTargett(1), second_device, state.flame->readTargett(0), main_device, state.flame->byteCount()));
+    checkCudaErrors(cudaMemcpyPeerAsync(state.temperature->readTargett(1), second_device, state.temperature->readTargett(0), main_device, state.temperature->byteCount()));
+    checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->readTargett(1), second_device, state.velocity->readTargett(0), main_device, state.velocity->byteCount()));
+
+    cudaSetDevice(lista[1]);
+    checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(1), 0, state.density->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(1), 0, state.flame->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(1), 0, state.temperature->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(1), 0, state.velocity->byteCount()));
+
+    cudaSetDevice(lista[0]);
+    checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(0), 0, state.density->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
+    checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
+}
+
+
+
+void SimulateMultiGPU(fluid_state& state, std::vector<OBJECT>& object_list,
+    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
+    float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
+    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
+    float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
+    bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, int deviceCount = 1,
+    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0, int NOISE_R = 64) {
+
+    float measured_time = 0.0f;
+    cudaEvent_t start, stop;
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
+    cudaEventRecord(start, 0);
+
+
+    ////////////////////////////////////////////////////////////////
+    auto lista = enumerate(deviceIndex, deviceCount);
+    const int s = BLOCK_SIZE;//8
+    dim3 block(s, s, s);
+
+    dim3 grid((state.dim.x + block.x - 1) / block.x,
+        (state.dim.y + block.y - 1) / block.y,
+        (state.dim.z + block.z - 1) / block.z);
+
+
+    dim3 grid2((state.dim.x + block.x - 1) / block.x,
+        ((state.dim.y + block.y - 1) / block.y) / 2,
+        (state.dim.z + block.z - 1) / block.z);
+    ////////////////////////////////////////////////////////////////
+
+    simulate_fluid3(state, object_list, ACCURACY_STEPS, DEBUG, frame, Dissolve_rate, Ambient_temp, Diverge_Rate, Smoke_Buoyancy, Pressure,
+        Flame_Dissolve, sscale, sintensity, soffset, Upsampling, UpsamplingVelocity, UpsamplingDensity, time_anim, density_cutoff,
+        deviceCount, max_velocity, influence_on_velocity, deviceIndex, NOISE_R, grid, block, grid2);
+
+    cudaSetDevice(lista[0]);
+    AddObjects(state, object_list, DEBUG, frame, grid, block, 0, max_velocity, influence_on_velocity, Ambient_temp);
+
+
+    SyncDevices(lista, state);
+
+
+
+
+
+    ///////////////////////////////////////////////////////////////
+    cudaEventRecord(stop, 0);
+    cudaThreadSynchronize();
+    cudaEventElapsedTime(&measured_time, start, stop);
+
+    cudaEventDestroy(start);
+    cudaEventDestroy(stop);
+
+    std::cout << "Simulation Time: " << measured_time << " ||";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
     int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
     float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
@@ -926,7 +1277,9 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
                 state.density->readTargett(current_device),
                 state.velocity->readTargett(current_device), //write target
                 AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight,
-                dim_start[i],dim_end[i], state.dim); //1.0f
+                dim_start[i], dim_end[i], state.dim); //1.0f
+
+
         }
 
 
@@ -945,6 +1298,8 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         combine << < grid, block >> > (state.temperature->readTargett(0), state.temperature->writeTargett(0), state.dim);
         checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->writeTargett(0), main_device, state.velocity->readTargett(1), second_device, state.velocity->byteCount()));
         combine << < grid, block >> > (state.velocity->readTargett(0), state.velocity->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.diverge->writeTargett(0), main_device, state.diverge->readTargett(1), second_device, state.diverge->byteCount()));
+        combine << < grid, block >> > (state.diverge->readTargett(0), state.diverge->writeTargett(0), state.dim);
 
 
 
@@ -952,32 +1307,21 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.diverge->writeTargett(0), 0, state.diverge->byteCount()));
     }
 
 
-
-
-
-
-    
-
-    ///////////////DIVERGANCE
-    {
-        checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->readTargett(1), lista[1], state.velocity->readTargett(0), lista[0], state.velocity->byteCount()));
-        cudaSetDevice(lista[1]);
-        divergence << <grid, block >> > (
-            state.velocity->readTargett(1),
-            state.diverge[1], state.dim, Diverge_Rate);//0.5
-
-
-        //environment turbulance
-        cudaSetDevice(lista[0]);
-        divergence << <grid, block >> > (
-            state.velocity->readTargett(0),
-            state.diverge[0], state.dim, Diverge_Rate);//0.5
-    }
-
-
+    checkCudaErrors(cudaMemcpyPeerAsync(state.diverge->writeTargett(1), lista[1], state.diverge->readTargett(0), lista[0], state.diverge->byteCount()));
+    current_device = 0;
+    cudaSetDevice(deviceIndex);
+    divergence << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
+    current_device = 1;
+    cudaSetDevice(lista[1]);
+    divergence << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
 
     ///////////////////PRESSURE
     {
@@ -989,10 +1333,10 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
 #pragma unroll
         for (int i = 0; i < ACCURACY_STEPS; i++) {
             pressure_solve << <grid2, block >> > (
-                state.diverge[1],
+                state.diverge->readTargett(current_device),
                 state.pressure->readTargett(current_device),
                 state.pressure->readTargett(current_device),
-                dim_start[1],dim_end[1],state.dim, Pressure); //-1.0
+                dim_start[1], dim_end[1], state.dim, Pressure); //-1.0
         }
 
 
@@ -1001,10 +1345,10 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
 #pragma unroll
         for (int i = 0; i < ACCURACY_STEPS; i++) {
             pressure_solve << <grid2, block >> > (
-                state.diverge[0],
+                state.diverge->readTargett(current_device),
                 state.pressure->readTargett(current_device),
                 state.pressure->readTargett(current_device),
-                dim_start[0],dim_end[0],state.dim, Pressure); //-1.0
+                dim_start[0], dim_end[0], state.dim, Pressure); //-1.0
         }
 
 
@@ -1071,92 +1415,7 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         }
     }
 
-    
+
 }
-
-
-void SyncDevices(std::vector<int> lista, fluid_state& state) {
-    unsigned int main_device = lista[0];
-    unsigned int second_device = lista[1];
-
-    checkCudaErrors(cudaMemcpyPeerAsync(state.density->readTargett(1), second_device, state.density->readTargett(0), main_device, state.density->byteCount()));
-    checkCudaErrors(cudaMemcpyPeerAsync(state.flame->readTargett(1), second_device, state.flame->readTargett(0), main_device, state.flame->byteCount()));
-    checkCudaErrors(cudaMemcpyPeerAsync(state.temperature->readTargett(1), second_device, state.temperature->readTargett(0), main_device, state.temperature->byteCount()));
-    checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->readTargett(1), second_device, state.velocity->readTargett(0), main_device, state.velocity->byteCount()));
-
-    cudaSetDevice(lista[1]);
-    checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(1), 0, state.density->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(1), 0, state.flame->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(1), 0, state.temperature->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(1), 0, state.velocity->byteCount()));
-
-    cudaSetDevice(lista[0]);
-    checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(0), 0, state.density->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
-    checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
-}
-
-
-
-void SimulateMultiGPU(fluid_state& state, std::vector<OBJECT>& object_list,
-    int ACCURACY_STEPS = 35, bool DEBUG = false, int frame = 0,
-    float Dissolve_rate = 0.95f, float Ambient_temp = 0.0f,
-    float Diverge_Rate = 0.5f, float Smoke_Buoyancy = 1.0f, float Pressure = -1.0f, float Flame_Dissolve = 0.99f,
-    float sscale = 0.7, float sintensity = 1, float soffset = 0.07, bool Upsampling = false, bool UpsamplingVelocity = false,
-    bool UpsamplingDensity = false, float time_anim = 0.5, float density_cutoff = 0.01f, int deviceCount = 1,
-    float max_velocity = 3.0f, float influence_on_velocity = 0.1f, int deviceIndex = 0, int NOISE_R = 64) {
-
-    float measured_time = 0.0f;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-    cudaEventRecord(start, 0);
-
-
-    ////////////////////////////////////////////////////////////////
-    auto lista = enumerate(deviceIndex, deviceCount);
-    const int s = BLOCK_SIZE;//8
-    dim3 block(s, s, s);
-
-    dim3 grid((state.dim.x + block.x - 1) / block.x,
-        (state.dim.y + block.y - 1) / block.y,
-        (state.dim.z + block.z - 1) / block.z);
-
-
-    dim3 grid2((state.dim.x + block.x - 1) / block.x,
-        ((state.dim.y + block.y - 1) / block.y) / 2,
-        (state.dim.z + block.z - 1) / block.z);
-    ////////////////////////////////////////////////////////////////
-
-    simulate_fluid2(state, object_list, ACCURACY_STEPS, DEBUG, frame, Dissolve_rate, Ambient_temp, Diverge_Rate, Smoke_Buoyancy, Pressure,
-        Flame_Dissolve, sscale, sintensity, soffset, Upsampling, UpsamplingVelocity, UpsamplingDensity, time_anim, density_cutoff,
-        deviceCount, max_velocity, influence_on_velocity, deviceIndex, NOISE_R, grid, block, grid2);
-
-    cudaSetDevice(lista[0]);
-    AddObjects(state, object_list, DEBUG, frame, grid, block, 0, max_velocity, influence_on_velocity, Ambient_temp);
-
-
-    SyncDevices(lista, state);
-
-
-
-
-
-    ///////////////////////////////////////////////////////////////
-    cudaEventRecord(stop, 0);
-    cudaThreadSynchronize();
-    cudaEventElapsedTime(&measured_time, start, stop);
-
-    cudaEventDestroy(start);
-    cudaEventDestroy(stop);
-
-    std::cout << "Simulation Time: " << measured_time << " ||";
-}
-
-
-
-
-
 
 #endif
