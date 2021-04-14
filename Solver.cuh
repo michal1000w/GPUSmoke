@@ -670,14 +670,28 @@ public:
 
     void Simulate(int frame, int device = 0) {
         cudaSetDevice(deviceIndex);
-        for (int st = 0; st < 1; st++) {
-            simulate_fluid(*state, object_list, ACCURACY_STEPS,
-                false, frame, Smoke_Dissolve, Ambient_Temperature,
-                DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
-                SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, deviceIndex,
-                NOISE_SC);
-            state->step++;
+
+        if (this->devicesCount == 1) {
+            for (int st = 0; st < 1; st++) {
+                simulate_fluid(*state, object_list, ACCURACY_STEPS,
+                    false, frame, Smoke_Dissolve, Ambient_Temperature,
+                    DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
+                    SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
+                    time_anim, density_cutoff, this->devicesCount, max_velocity, influence_on_velocity, deviceIndex,
+                    NOISE_SC);
+                state->step++;
+            }
+        }
+        else {
+            for (int st = 0; st < 1; st++) {
+                simulate_fluid2(*state, object_list, ACCURACY_STEPS,
+                    false, frame, Smoke_Dissolve, Ambient_Temperature,
+                    DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
+                    SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
+                    time_anim, density_cutoff, this->devicesCount, max_velocity, influence_on_velocity, deviceIndex,
+                    NOISE_SC);
+                state->step++;
+            }
         }
         cudaDeviceSynchronize();
     }
