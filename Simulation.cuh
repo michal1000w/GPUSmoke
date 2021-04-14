@@ -671,43 +671,10 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
-    advection << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.velocity->readTargett(current_device),
-        state.velocity->writeTargett(current_device),
-        state.dim, state.time_step, 1.0);//1.0
-    state.velocity->swap();
+    
 
-
-
-
-
-    if (deviceCount == 1) {
-
-        advection << <grid, block >> > (
-            state.velocity->readTargett(current_device),
-            state.temperature->readTargett(current_device),
-            state.temperature->writeTargett(current_device),
-            state.dim, state.time_step, 0.998);//0.998
-        state.temperature->swap();
-
-
-        advection << <grid, block >> > (
-            state.velocity->readTargett(current_device),
-            state.flame->readTargett(current_device),
-            state.flame->writeTargett(current_device),
-            state.dim, state.time_step, Flame_Dissolve);
-        state.flame->swap();
-
-
-        advection << <grid, block >> > (  //zanikanie
-            state.velocity->readTargett(current_device),
-            state.density->readTargett(current_device),
-            state.density->writeTargett(current_device),
-            state.dim, state.time_step, Dissolve_rate);//0.995
-        state.density->swap();
-    }
-    else {
+    //////ADVECTION
+    {
         unsigned int main_device = lista[0];
         unsigned int second_device = lista[1];
 
@@ -716,6 +683,12 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         for (int i = 0; i < deviceCount; i++) {
             current_device = i;
             cudaSetDevice(lista[i]);
+
+            advection << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.velocity->readTargett(current_device),
+                state.velocity->writeTargett(current_device),
+                dim_start[i], dim_end[i], state.dim, state.time_step, 1.0);//1.0
 
             advection << <grid2, block >> > (
                 state.velocity->readTargett(current_device),
@@ -740,6 +713,23 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         state.temperature->swap();
         state.flame->swap();
         state.density->swap();
+        state.velocity->swap();
+
+
+        for (int i = 0; i < deviceCount; i++) {
+            current_device = i;
+            cudaSetDevice(lista[i]);
+
+            //wznoszenie się dymu
+            buoyancy << <grid2, block >> > (
+                state.velocity->readTargett(current_device),
+                state.temperature->readTargett(current_device),
+                state.density->readTargett(current_device),
+                state.velocity->readTargett(current_device), //write target
+                AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight,
+                dim_start[i],dim_end[i], state.dim); //1.0f
+        }
+
 
 
         current_device = 0;
@@ -754,11 +744,15 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         combine << < grid, block >> > (state.flame->readTargett(0), state.flame->writeTargett(0), state.dim);
         checkCudaErrors(cudaMemcpyPeerAsync(state.temperature->writeTargett(0), main_device, state.temperature->readTargett(1), second_device, state.temperature->byteCount()));
         combine << < grid, block >> > (state.temperature->readTargett(0), state.temperature->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->writeTargett(0), main_device, state.velocity->readTargett(1), second_device, state.velocity->byteCount()));
+        combine << < grid, block >> > (state.velocity->readTargett(0), state.velocity->writeTargett(0), state.dim);
+
 
 
         checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(0), 0, state.density->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
+        checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
     }
 
 
@@ -766,14 +760,7 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
-    //wznoszenie się dymu
-    buoyancy << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.temperature->readTargett(current_device),
-        state.density->readTargett(current_device),
-        state.velocity->writeTargett(current_device),
-        AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight, state.dim); //1.0f
-    state.velocity->swap();
+    
 
     float3 location = state.impulseLoc;
 
@@ -1059,7 +1046,7 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         0.0f, state.dim);
 
 
-    if (deviceCount == 1) {
+    if (deviceCount == 1 || true) {
         for (int i = 0; i < ACCURACY_STEPS; i++) {
             pressure_solve << <grid, block >> > (
                 state.diverge[0],
@@ -1178,14 +1165,12 @@ void simulate_fluid2(fluid_state& state, std::vector<OBJECT>& object_list,
         checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(1), 0, state.flame->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(1), 0, state.temperature->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(1), 0, state.velocity->byteCount()));
-
+        
         cudaSetDevice(lista[0]);
         checkCudaErrors(cudaMemsetAsync(state.density->writeTargett(0), 0, state.density->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.flame->writeTargett(0), 0, state.flame->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.temperature->writeTargett(0), 0, state.temperature->byteCount()));
         checkCudaErrors(cudaMemsetAsync(state.velocity->writeTargett(0), 0, state.velocity->byteCount()));
-        /*
-        */
     }
 
     cudaEventRecord(stop, 0);

@@ -1186,7 +1186,27 @@ __global__ void pressure_solve(T* div, T* p_src, T* p_dst, int3 vds, int3 vde,
 
 
 
+template <typename V, typename T>
+__global__ void buoyancy(V* v_src, T* t_src, T* d_src, V* v_dest,
+    float amb_temp, float time_step, float buoy, float weight,int3 vds, int3 vde, int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
 
+    if (x >= vde.x || y >= vde.y || z >= vde.z) return;
+
+    T temp = t_src[get_voxel(x, y, z, vd)];
+    V vel = v_src[get_voxel(x, y, z, vd)];
+
+    if (temp > amb_temp)
+    {
+        T dense = d_src[get_voxel(x, y, z, vd)];
+        vel.y += (time_step * (temp - amb_temp) * buoy - dense * weight);
+    }
+
+    v_dest[get_voxel(x, y, z, vd)] = vel;
+}
 
 
 template <typename V, typename T>
