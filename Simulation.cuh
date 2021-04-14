@@ -73,7 +73,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
     cudaEventRecord(start, 0);
 
-    
+    dim3 grid2((state.dim.x + block.x - 1) / block.x,
+        ((state.dim.y + block.y - 1) / block.y)/2,
+        (state.dim.z + block.z - 1) / block.z);
     
     
       
@@ -97,7 +99,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
-    if (deviceCount == 1) {
+    if (deviceCount == 1 || true) {
 
         advection << <grid, block >> > (
             state.velocity->readTargett(current_device),
@@ -132,21 +134,21 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             current_device = i;
             cudaSetDevice((deviceIndex + i)%deviceCount);
 
-            advection << <grid, block >> > (
+            advection << <grid2, block >> > (
                 state.velocity->readTargett(current_device),
                 state.temperature->readTargett(current_device),
                 state.temperature->writeTargett(current_device),
                 dim_start[i], dim_end[i], state.dim, state.time_step, 0.998);//0.998
 
 
-            advection << <grid, block >> > (
+            advection << <grid2, block >> > (
                 state.velocity->readTargett(current_device),
                 state.flame->readTargett(current_device),
                 state.flame->writeTargett(current_device),
                 dim_start[i], dim_end[i], state.dim, state.time_step, Flame_Dissolve);
 
 
-            advection << <grid, block >> > (  //zanikanie
+            advection << <grid2, block >> > (  //zanikanie
                 state.velocity->readTargett(current_device),
                 state.density->readTargett(current_device),
                 state.density->writeTargett(current_device),
@@ -474,14 +476,52 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
         0.0f, state.dim);
 
 
+    if (deviceCount == 1) {
+        for (int i = 0; i < ACCURACY_STEPS; i++) {
+            pressure_solve << <grid, block >> > (
+                state.diverge[0],
+                state.pressure->readTargett(current_device),
+                state.pressure->writeTargett(current_device),
+                state.dim, Pressure); //-1.0
+            state.pressure->swap();
+        }
+    }
+    else {
+        unsigned int main_device = deviceIndex;
+        unsigned int second_device = (deviceIndex + 1) % deviceCount;
 
-    for (int i = 0; i < ACCURACY_STEPS; i++) {
-        pressure_solve << <grid, block >> > (
-            state.diverge[0],
-            state.pressure->readTargett(current_device),
-            state.pressure->writeTargett(current_device),
-            state.dim, Pressure); //-1.0
-        state.pressure->swap();
+        checkCudaErrors(cudaMemcpyPeerAsync(state.pressure->readTargett(1), second_device, state.pressure->readTargett(0), main_device, state.pressure->byteCount()));
+
+
+        current_device = 1;
+        cudaSetDevice(1);
+        for (int i = 0; i < ACCURACY_STEPS; i++) {
+            pressure_solve << <grid, block >> > (
+                state.diverge[1],
+                state.pressure->readTargett(current_device),
+                state.pressure->writeTargett(current_device),
+                state.dim, Pressure); //-1.0
+            state.pressure[1].swap();
+        }
+
+
+        cudaSetDevice(deviceIndex);
+        current_device = 0;
+        for (int i = 0; i < 8; i++) {
+            pressure_solve << <grid, block >> > (
+                state.diverge[0],
+                state.pressure->readTargett(current_device),
+                state.pressure->writeTargett(current_device),
+                state.dim, Pressure); //-1.0
+            state.pressure[0].swap();
+        }
+
+        
+
+        cudaThreadSynchronize();
+        checkCudaErrors(cudaMemcpyPeerAsync(state.pressure->writeTargett(0), main_device, state.pressure->readTargett(1), second_device, state.pressure->byteCount()));
+        combine << < grid, block >> > (state.pressure->readTargett(0), state.pressure->writeTargett(0), state.dim);
+        checkCudaErrors(cudaMemsetAsync(state.pressure->writeTargett(0), 0, state.pressure->byteCount()));
     }
     
 
