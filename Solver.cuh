@@ -533,7 +533,7 @@ public:
         SCALE = 0.7f; //0.12
         noise_intensity = 0.45f;
 
-        GRID = new GRID3D(devicesCount);
+        GRID = new GRID3D(devicesCount, deviceIndex);
         GRID->deviceCount = devicesCount;
         //rendering settings
         
@@ -629,7 +629,7 @@ public:
     void Initialize_Simulation() {
         state = new fluid_state(vol_d, devicesCount, deviceIndex);
 
-        GRID = new GRID3D(devicesCount);
+        GRID = new GRID3D(devicesCount, deviceIndex);
         GRID->deviceCount = this->devicesCount;
         InitGPUNoise(NOISE_SC);
 
@@ -675,7 +675,7 @@ public:
                 false, frame, Smoke_Dissolve, Ambient_Temperature,
                 DIVERGE_RATE, Smoke_Buoyancy, Pressure, Flame_Dissolve,
                 SCALE, noise_intensity, OFFSET, Upsampling, UpsamplingVelocity, UpsamplingDensity,
-                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, device,
+                time_anim, density_cutoff,this->devicesCount, max_velocity, influence_on_velocity, deviceIndex,
                 NOISE_SC);
             state->step++;
         }
@@ -702,7 +702,7 @@ public:
     }
 
     void Save(int frame, int device = 0) {
-        cudaSetDevice(device);
+        cudaSetDevice(deviceIndex);
         if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
             //std::cout << "C:";
             auto grid = state->density->readToGrid(device);
@@ -746,7 +746,7 @@ public:
         std::cout << "\rFrame " << frame + 1 << "  -  ";
         
 
-        Simulate(frame, this->deviceIndex);
+        Simulate(frame, deviceIndex);
 
         /*
         state->sync_devices();
