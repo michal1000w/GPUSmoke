@@ -834,13 +834,13 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
     , dim3 grid2 = NULL)
 {
     float AMBIENT_TEMPERATURE = Ambient_temp;//0.0f
-   //float BUOYANCY = buoancy; //1.0f
+//float BUOYANCY = buoancy; //1.0f
 
 
 
-   /////////////GLOBAL EVALUATE//////////////////////
-   //Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
-   //////////////////////////////////////////////////
+/////////////GLOBAL EVALUATE//////////////////////
+//Smoke_Buoyancy += 0.5f * cosf(-0.8f * float(state.step));
+//////////////////////////////////////////////////
     unsigned char current_device = 0;
 
     auto lista = enumerate(deviceIndex, deviceCount);
@@ -875,7 +875,7 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
         unsigned int second_device = lista[1];
 
         //checkCudaErrors(cudaMemcpyPeerAsync(state.velocity->readTargett(1), second_device, state.velocity->readTargett(0), main_device, state.velocity->byteCount()));
-#pragma unroll
+#pragma omp parallel for num_threads(deviceCount)
         for (int i = 0; i < deviceCount; i++) {
             current_device = i;
             cudaSetDevice(lista[i]);
@@ -914,7 +914,7 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
         state.density->swap();
         state.velocity->swap();
 
-#pragma unroll
+#pragma omp parallel for num_threads(deviceCount)
         for (int i = 0; i < deviceCount; i++) {
             current_device = i;
             cudaSetDevice(lista[i]);
@@ -927,7 +927,6 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
                 state.velocity->readTargett(current_device), //write target
                 AMBIENT_TEMPERATURE, state.time_step, Smoke_Buoyancy, state.f_weight,
                 dim_start[i], dim_end[i], state.dim); //1.0f
-
 
         }
 
@@ -959,50 +958,38 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
         checkCudaErrors(cudaMemsetAsync(state.diverge->writeTargett(0), 0, state.diverge->byteCount()));
     }
 
-
     checkCudaErrors(cudaMemcpyPeerAsync(state.diverge->writeTargett(1), lista[1], state.diverge->readTargett(0), lista[0], state.diverge->byteCount()));
-    current_device = 0;
-    cudaSetDevice(deviceIndex);
-    divergence << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
-    current_device = 1;
-    cudaSetDevice(lista[1]);
-    divergence << <grid, block >> > (
-        state.velocity->readTargett(current_device),
-        state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
+#pragma omp parallel for num_threads(deviceCount)
+    for (int i = 0; i < deviceCount; i++) {
+        current_device = i;
+        cudaSetDevice(lista[i]);
+        divergence << <grid, block >> > (
+            state.velocity->readTargett(current_device),
+            state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
+    }
 
     ///////////////////PRESSURE
     {
-        unsigned int main_device = lista[0];
-        unsigned int second_device = lista[1];
-
-        cudaSetDevice(lista[1]);
-        current_device = 1;
+#pragma omp parallel for num_threads(deviceCount)
+        for (int i = 0; i < deviceCount; i++) {
+            current_device = i;
+            cudaSetDevice(lista[i]);
 #pragma unroll
-        for (int i = 0; i < ACCURACY_STEPS; i++) {
-            pressure_solve << <grid2, block >> > (
-                state.diverge->readTargett(current_device),
-                state.pressure->readTargett(current_device),
-                state.pressure->readTargett(current_device),
-                dim_start[1], dim_end[1], state.dim, Pressure); //-1.0
+            for (int j = 0; j < ACCURACY_STEPS; j++) {
+                pressure_solve << <grid2, block >> > (
+                    state.diverge->readTargett(current_device),
+                    state.pressure->readTargett(current_device),
+                    state.pressure->readTargett(current_device),
+                    dim_start[i], dim_end[i], state.dim, Pressure); //-1.0
+            }
         }
+
 
 
         cudaSetDevice(lista[0]);
         current_device = 0;
-#pragma unroll
-        for (int i = 0; i < ACCURACY_STEPS; i++) {
-            pressure_solve << <grid2, block >> > (
-                state.diverge->readTargett(current_device),
-                state.pressure->readTargett(current_device),
-                state.pressure->readTargett(current_device),
-                dim_start[0], dim_end[0], state.dim, Pressure); //-1.0
-        }
-
-
-
-        cudaThreadSynchronize();
+        unsigned int main_device = lista[0];
+        unsigned int second_device = lista[1];
         checkCudaErrors(cudaMemcpyPeerAsync(state.pressure->writeTargett(0), main_device, state.pressure->readTargett(1), second_device, state.pressure->byteCount()));
         combine << < grid, block >> > (state.pressure->readTargett(0), state.pressure->writeTargett(0), state.dim);
         checkCudaErrors(cudaMemsetAsync(state.pressure->writeTargett(0), 0, state.pressure->byteCount()));
@@ -1063,7 +1050,6 @@ void simulate_fluid3(fluid_state& state, std::vector<OBJECT>& object_list,
             }
         }
     }
-
 }
 
 
