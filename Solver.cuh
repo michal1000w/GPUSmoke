@@ -711,7 +711,8 @@ public:
             /*
             PrepareRender(img, img_d);
                 */
-            generateBitmapImage(img, img_d.y, img_d.x, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
+            //generateBitmapImage(img, img_d.y, img_d.x, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
+            generateBitmapImage(img, img_d.y, img_d.x, std::string("output/temp.bmp").c_str());
         }
     }
 

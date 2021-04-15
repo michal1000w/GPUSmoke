@@ -648,7 +648,8 @@ int Window(float* Img_res, float dpi) {
 			}
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
-			texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
+			//texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
+			texture.UpdateTexture("output/temp.bmp");
 			texture.Bind(/*slot*/0);
 			//shader.SetUniform1i("u_Texture", /*slot*/0);
 			//////////////////
