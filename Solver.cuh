@@ -68,6 +68,8 @@ public:
     int SAMPLE_SCENE;
     int EXPORT_END_FRAME;
     int EXPORT_START_FRAME;
+    unsigned int START_FRAME;
+    unsigned int END_FRAME;
     char EXPORT_FOLDER[100] = { 0 };
     char SAVE_FOLDER[100] = { 0 };
     char OPEN_FOLDER[100] = { 0 };
@@ -100,6 +102,8 @@ public:
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
+    unsigned int frame;
+
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -412,7 +416,6 @@ public:
 
         vol_d = make_int3(DOMAIN_RESOLUTION.x, DOMAIN_RESOLUTION.y, DOMAIN_RESOLUTION.z); //Domain resolution
     }
-    unsigned int frame;
     void setImageResolution(unsigned int x, unsigned int y) {
         Image_Resolution[0] = x;
         Image_Resolution[1] = y;
@@ -554,7 +557,8 @@ public:
         img_d = make_int3(Image_Resolution[0], Image_Resolution[1], 0);
 
 
-
+        START_FRAME = 0;
+        END_FRAME = 1000;
 
         //X - lewo prawo
         //Y - g�ra d�

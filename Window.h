@@ -486,6 +486,26 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	}
 	ImGui::End();
 	/////////////////////////////
+
+
+
+	ImGui::Begin("Timeline && Animation");
+	{
+		unsigned int small = 1;
+		unsigned int huge = 100;
+		ImGui::SetWindowFontScale(InterfaceScale);
+		ImGui::InputScalar("Frame Start",ImGuiDataType_U32, &solver.START_FRAME, &small,&huge, "%d");
+		ImGui::InputScalar("Frame End", ImGuiDataType_U32, &solver.END_FRAME, &small, &huge, "%d");
+
+		if (solver.START_FRAME < 0) solver.START_FRAME = 0;
+		if (solver.END_FRAME < 0) solver.END_FRAME = 0;
+
+		ImGui::SliderScalar("timeline", ImGuiDataType_U32, &solver.frame, &solver.START_FRAME, &solver.END_FRAME, "%d", 1);
+
+		if (solver.frame > solver.END_FRAME)
+			UpdateSolver();
+	}
+	ImGui::End();
 }
 
 
