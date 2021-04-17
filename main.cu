@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
 
 
 
-
+#ifndef WINDOWS7_BUILD
     HWND hd = GetDesktopWindow();
     RECT rect;
     int no_menu_bar_width = GetSystemMetrics(SM_CXFULLSCREEN);
@@ -131,7 +131,11 @@ int main(int argc, char* argv[]) {
         std::cout << "error" << std::endl;
         break;
     }
-
+#else
+    int no_menu_bar_width = 1400;
+    int no_menu_bar__height = 800;
+    double dpi = 1;
+#endif
     int width = no_menu_bar_width * dpi;
     int height = no_menu_bar__height * dpi;
 
