@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Renderer.h"
 #include "Texture.h"
+#include "Timeline.h"
 
 #include "Solver.cuh"
 extern Solver solver;
@@ -22,8 +23,8 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
-//#define WINDOWS7_BUILD
 
+//#define WINDOWS7_BUILD
 
 
 static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos);
@@ -52,6 +53,21 @@ void UpdateSolver() {
 }
 
 
+
+bool TimelineInitialized = false;
+MySequence Timeline;
+
+void UpdateTimeline() {
+	Timeline.myItems.clear();
+	//dodawanie elementow
+	for (int j = 0; j < solver.object_list.size(); j++) {
+		if (solver.object_list[j].get_type() == "explosion") {
+			Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, &solver.object_list[j].frame_range_min,
+																	&solver.object_list[j].frame_range_max, false });
+		}
+		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
+	}
+}
 
 
 
@@ -146,8 +162,12 @@ float ImageScale = 1.0f;
 
 
 
+
 void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	float& progress, bool& save_panel, bool& helper_window, bool& confirm_button, int2 Image) {
+
+	Timeline.mFrameMin = solver.START_FRAME;
+	Timeline.mFrameMax = solver.END_FRAME;
 
 	if (helper_window) {
 		ImGui::Begin("Helper Panel");
@@ -422,6 +442,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 				solver.object_list.clear();
 				confirm_button = false;
+				TimelineInitialized = false;
 			}
 		}
 		if (ImGui::Button("Delete selected")) {
@@ -436,9 +457,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					goto REPEAT;
 				}
 			}
+			TimelineInitialized = false;
 		}
 		if (ImGui::Button("Add Emitter")) {
 			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
+			TimelineInitialized = false;
 		}
 
 		ImGui::Text("Object list:");
@@ -492,21 +515,63 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 	ImGui::Begin("Timeline && Animation");
 	{
+		ImGui::SetWindowFontScale(InterfaceScale);
+
+		if (!TimelineInitialized) {
+			UpdateTimeline();
+			TimelineInitialized = true;
+		}
+
+		/*
 		unsigned int small = 1;
 		unsigned int huge = 100;
-		ImGui::SetWindowFontScale(InterfaceScale);
+
 		ImGui::InputScalar("Frame Start",ImGuiDataType_U32, &solver.START_FRAME, &small,&huge, "%d");
 		ImGui::InputScalar("Frame End", ImGuiDataType_U32, &solver.END_FRAME, &small, &huge, "%d");
 
+		ImGui::SliderScalar("timeline", ImGuiDataType_U32, &solver.frame, &solver.START_FRAME, &solver.END_FRAME, "%d", 1);
+		*/
+
+
+		// let's create the sequencer
+		static int selectedEntry = -1;
+		static bool expanded = true;
+
+		ImGui::PushItemWidth(130);
+		ImGui::InputInt("Frame Min", &solver.START_FRAME);
+		//ImGui::SameLine();
+		//ImGui::InputInt("Frame ", &currentFrame);
+		ImGui::SameLine();
+		ImGui::InputInt("Frame Max", &solver.END_FRAME);
+		ImGui::PopItemWidth();
+		
+		
 		if (solver.START_FRAME < 0) solver.START_FRAME = 0;
 		if (solver.END_FRAME < 0) solver.END_FRAME = 0;
 
-		ImGui::SliderScalar("timeline", ImGuiDataType_U32, &solver.frame, &solver.START_FRAME, &solver.END_FRAME, "%d", 1);
+		Timeline.mFrameMin = solver.START_FRAME;
+		Timeline.mFrameMax = solver.END_FRAME;
+
+		Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &solver.START_FRAME, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+		// add a UI to edit that particular item
+		if (selectedEntry != -1)
+		{
+			const MySequence::MySequenceItem& item = Timeline.myItems[selectedEntry];
+			ImGui::Text("I am a %s, please edit me", SequencerItemTypeNames[item.mType]);
+			// switch (type) ....
+		}
+
+
+
+
 
 		if (solver.frame > solver.END_FRAME)
 			UpdateSolver();
+	
+		
 	}
 	ImGui::End();
+
 }
 
 
@@ -661,6 +726,13 @@ int Window(float* Img_res, float dpi) {
 		//std::thread* sim;
 		solver.DONE_FRAME = true;
 		/////////////////////////////////////////////////
+		//TImeline
+
+		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 0, 10, 30, false });
+		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
+
+
+		///////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			clock_t startTime = clock();
 

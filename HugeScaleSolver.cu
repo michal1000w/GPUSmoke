@@ -40,11 +40,20 @@
 //#define NOSAVE
 
 
+//#define WINDOWS7_BUILD
+//#define FASTER_KERNELS
 
 
 
-//#include "Fluid_Kernels.cuh" //old
-#include "Fluid_Kernels_Fast.cuh" //new
+
+
+
+
+#ifndef FASTER_KERNELS
+#include "Fluid_Kernels_Fast.cuh"
+#else
+#include "Fluid_Kernels_Faster.cuh" //new
+#endif
 #include "Unified_Buffer.cpp"
 
 //#define EXPERIMENTAL

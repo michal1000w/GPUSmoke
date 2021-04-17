@@ -106,13 +106,22 @@
     <ClInclude Include="APP_INFO.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="Fluid_Kernels_Fast.cuh">
+    <ClInclude Include="Fluid_Kernels_Faster.cuh">
       <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h">
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_Kernels_Fast.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="Timeline.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="ImCurveEdit.h">
       <Filter>ImGui</Filter>
     </ClInclude>
   </ItemGroup>
@@ -210,6 +219,12 @@
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="third_party\imgui\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Timeline.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImCurveEdit.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
   </ItemGroup>

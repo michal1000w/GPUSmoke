@@ -17,8 +17,10 @@
     <ClInclude Include="double_buffer.h" />
     <ClInclude Include="Fluid_Kernels.cuh" />
     <ClInclude Include="Fluid_Kernels_Fast.cuh" />
+    <ClInclude Include="Fluid_Kernels_Faster.cuh" />
     <ClInclude Include="Fluid_State.cuh" />
     <ClInclude Include="GRID3D.h" />
+    <ClInclude Include="ImCurveEdit.h" />
     <ClInclude Include="IO.h" />
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="LoadTexture.h" />
@@ -40,6 +42,7 @@
     <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
     <ClInclude Include="third_party\imgui\imstb_textedit.h" />
     <ClInclude Include="third_party\imgui\imstb_truetype.h" />
+    <ClInclude Include="Timeline.h" />
     <ClInclude Include="VertexArray.h" />
     <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="VertexBufferLayout.h" />
@@ -54,6 +57,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
+    <ClCompile Include="ImCurveEdit.cpp" />
     <ClCompile Include="IndexBuffer.cpp" />
     <ClCompile Include="Object.cpp" />
     <ClCompile Include="openvdb-old\miniz.c" />
@@ -68,6 +72,7 @@
     <ClCompile Include="third_party\imgui\imgui_draw.cpp" />
     <ClCompile Include="third_party\imgui\imgui_tables.cpp" />
     <ClCompile Include="third_party\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="Timeline.cpp" />
     <ClCompile Include="Unified_Buffer.cpp" />
     <ClCompile Include="VertexArray.cpp" />
     <ClCompile Include="VertexBuffer.cpp" />

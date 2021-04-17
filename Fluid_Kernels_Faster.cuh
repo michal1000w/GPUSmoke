@@ -16,32 +16,12 @@
 //block size jak najmniejszy
 #define BLOCK_SIZE 8
 #define PADDING 1
-const long long LocLoc = std::pow(2 , (BLOCK_SIZE + (2 * PADDING)));
+const long long LocLoc = std::pow(2, (BLOCK_SIZE + (2 * PADDING)));
 
 
 #define LOC_SIZE 1024
 //dla BLOCK_SIZE 8 ~240
 //#define LOC_SIZE 1024
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -843,10 +823,10 @@ __global__ void applyNoiseDT(T* t_src, T* d_src, T* t_dest, T* d_dest, V* noise,
 
 
     if (temp != 0) {
-    //if (temp <= -density_cutoff/20.0f && temp >= density_cutoff/20.0) {
+        //if (temp <= -density_cutoff/20.0f && temp >= density_cutoff/20.0) {
         t_dest[get_voxel(x, y, z, vd)] = t_src[get_voxel(x, y, z, vd)] + (eevaluateNoise(make_float3(x, y, z), vd, noise,
             NOISE_R, offset * 1.6f, scale, 0.1, frame % 128) * intensity * maxf(0.05, minf((t_src[get_voxel(x, y, z, vd)]), 1.0)));
-        
+
         if (fabs(t_dest[get_voxel(x, y, z, vd)]) <= density_cutoff)
             t_dest[get_voxel(x, y, z, vd)] = 0;
     }
@@ -1065,7 +1045,7 @@ __global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
 ///////////////////////////////VELOCITY FOR ANIMATION//////////////////
 template <typename T>
 __global__ void resize_sphere_vel(T* target, float3 c,
-    float radius, float direction, float max_velocity, float influence_on_velocity , int3 vd)
+    float radius, float direction, float max_velocity, float influence_on_velocity, int3 vd)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -1156,7 +1136,7 @@ __global__ void divergence(V* velocity, T* div, int3 vds, int3 vde, int3 vd, flo
 
 
 template <typename V, typename T>
-__global__ void advection(V* velocity, T* source, T* dest,int3 vds,int3 vde, int3 vd,
+__global__ void advection(V* velocity, T* source, T* dest, int3 vds, int3 vde, int3 vd,
     float time_step, float dissipation)
 {
 
@@ -1218,7 +1198,7 @@ __global__ void pressure_solve(T* div, T* p_src, T* p_dst, int3 vds, int3 vde,
 
 template <typename V, typename T>
 __global__ void buoyancy(V* v_src, T* t_src, T* d_src, V* v_dest,
-    float amb_temp, float time_step, float buoy, float weight,int3 vds, int3 vde, int3 vd)
+    float amb_temp, float time_step, float buoy, float weight, int3 vds, int3 vde, int3 vd)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y + vds.y;

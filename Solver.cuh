@@ -68,8 +68,8 @@ public:
     int SAMPLE_SCENE;
     int EXPORT_END_FRAME;
     int EXPORT_START_FRAME;
-    unsigned int START_FRAME;
-    unsigned int END_FRAME;
+    int START_FRAME;
+    int END_FRAME;
     char EXPORT_FOLDER[100] = { 0 };
     char SAVE_FOLDER[100] = { 0 };
     char OPEN_FOLDER[100] = { 0 };
@@ -102,7 +102,7 @@ public:
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
-    unsigned int frame;
+    int frame;
 
 private:
     int3 DOMAIN_RESOLUTION;

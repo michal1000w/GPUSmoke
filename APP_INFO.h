@@ -8,3 +8,5 @@ std::string APP_NAME = "JFlow";
 
 
 std::string FULL_NAME = APP_NAME + " " + RELEASE_STATUS + " " + VERSION + "  -  " + AUTHOR;
+
+
