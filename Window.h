@@ -64,6 +64,7 @@ void UpdateTimeline() {
 		if (solver.object_list[j].get_type() == "explosion") {
 			Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, &solver.object_list[j].frame_range_min,
 																	&solver.object_list[j].frame_range_max, false });
+			Timeline.rampEdit.push_back(RampEdit());
 		}
 		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
 	}

@@ -89,13 +89,13 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts[0][4] = ImVec2(120.f, 1.f);
         mPointCount[0] = 5;
 
+        /*
         mPts[1][0] = ImVec2(-50.f, 0.2f);
         mPts[1][1] = ImVec2(33.f, 0.7f);
         mPts[1][2] = ImVec2(80.f, 0.2f);
         mPts[1][3] = ImVec2(82.f, 0.8f);
         mPointCount[1] = 4; //liczba elementow
 
-        /*
         mPts[2][0] = ImVec2(40.f, 0);
         mPts[2][1] = ImVec2(60.f, 0.1f);
         mPts[2][2] = ImVec2(90.f, 0.82f);
@@ -104,7 +104,7 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts[2][5] = ImVec2(250.f, 0.12f);
         mPointCount[2] = 6;
         */
-        mbVisible[0] = mbVisible[1] = true; //czy widoczny po otwarciu
+        mbVisible[0] = true; //czy widoczny po otwarciu
         mMax = ImVec2(1.f, 1.f);
         mMin = ImVec2(0.f, 0.f);
     }
@@ -153,9 +153,9 @@ struct RampEdit : public ImCurveEdit::Delegate
     virtual ImVec2& GetMax() { return mMax; }
     virtual ImVec2& GetMin() { return mMin; }
     virtual unsigned int GetBackgroundColor() { return 0; }
-    ImVec2 mPts[2][8];
-    size_t mPointCount[2];
-    bool mbVisible[2];
+    ImVec2 mPts[1][8];//3,8
+    size_t mPointCount[1];//3
+    bool mbVisible[1];//3
     ImVec2 mMin;
     ImVec2 mMax;
 private:
@@ -204,8 +204,14 @@ struct MySequence : public ImSequencer::SequenceInterface
         if (type)
             *type = item.mType;
     }
-    virtual void Add(int type) { myItems.push_back(MySequenceItem{ type, (int*)0, (int*)10, false }); };
-    virtual void Del(int index) { myItems.erase(myItems.begin() + index); }
+    virtual void Add(int type) { 
+        myItems.push_back(MySequenceItem{ type, (int*)0, (int*)10, false });
+        rampEdit.push_back(RampEdit());
+    };
+    virtual void Del(int index) { 
+        myItems.erase(myItems.begin() + index); 
+        rampEdit.erase(rampEdit.begin() + index);
+    }
     virtual void Duplicate(int index) { myItems.push_back(myItems[index]); }
 
     virtual size_t GetCustomHeight(int index) { return myItems[index].mExpanded ? 300 : 0; }
@@ -221,7 +227,7 @@ struct MySequence : public ImSequencer::SequenceInterface
         bool mExpanded;
     };
     std::vector<MySequenceItem> myItems;
-    RampEdit rampEdit;
+    std::vector<RampEdit> rampEdit;
 
     virtual void DoubleClick(int index) {
         if (myItems[index].mExpanded)
@@ -236,35 +242,35 @@ struct MySequence : public ImSequencer::SequenceInterface
 
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect)
     { //opisy zaznaczanie i wykresy
-        static const char* labels[] = { "Translation", /*"Rotation" ,*/ "Scale" };
+        static const char* labels[] = { /*"Translation", "Rotation" ,*/ "Scale" };
 
-        rampEdit.mMax = ImVec2(float(mFrameMax), 1.f);
-        rampEdit.mMin = ImVec2(float(mFrameMin), 0.f);
+        rampEdit[index].mMax = ImVec2(float(mFrameMax), 1.f);
+        rampEdit[index].mMin = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
-        for (int i = 0; i < 2; i++) //liczba wykresow  3
+        for (int i = 0; i < 1; i++) //liczba wykresow  3
         {
             ImVec2 pta(legendRect.Min.x + 30, legendRect.Min.y + i * 14.f);
             ImVec2 ptb(legendRect.Max.x, legendRect.Min.y + (i + 1) * 14.f);
-            draw_list->AddText(pta, rampEdit.mbVisible[i] ? 0xFFFFFFFF : 0x80FFFFFF, labels[i]);
+            draw_list->AddText(pta, rampEdit[index].mbVisible[i] ? 0xFFFFFFFF : 0x80FFFFFF, labels[i]);
             if (ImRect(pta, ptb).Contains(ImGui::GetMousePos()) && ImGui::IsMouseClicked(0))
-                rampEdit.mbVisible[i] = !rampEdit.mbVisible[i];
+                rampEdit[index].mbVisible[i] = !rampEdit[index].mbVisible[i];
         }
         draw_list->PopClipRect();
 
         ImGui::SetCursorScreenPos(rc.Min);
-        ImCurveEdit::Edit(rampEdit, rc.Max - rc.Min, 137 + index, &clippingRect);
+        ImCurveEdit::Edit(rampEdit[index], rc.Max - rc.Min, 137 + index, &clippingRect);
     }
 
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
     {
-        rampEdit.mMax = ImVec2(float(mFrameMax), 1.f);
-        rampEdit.mMin = ImVec2(float(mFrameMin), 0.f);
+        rampEdit[index].mMax = ImVec2(float(mFrameMax), 1.f);
+        rampEdit[index].mMin = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
-        for (int i = 0; i < 2; i++) //liczba wykresow
+        for (int i = 0; i < 1; i++) //liczba wykresow 3
         {
-            for (int j = 0; j < rampEdit.mPointCount[i]; j++)
+            for (int j = 0; j < rampEdit[index].mPointCount[i]; j++)
             {
-                float p = rampEdit.mPts[i][j].x;
+                float p = rampEdit[index].mPts[i][j].x;
                 if (p < *myItems[index].mFrameStart || p > *myItems[index].mFrameEnd)
                     continue;
                 float r = (p - mFrameMin) / float(mFrameMax - mFrameMin);
