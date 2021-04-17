@@ -71,7 +71,14 @@ void UpdateTimeline() {
 }
 
 
-
+void UpdateAnimation() {
+	int frame = solver.frame;
+	for (int j = 0; j < solver.object_list.size(); j++) {
+		if (solver.object_list[j].get_type() == "explosion") {
+			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointXAtTime(0,frame));
+		}
+	}
+}
 
 
 

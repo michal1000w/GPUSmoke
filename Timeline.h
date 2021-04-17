@@ -82,6 +82,15 @@ struct RampEdit : public ImCurveEdit::Delegate
 {
     RampEdit()
     {
+        std::vector<ImVec2> pSIZE;
+        pSIZE.push_back(ImVec2(0.0f, 0));
+        pSIZE.push_back(ImVec2(2.0f, 0.6f));
+        pSIZE.push_back(ImVec2(25.0f, 0.2f));
+        pSIZE.push_back(ImVec2(70.0f, 0.4f));
+        pSIZE.push_back(ImVec2(120.0f, 1.0f));
+        mPointCount[0] = pSIZE.size();
+        mPts.push_back(pSIZE);
+        /*
         mPts[0][0] = ImVec2(-10.f, 0);
         mPts[0][1] = ImVec2(20.f, 0.6f);
         mPts[0][2] = ImVec2(25.f, 0.2f);
@@ -89,7 +98,6 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts[0][4] = ImVec2(120.f, 1.f);
         mPointCount[0] = 5;
 
-        /*
         mPts[1][0] = ImVec2(-50.f, 0.2f);
         mPts[1][1] = ImVec2(33.f, 0.7f);
         mPts[1][2] = ImVec2(80.f, 0.2f);
@@ -110,7 +118,7 @@ struct RampEdit : public ImCurveEdit::Delegate
     }
     size_t GetCurveCount()
     {
-        return 3;
+        return 1;//3
     }
 
     bool IsVisible(size_t curveIndex)
@@ -129,9 +137,15 @@ struct RampEdit : public ImCurveEdit::Delegate
     }
     ImVec2* GetPoints(size_t curveIndex)
     {
-        return mPts[curveIndex];
+        //return mPts[curveIndex];
+        return &mPts[curveIndex].at(0);
     }
-    virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const { return ImCurveEdit::CurveSmooth; }
+    float GetPointXAtTime(size_t curveIndex, int frame) {
+        //ImVec2* points = mPts[curveIndex];
+        return 1;
+    }
+    //virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const { return ImCurveEdit::CurveSmooth; }
+    virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const { return ImCurveEdit::CurveLinear; }
     virtual int EditPoint(size_t curveIndex, int pointIndex, ImVec2 value)
     {
         mPts[curveIndex][pointIndex] = ImVec2(value.x, value.y);
@@ -153,7 +167,8 @@ struct RampEdit : public ImCurveEdit::Delegate
     virtual ImVec2& GetMax() { return mMax; }
     virtual ImVec2& GetMin() { return mMin; }
     virtual unsigned int GetBackgroundColor() { return 0; }
-    ImVec2 mPts[1][8];//3,8
+    //ImVec2 mPts[1][8];//3,8
+    std::vector<std::vector<ImVec2>> mPts;
     size_t mPointCount[1];//3
     bool mbVisible[1];//3
     ImVec2 mMin;
