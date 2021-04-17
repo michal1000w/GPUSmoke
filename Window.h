@@ -22,6 +22,7 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
+//#define WINDOWS7_BUILD
 
 
 
@@ -524,7 +525,9 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 #include <WinUser.h>
 
 int Window(float* Img_res, float dpi) {
+#ifndef WINDOWS7_BUILD
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE); //skalowanie globalne //bez _V2 chyba lepsze
+#endif // WINDOWS7_BUILD
 	
 	InterfaceScale = dpi;
 	
