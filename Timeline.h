@@ -93,9 +93,9 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts[1][1] = ImVec2(33.f, 0.7f);
         mPts[1][2] = ImVec2(80.f, 0.2f);
         mPts[1][3] = ImVec2(82.f, 0.8f);
-        mPointCount[1] = 4;
+        mPointCount[1] = 4; //liczba elementow
 
-
+        /*
         mPts[2][0] = ImVec2(40.f, 0);
         mPts[2][1] = ImVec2(60.f, 0.1f);
         mPts[2][2] = ImVec2(90.f, 0.82f);
@@ -103,7 +103,8 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts[2][4] = ImVec2(200.f, 0.34f);
         mPts[2][5] = ImVec2(250.f, 0.12f);
         mPointCount[2] = 6;
-        mbVisible[0] = mbVisible[1] = mbVisible[2] = true;
+        */
+        mbVisible[0] = mbVisible[1] = true; //czy widoczny po otwarciu
         mMax = ImVec2(1.f, 1.f);
         mMin = ImVec2(0.f, 0.f);
     }
@@ -152,9 +153,9 @@ struct RampEdit : public ImCurveEdit::Delegate
     virtual ImVec2& GetMax() { return mMax; }
     virtual ImVec2& GetMin() { return mMin; }
     virtual unsigned int GetBackgroundColor() { return 0; }
-    ImVec2 mPts[3][8];
-    size_t mPointCount[3];
-    bool mbVisible[3];
+    ImVec2 mPts[2][8];
+    size_t mPointCount[2];
+    bool mbVisible[2];
     ImVec2 mMin;
     ImVec2 mMax;
 private:
@@ -234,13 +235,13 @@ struct MySequence : public ImSequencer::SequenceInterface
     }
 
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect)
-    {
-        static const char* labels[] = { "Translation", "Rotation" , "Scale" };
+    { //opisy zaznaczanie i wykresy
+        static const char* labels[] = { "Translation", /*"Rotation" ,*/ "Scale" };
 
         rampEdit.mMax = ImVec2(float(mFrameMax), 1.f);
         rampEdit.mMin = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++) //liczba wykresow  3
         {
             ImVec2 pta(legendRect.Min.x + 30, legendRect.Min.y + i * 14.f);
             ImVec2 ptb(legendRect.Max.x, legendRect.Min.y + (i + 1) * 14.f);
@@ -259,7 +260,7 @@ struct MySequence : public ImSequencer::SequenceInterface
         rampEdit.mMax = ImVec2(float(mFrameMax), 1.f);
         rampEdit.mMin = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 2; i++) //liczba wykresow
         {
             for (int j = 0; j < rampEdit.mPointCount[i]; j++)
             {
