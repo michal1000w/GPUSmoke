@@ -22,7 +22,7 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
-#define WINDOWS7_BUILD
+//#define WINDOWS7_BUILD
 
 
 
