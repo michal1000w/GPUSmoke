@@ -60,10 +60,14 @@ void UpdateTimeline() {
 
 void UpdateAnimation() {
 	int frame = solver.frame;
+#pragma omp parallel for num_threads(8)
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
 			frame <= solver.object_list[j].frame_range_max) {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
+		}
+		if (solver.object_list[j].get_type2() == "emitter") {
+			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
 		}
 	}
 }
@@ -87,6 +91,7 @@ void DuplicateObject(int index) {
 	int j = solver.object_list.size() - 1;
 
 	int current_item_id = 0;
+#pragma unroll
 	for (int i = 0; i < EmitterCount; i++)
 		if (solver.object_list.at(j).get_type2() == items[i]) {
 			current_item_id = i;
