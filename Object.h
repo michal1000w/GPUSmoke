@@ -63,7 +63,7 @@ public:
 	void set_force_strength(float strength) { force_strength = strength; }
 	float get_force_strength() const { return force_strength; }
 	void reset();
-
+	void update();
 	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
 
 	bool selected;
@@ -84,12 +84,15 @@ public:
 	float impulseTemp;
 	int frame_range_min = 0;
 	int frame_range_max = 30;
+	float3 previous_location;
+	float previous_size;
 private:
 	float impulseDensity;
 	float3 location;
     GRID3D vdb_object;
     float initial_temperature;
 	std::string name;
+
 };
 
 

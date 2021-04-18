@@ -197,20 +197,19 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
             //REAL ANIMATION
-            /*
+            
             if (current.get_type() == "explosion") { // RESCALE
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
-                    float direction = 1.0f;
-                    resize_sphere_vel << < grid, block >> > (
+                    sphere_vel << < grid, block >> > (
                         state.velocity->readTargett(current_device),
-                        current.get_location(), object_list[i].size, direction, max_velocity, influence_on_velocity,
+                        current.get_location(), current.size, current.previous_location, current.previous_size, 
+                        max_velocity, influence_on_velocity,
                         state.dim
                         );
-                    object_list[i].size += direction;
                     //std::cout << cudaGetErrorString(cudaGetLastError());
                 }
             }
-            */
+            
 
 
 
@@ -624,10 +623,10 @@ void AddObjects(fluid_state& state, std::vector<OBJECT>& object_list, bool DEBUG
 
 
             //REAL ANIMATION
+            /**/
             if (current.get_type() == "explosion") { // RESCALE
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
                     /*
-                        */
                     float direction = 1.0f;
                     resize_sphere_vel << < grid, block >> > (
                         state.velocity->readTargett(current_device),
@@ -635,6 +634,7 @@ void AddObjects(fluid_state& state, std::vector<OBJECT>& object_list, bool DEBUG
                         state.dim
                         );
                     object_list[i].size += direction;
+                        */
                     //std::cout << cudaGetErrorString(cudaGetLastError());
                 }
             }

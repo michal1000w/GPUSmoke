@@ -36,6 +36,9 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 	this->force_strength = 0.0f;
 	this->vdb_object = GRID3D(deviceCount);
+
+	this->previous_location = location;
+	this->previous_size = size;
 }
 
 OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
@@ -55,10 +58,18 @@ OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
 	this->vdb_object = GRID3D(deviceCount);
 	this->frame_range_max = obj.frame_range_max;
 	this->frame_range_min = obj.frame_range_min;
+
+	this->previous_location = location;
+	this->previous_size = size;
 }
 
 void OBJECT::reset() {
 	this->size = this->initial_size;
+}
+
+void OBJECT::update() {
+	this->previous_location = this->location;
+	this->previous_size = this->size;
 }
 
 

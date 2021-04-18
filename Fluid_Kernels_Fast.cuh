@@ -1045,8 +1045,8 @@ __global__ void applyNoiseV(T* v_src, T* v_dest, V* noise,
 
 ///////////////////////////////VELOCITY FOR ANIMATION//////////////////
 template <typename T>
-__global__ void resize_sphere_vel(T* target, float3 c,
-    float radius, float direction, float max_velocity, float influence_on_velocity , int3 vd)
+__global__ void sphere_vel(T* target, float3 c,
+    float radius, float3 prevLoc,float prevSize, float max_velocity, float influence_on_velocity , int3 vd)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
@@ -1058,9 +1058,8 @@ __global__ void resize_sphere_vel(T* target, float3 c,
 
     float dist = length(p - c);
 
-
-
-    if (dist <= (radius + direction) * 1.2 && dist >= radius) {
+    float direction = prevSize - radius;
+    if (dist <= (radius + direction) * 1.2 && dist >= radius) { //powiekszanie
         float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
 
         float3* current = &target[get_voxel(x, y, z, vd)];
@@ -1079,9 +1078,6 @@ __global__ void resize_sphere_vel(T* target, float3 c,
         current->x = max(current->x, 0.0f);
         current->y = max(current->y, 0.0f);
         current->z = max(current->z, 0.0f);
-
-        /*
-        */
     }
 }
 
