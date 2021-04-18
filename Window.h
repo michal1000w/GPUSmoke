@@ -53,7 +53,7 @@ void UpdateSolver() {
 }
 
 
-
+const char* items[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
 bool TimelineInitialized = false;
 MySequence Timeline;
 
@@ -62,12 +62,15 @@ void UpdateTimeline() {
 	Timeline.rampEdit.clear();
 	//dodawanie elementow
 	for (int j = 0; j < solver.object_list.size(); j++) {
-		if (solver.object_list[j].get_type() == "explosion") {
-			Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, &solver.object_list[j].frame_range_min,
+		int current_item_id = 0;
+		for (int i = 0; i < EmitterCount; i++)
+			if (solver.object_list.at(j).get_type2() == items[i]) {
+				current_item_id = i;
+				break;
+			}
+		Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																	&solver.object_list[j].frame_range_max, false });
-			Timeline.rampEdit.push_back(RampEdit());
-		}
-		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
 	}
 }
 
@@ -75,7 +78,8 @@ void UpdateTimeline() {
 void UpdateAnimation() {
 	int frame = solver.frame;
 	for (int j = 0; j < solver.object_list.size(); j++) {
-		if (solver.object_list[j].get_type() == "explosion") {
+		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
+			frame <= solver.object_list[j].frame_range_max) {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
 		}
 	}
@@ -423,9 +427,9 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	{
 		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Emitter type");
-		const char* items[] = { "emitter", "explosion" , "force", "power", 
-			"turbulance", "wind", "sphere" };// , "vdb", "vdbs" };
+		
 		static const char* current_item = "emitter";
+		int current_item_id = 0;
 
 		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
 		{
@@ -472,12 +476,17 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		}
 		if (ImGui::Button("Add Emitter")) {
 			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
-			if (current_item == "explosion") {
+			//if (current_item == "explosion") {
+			for (int i = 0; i < EmitterCount; i++)
+				if (current_item == items[i]) {
+					current_item_id = i;
+					break;
+				}
 				int j = solver.object_list.size() - 1;
-				Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, &solver.object_list[j].frame_range_min,
+				Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																		&solver.object_list[j].frame_range_max, false });
 				Timeline.rampEdit.push_back(RampEdit());
-			}
+			//}
 		}
 
 		ImGui::Text("Object list:");

@@ -67,6 +67,29 @@ std::string OBJECT::get_type() {
 		return "explosion";
 }
 
+std::string OBJECT::get_type2() {
+	if (this->type == EMITTER)
+		return "emitter";
+	else if (this->type == SMOKE)
+		return "smoke";
+	else if (this->type == VDBOBJECT)
+		return "vdb";
+	else if (this->type == VDBSINGLE)
+		return "vdbs";
+	else if (this->type == FORCE_FIELD_FORCE)
+		return "force";
+	else if (this->type == FORCE_FIELD_POWER)
+		return "power";
+	else if (this->type == FORCE_FIELD_TURBULANCE)
+		return "turbulance";
+	else if (this->type == FORCE_FIELD_WIND)
+		return "wind";
+	else if (this->type == COLLISION_SPHERE)
+		return "sphere";
+	else if (this->type == EXPLOSION)
+		return "explosion";
+}
+
 void OBJECT::set_type(std::string type) {
 	if (type == "EMITTER" || type == "emitter")
 		this->type = EMITTER;

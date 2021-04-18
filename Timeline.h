@@ -62,13 +62,13 @@ namespace ImSequencer
 
 
 
-
 extern bool TimelineInitialized;
 
 
 
-static const char* SequencerItemTypeNames[] = { "Emitter","Explosion" };
-
+static const int EmitterCount = 7;
+static const char* SequencerItemTypeNames[EmitterCount] = { "emitter","explosion", "force", "power",
+            "turbulance", "wind", "sphere" };
 
 
 #include <vector>
@@ -113,6 +113,17 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMax.push_back(ImVec2(1.f, 40.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
+    RampEdit(float start, float end) {
+        std::vector<ImVec2> pSIZE;
+        pSIZE.push_back(ImVec2(start, 0));
+        pSIZE.push_back(ImVec2(end, end-start));
+        mPointCount[0] = pSIZE.size();
+        mPts.push_back(pSIZE);
+
+        mbVisible[0] = true; //czy widoczny po otwarciu
+        mMax.push_back(ImVec2(1.f, 40.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
+    }
     size_t GetCurveCount()
     {
         return mPts.size();//3
@@ -138,9 +149,9 @@ struct RampEdit : public ImCurveEdit::Delegate
         return &mPts[curveIndex].at(0);
     }
     float GetPointYAtTime(size_t curveIndex, int frame) {
-        ImVec2 minn = mPts.at(curveIndex).at(0);
-        ImVec2 makss = mPts.at(curveIndex).at(1);
-        for (int i = 1; i < mPts.at(curveIndex).size() - 1; i++) {
+        ImVec2 minn = ImVec2(0.f,0.f);
+        ImVec2 makss = mPts.at(curveIndex).at(0);
+        for (int i = 0; i < mPts.at(curveIndex).size() - 1; i++) {
             if (minn.x <= frame && makss.x >= frame) break;
             minn = mPts.at(curveIndex).at(i);
             makss = mPts.at(curveIndex).at(i + 1);
