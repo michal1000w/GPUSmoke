@@ -87,30 +87,34 @@ struct RampEdit : public ImCurveEdit::Delegate
         pSIZE.push_back(ImVec2(10.0f, 10.0f));
         mPointCount[0] = pSIZE.size();
         mPts.push_back(pSIZE);
-        /*
-        mPts[0][0] = ImVec2(-10.f, 0);
-        mPts[0][1] = ImVec2(20.f, 0.6f);
-        mPts[0][2] = ImVec2(25.f, 0.2f);
-        mPts[0][3] = ImVec2(70.f, 0.4f);
-        mPts[0][4] = ImVec2(120.f, 1.f);
-        mPointCount[0] = 5;
+        
+        std::vector<ImVec2> posx;
+        posx.push_back(ImVec2(0.0f, 45));
+        posx.push_back(ImVec2(100.0f, 45));
+        mPointCount[1] = posx.size();
+        mPts.push_back(posx);
 
-        mPts[1][0] = ImVec2(-50.f, 0.2f);
-        mPts[1][1] = ImVec2(33.f, 0.7f);
-        mPts[1][2] = ImVec2(80.f, 0.2f);
-        mPts[1][3] = ImVec2(82.f, 0.8f);
-        mPointCount[1] = 4; //liczba elementow
+        std::vector<ImVec2> posy;
+        posy.push_back(ImVec2(0.0f, 15));
+        posy.push_back(ImVec2(100.0f, 15));
+        mPointCount[2] = posy.size();
+        mPts.push_back(posy);
 
-        mPts[2][0] = ImVec2(40.f, 0);
-        mPts[2][1] = ImVec2(60.f, 0.1f);
-        mPts[2][2] = ImVec2(90.f, 0.82f);
-        mPts[2][3] = ImVec2(150.f, 0.24f);
-        mPts[2][4] = ImVec2(200.f, 0.34f);
-        mPts[2][5] = ImVec2(250.f, 0.12f);
-        mPointCount[2] = 6;
-        */
-        mbVisible[0] = true; //czy widoczny po otwarciu
+        std::vector<ImVec2> posz;
+        posz.push_back(ImVec2(0.0f, 60));
+        posz.push_back(ImVec2(100.0f, 60));
+        mPointCount[3] = posz.size();
+        mPts.push_back(posz);
+
+
+        mbVisible[0] = mbVisible[1] = mbVisible[2] = mbVisible[3] = true; //czy widoczny po otwarciu
         mMax.push_back(ImVec2(1.f, 40.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
     RampEdit(float start, float end) {
@@ -120,17 +124,55 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPointCount[0] = pSIZE.size();
         mPts.push_back(pSIZE);
 
-        mbVisible[0] = true; //czy widoczny po otwarciu
+        std::vector<ImVec2> posx;
+        posx.push_back(ImVec2(start, 45));
+        posx.push_back(ImVec2(end, 45));
+        mPointCount[1] = posx.size();
+        mPts.push_back(posx);
+
+        std::vector<ImVec2> posy;
+        posy.push_back(ImVec2(start, 15));
+        posy.push_back(ImVec2(end, 15));
+        mPointCount[2] = posy.size();
+        mPts.push_back(posy);
+
+        std::vector<ImVec2> posz;
+        posz.push_back(ImVec2(start, 65));
+        posz.push_back(ImVec2(end, 65));
+        mPointCount[3] = posz.size();
+        mPts.push_back(posz);
+
+
+
+        mbVisible[0] = mbVisible[1] = mbVisible[2] = mbVisible[3] = true; //czy widoczny po otwarciu
         mMax.push_back(ImVec2(1.f, 40.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMax.push_back(ImVec2(1.f, 100.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
     RampEdit(RampEdit& rhs) {
         this->mPts = rhs.mPts;
         mPointCount[0] = mPts.at(0).size();
+        mPointCount[1] = mPts.at(1).size();
+        mPointCount[2] = mPts.at(2).size();
+        mPointCount[3] = mPts.at(3).size();
 
         mbVisible[0] = rhs.mbVisible[0]; //czy widoczny po otwarciu
+        mbVisible[1] = rhs.mbVisible[1];
+        mbVisible[2] = rhs.mbVisible[2];
+        mbVisible[3] = rhs.mbVisible[3];
         mMax.push_back(rhs.mMax[0]);
+        mMax.push_back(rhs.mMax[1]);
+        mMax.push_back(rhs.mMax[2]);
+        mMax.push_back(rhs.mMax[3]);
         mMin.push_back(rhs.mMin[0]);
+        mMin.push_back(rhs.mMin[1]);
+        mMin.push_back(rhs.mMin[2]);
+        mMin.push_back(rhs.mMin[3]);
     }
     size_t GetCurveCount()
     {
@@ -148,7 +190,7 @@ struct RampEdit : public ImCurveEdit::Delegate
 
     uint32_t GetCurveColor(size_t curveIndex)
     {
-        uint32_t cols[] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000 };
+        uint32_t cols[] = { 0xFF0000FF, 0xFF00FF00, 0xFFFF0000, 0xFFFF00FF };
         return cols[curveIndex];
     }
     ImVec2* GetPoints(size_t curveIndex)
@@ -191,7 +233,7 @@ struct RampEdit : public ImCurveEdit::Delegate
     {
         mPts.at(curveIndex).push_back(value);
         SortValues(curveIndex);
-        mPointCount[0] = mPts.at(curveIndex).size();
+        mPointCount[curveIndex] = mPts.at(curveIndex).size();
     }
     virtual ImVec2& GetMax(int curve) { return mMax.at(curve); }
     virtual ImVec2& GetMin(int curve) { return mMin.at(curve); }
@@ -202,8 +244,8 @@ struct RampEdit : public ImCurveEdit::Delegate
     std::vector<std::vector<ImVec2>> mPts;
     std::vector<ImVec2> mMin;
     std::vector<ImVec2> mMax;
-    size_t mPointCount[1];//3
-    bool mbVisible[1];//3
+    size_t mPointCount[4];//3
+    bool mbVisible[4];//3
     //Vec2 mMin;
     //ImVec2 mMax;
 private:
@@ -293,12 +335,17 @@ struct MySequence : public ImSequencer::SequenceInterface
 
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect)
     { //opisy zaznaczanie i wykresy
-        static const char* labels[] = { /*"Translation", "Rotation" ,*/ "Scale" };
+        static const char* labels[] = { "Scale", "X", "Y", "Z" };
 
-        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.f);
+        float maks = 0;
+        for (int i = 0; i < rampEdit[index].mMax.size(); i++) {
+            maks = fmax(rampEdit[index].mMax[i].y, maks);
+        }
+
+        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), maks);
         rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
-        for (int i = 0; i < 1; i++) //liczba wykresow  3
+        for (int i = 0; i < 4; i++) //liczba wykresow  3
         {
             ImVec2 pta(legendRect.Min.x + 30, legendRect.Min.y + i * 14.f);
             ImVec2 ptb(legendRect.Max.x, legendRect.Min.y + (i + 1) * 14.f);
@@ -314,10 +361,10 @@ struct MySequence : public ImSequencer::SequenceInterface
 
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
     {
-        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.f);
+        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.0f);
         rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
-        for (int i = 0; i < 1; i++) //liczba wykresow 3
+        for (int i = 0; i < 4; i++) //liczba wykresow 3
         {
             for (int j = 0; j < rampEdit[index].mPointCount[i]; j++)
             {
