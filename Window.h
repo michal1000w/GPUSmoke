@@ -75,7 +75,7 @@ void UpdateAnimation() {
 	int frame = solver.frame;
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type() == "explosion") {
-			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointXAtTime(0,frame));
+			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
 		}
 	}
 }
@@ -520,7 +520,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	/////////////////////////////
 
 
-
+	
 	ImGui::Begin("Timeline && Animation");
 	{
 		ImGui::SetWindowFontScale(InterfaceScale);
@@ -529,17 +529,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			UpdateTimeline();
 			TimelineInitialized = true;
 		}
-
-		/*
-		unsigned int small = 1;
-		unsigned int huge = 100;
-
-		ImGui::InputScalar("Frame Start",ImGuiDataType_U32, &solver.START_FRAME, &small,&huge, "%d");
-		ImGui::InputScalar("Frame End", ImGuiDataType_U32, &solver.END_FRAME, &small, &huge, "%d");
-
-		ImGui::SliderScalar("timeline", ImGuiDataType_U32, &solver.frame, &solver.START_FRAME, &solver.END_FRAME, "%d", 1);
-		*/
-
+		UpdateAnimation();
 
 		// let's create the sequencer
 		static int selectedEntry = -1;
@@ -579,7 +569,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		
 	}
 	ImGui::End();
-
+	
 }
 
 
@@ -618,6 +608,7 @@ int Window(float* Img_res, float dpi) {
 	//create a windowed mode window
 	window = glfwCreateWindow(Img_res[0], Img_res[1], FULL_NAME.c_str(), NULL, NULL);
 	if (!window) {
+		std::cout << "Cannot create window";
 		glfwTerminate();
 		return -1;
 	}

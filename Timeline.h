@@ -140,9 +140,15 @@ struct RampEdit : public ImCurveEdit::Delegate
         //return mPts[curveIndex];
         return &mPts[curveIndex].at(0);
     }
-    float GetPointXAtTime(size_t curveIndex, int frame) {
-        //ImVec2* points = mPts[curveIndex];
-        return 1;
+    float GetPointYAtTime(size_t curveIndex, int frame) {
+        ImVec2 minn = mPts.at(curveIndex).at(0);
+        ImVec2 makss = mPts.at(curveIndex).at(1);
+        for (int i = 1; i < mPts.at(curveIndex).size() - 1; i++) {
+            if (minn.x <= frame && makss.x >= frame) break;
+            minn = mPts.at(curveIndex).at(i);
+            makss = mPts.at(curveIndex).at(i + 1);
+        }
+        return minn.y + ((makss.y - minn.y) / (makss.x - minn.x)) * ((float)frame - minn.x);
     }
     //virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const { return ImCurveEdit::CurveSmooth; }
     virtual ImCurveEdit::CurveType GetCurveType(size_t curveIndex) const { return ImCurveEdit::CurveLinear; }
