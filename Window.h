@@ -665,6 +665,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		{
 			const MySequence::MySequenceItem& item = Timeline.myItems[selectedEntry];
 			ImGui::Text("Work in progress", SequencerItemTypeNames[item.mType]);
+			ImGui::SliderFloat("Minimum", &Timeline.rampEdit[selectedEntry].mMin[0].y, 0.0, 1000);
+			ImGui::SliderFloat("Maksimum", &Timeline.rampEdit[selectedEntry].mMax[0].y, 0.0, 1000);
 		}
 
 

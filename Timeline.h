@@ -337,6 +337,7 @@ struct MySequence : public ImSequencer::SequenceInterface
     { //opisy zaznaczanie i wykresy
         static const char* labels[] = { "Scale", "X", "Y", "Z" };
 
+        /*
         float maks = 0;
         for (int i = 0; i < rampEdit[index].mMax.size(); i++) {
             if (rampEdit[index].mbVisible[i])
@@ -347,6 +348,7 @@ struct MySequence : public ImSequencer::SequenceInterface
 
         rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), maks);
         rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), mini);
+        */
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
         for (int i = 0; i < 4; i++) //liczba wykresow  3
         {
