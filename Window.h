@@ -247,7 +247,7 @@ bool SliderPos(const char* label, ImGuiDataType data_type, void* v, int componen
 
 float InterfaceScale = 1.0f;
 float ImageScale = 1.0f;
-
+int begin_frame = 0;
 
 
 
@@ -628,7 +628,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 		// let's create the sequencer
 		static int selectedEntry = -1;
-		static bool expanded = true;
+		static bool expanded = true;//true
 
 		ImGui::PushItemWidth(130);
 		ImGui::InputInt("Frame Min", &solver.START_FRAME);
@@ -642,10 +642,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		if (solver.START_FRAME < 0) solver.START_FRAME = 0;
 		if (solver.END_FRAME < 0) solver.END_FRAME = 0;
 
-		Timeline.mFrameMin = solver.START_FRAME;
-		Timeline.mFrameMax = solver.END_FRAME;
+		//Timeline.mFrameMin = solver.START_FRAME;
+		//Timeline.mFrameMax = solver.END_FRAME;
 
-		Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &solver.START_FRAME, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+		//Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &solver.START_FRAME, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
+		Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &begin_frame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
 		// add a UI to edit that particular item
 		if (selectedEntry != -1)
 		{

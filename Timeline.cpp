@@ -57,8 +57,11 @@ namespace ImSequencer
 
         ImDrawList* draw_list = ImGui::GetWindowDrawList();
         ImVec2 canvas_pos = ImGui::GetCursorScreenPos();            // ImDrawList API uses screen coordinates!
-        ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
+        //ImVec2 canvas_size = ImGui::GetContentRegionAvail();        // Resize canvas to what's available
+        ImVec2 canvas_size = ImVec2(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y/1.3);
         int firstFrameUsed = firstFrame ? *firstFrame : 0;
+        //*firstFrame = 0;
+        //firstFrameUsed = 0;
 
 
         int controlHeight = sequenceCount * ItemHeight;
@@ -89,7 +92,7 @@ namespace ImSequencer
         static bool panningView = false;
         static ImVec2 panningViewSource;
         static int panningViewFrame;
-        if (ImGui::IsWindowFocused() && io.KeyAlt && io.MouseDown[2])
+        if (ImGui::IsWindowFocused() && io.KeyAlt && io.MouseDown[0])
         {
             if (!panningView)
             {
@@ -99,6 +102,7 @@ namespace ImSequencer
             }
             *firstFrame = panningViewFrame - int((io.MousePos.x - panningViewSource.x) / framePixelWidth);
             *firstFrame = ImClamp(*firstFrame, sequence->GetFrameMin(), sequence->GetFrameMax() - visibleFrameCount);
+
         }
         if (panningView && !io.MouseDown[2])
         {
@@ -134,7 +138,7 @@ namespace ImSequencer
             */
             // test scroll area
             ImVec2 headerSize(canvas_size.x, (float)ItemHeight);
-            ImVec2 scrollBarSize(canvas_size.x, 14.f);
+            ImVec2 scrollBarSize(canvas_size.x, 24.f);//timeline scroll
             ImGui::InvisibleButton("topBar", headerSize);
             draw_list->AddRectFilled(canvas_pos, canvas_pos + headerSize, 0xFFFF0000, 0);
             ImVec2 childFramePos = ImGui::GetCursorScreenPos();
@@ -142,6 +146,8 @@ namespace ImSequencer
             ImGui::PushStyleColor(ImGuiCol_FrameBg, 0);
             ImGui::BeginChildFrame(889, childFrameSize);
             sequence->focused = ImGui::IsWindowFocused();
+            
+            
             ImGui::InvisibleButton("contentBar", ImVec2(canvas_size.x, float(controlHeight)));
             const ImVec2 contentMin = ImGui::GetItemRectMin();
             const ImVec2 contentMax = ImGui::GetItemRectMax();
@@ -504,7 +510,7 @@ namespace ImSequencer
                 ImRect scrollBarRect(scrollBarA, scrollBarB);
                 bool inScrollBar = scrollBarRect.Contains(io.MousePos);
 
-                draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF101010, 8);
+                draw_list->AddRectFilled(scrollBarA, scrollBarB, 0xFF101010, 8); //8
 
 
                 ImVec2 scrollBarC(scrollBarMin.x + legendWidth + startFrameOffset, scrollBarMin.y);
