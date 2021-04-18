@@ -33,24 +33,7 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
-void UpdateSolver() {
-	std::cout << "\nRestarting\n";
-	solver.ThreadsJoin();
-	//clearing
-	//solver.ClearCache();
-	solver.frame = 0;
-	solver.Clear_Simulation_Data();
-	solver.ResetObjects();
-	//preparation
-	//solver.Initialize();
-	solver.UpdateDomainResolution();
-	//solver.UpdateTimeStep();
-	if (solver.SAMPLE_SCENE == 0)
-		solver.ExampleScene();
-	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
-		solver.ExportVDBScene();
-	solver.Initialize_Simulation();
-}
+
 
 
 const char* items[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
@@ -84,6 +67,91 @@ void UpdateAnimation() {
 		}
 	}
 }
+
+void AddObject(int type) {
+	//std::cout << "Adding object of index " << type << std::endl;
+	std::string name = items[type];
+	solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
+	int j = solver.object_list.size() - 1;
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list[j].frame_range_min,
+																&solver.object_list[j].frame_range_max, false });
+	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+}
+
+void DuplicateObject(int index) {
+	OBJECT obj = solver.object_list[index];
+	std::string name = obj.get_type2();
+	obj.set_name(name + std::to_string(index+1));
+
+	solver.object_list.push_back(OBJECT(obj, solver.object_list.size(), solver.devicesCount));
+	int j = solver.object_list.size() - 1;
+
+	int current_item_id = 0;
+	for (int i = 0; i < EmitterCount; i++)
+		if (solver.object_list.at(j).get_type2() == items[i]) {
+			current_item_id = i;
+			break;
+		}
+
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
+																&solver.object_list[j].frame_range_max, false });
+	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+}
+
+void DeleteObject(const int object) {
+	if (solver.object_list[object].get_type() == "vdb" ||
+		solver.object_list[object].get_type() == "vdbs")
+		solver.object_list[object].cudaFree();
+	solver.object_list[object].free();
+	solver.object_list.erase(solver.object_list.begin() + object);
+	//Timeline.Del(object);
+	Timeline.myItems.erase(Timeline.myItems.begin() + object);
+	Timeline.rampEdit.erase(Timeline.rampEdit.begin() + object);
+
+	UpdateTimeline();
+	//std::cout << "Lists: " << solver.object_list.size() << ":" << Timeline.myItems.size() << ":" << Timeline.rampEdit.size() << std::endl;
+}
+
+
+
+
+
+
+
+
+void UpdateSolver() {
+	std::cout << "\nRestarting\n";
+	solver.ThreadsJoin();
+	//clearing
+	//solver.ClearCache();
+	solver.frame = 0;
+	solver.Clear_Simulation_Data();
+	solver.ResetObjects();
+	//preparation
+	//solver.Initialize();
+	solver.UpdateDomainResolution();
+	//solver.UpdateTimeStep();
+	if (solver.SAMPLE_SCENE == 0)
+		solver.ExampleScene();
+	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
+		solver.ExportVDBScene();
+	solver.Initialize_Simulation();
+	UpdateTimeline();
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -462,12 +530,15 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		REPEAT:
 			for (int object = 0; object < solver.object_list.size(); object++) {
 				if (solver.object_list[object].selected) {
+					/*
 					if (solver.object_list[object].get_type() == "vdb" ||
 						solver.object_list[object].get_type() == "vdbs")
 						solver.object_list[object].cudaFree();
 					solver.object_list[object].free();
 					solver.object_list.erase(solver.object_list.begin() + object);
 					Timeline.Del(object);
+					*/
+					DeleteObject(object);
 					goto REPEAT;
 					//TODO
 				}
@@ -482,10 +553,10 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					current_item_id = i;
 					break;
 				}
-				int j = solver.object_list.size() - 1;
-				Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
-																		&solver.object_list[j].frame_range_max, false });
-				Timeline.rampEdit.push_back(RampEdit());
+			int j = solver.object_list.size() - 1;
+			Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
+																	&solver.object_list[j].frame_range_max, false });
+			Timeline.rampEdit.push_back(RampEdit());
 			//}
 		}
 

@@ -38,6 +38,23 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->vdb_object = GRID3D(deviceCount);
 }
 
+OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
+	this->type = obj.type;
+	this->size = size;
+	this->initial_size = size;
+	this->initial_velocity = initial_velocity;
+	this->set_velocity_frequence(velocity_frequence);
+	this->location = location;
+	this->set_impulseDensity(obj.impulseDensity);
+	this->set_impulseTemp(obj.impulseTemp);
+	this->name = get_object() + "_COPY";
+	this->name += std::to_string(number);
+	this->selected = false;
+	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
+	this->force_strength = 0.0f;
+	this->vdb_object = GRID3D(deviceCount);
+}
+
 void OBJECT::reset() {
 	this->size = this->initial_size;
 }

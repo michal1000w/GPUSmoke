@@ -118,10 +118,10 @@
     <ClInclude Include="Fluid_Kernels_Fast.cuh">
       <Filter>Sources</Filter>
     </ClInclude>
-    <ClInclude Include="Timeline.h">
+    <ClInclude Include="ImCurveEdit.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="ImCurveEdit.h">
+    <ClInclude Include="Timeline.h">
       <Filter>ImGui</Filter>
     </ClInclude>
   </ItemGroup>
@@ -221,10 +221,10 @@
     <ClCompile Include="third_party\imgui\imgui_tables.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="Timeline.cpp">
+    <ClCompile Include="ImCurveEdit.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="ImCurveEdit.cpp">
+    <ClCompile Include="Timeline.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
   </ItemGroup>
