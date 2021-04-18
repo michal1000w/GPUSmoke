@@ -159,6 +159,10 @@ struct RampEdit : public ImCurveEdit::Delegate
     float GetPointYAtTime(size_t curveIndex, int frame) {
         ImVec2 minn = mPts.at(curveIndex).at(0);
         ImVec2 makss = mPts.at(curveIndex).at(1);
+
+        if (frame <= minn.x)
+            return mPts.at(curveIndex).at(0).y;
+
         int i = 1;
         for (i = 0; i < mPts.at(curveIndex).size()-1; i++) {
             if (minn.x <= frame && makss.x >= frame) break;

@@ -651,8 +651,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		if (selectedEntry != -1)
 		{
 			const MySequence::MySequenceItem& item = Timeline.myItems[selectedEntry];
-			ImGui::Text("I am a %s, please edit me", SequencerItemTypeNames[item.mType]);
-			// switch (type) ....
+			ImGui::Text("Work in progress", SequencerItemTypeNames[item.mType]);
 		}
 
 
