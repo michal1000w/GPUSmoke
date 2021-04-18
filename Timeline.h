@@ -124,6 +124,14 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMax.push_back(ImVec2(1.f, 40.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
+    RampEdit(RampEdit& rhs) {
+        this->mPts = rhs.mPts;
+        mPointCount[0] = mPts.at(0).size();
+
+        mbVisible[0] = rhs.mbVisible[0]; //czy widoczny po otwarciu
+        mMax.push_back(rhs.mMax[0]);
+        mMin.push_back(rhs.mMin[0]);
+    }
     size_t GetCurveCount()
     {
         return mPts.size();//3

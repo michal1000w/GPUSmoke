@@ -53,6 +53,8 @@ OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 	this->force_strength = 0.0f;
 	this->vdb_object = GRID3D(deviceCount);
+	this->frame_range_max = obj.frame_range_max;
+	this->frame_range_min = obj.frame_range_min;
 }
 
 void OBJECT::reset() {

@@ -95,7 +95,8 @@ void DuplicateObject(int index) {
 
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																&solver.object_list[j].frame_range_max, false });
-	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+	//Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+	Timeline.rampEdit.push_back(RampEdit(Timeline.rampEdit.at(index)));
 }
 
 void DeleteObject(const int object) {
