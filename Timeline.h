@@ -117,7 +117,7 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
-    RampEdit(float start, float end) {
+    RampEdit(float start, float end, float x = 45, float y = 15, float z = 65) {
         std::vector<ImVec2> pSIZE;
         pSIZE.push_back(ImVec2(start, 0));
         pSIZE.push_back(ImVec2(end, end-start));
@@ -125,20 +125,20 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPts.push_back(pSIZE);
 
         std::vector<ImVec2> posx;
-        posx.push_back(ImVec2(start, 45));
-        posx.push_back(ImVec2(end, 45));
+        posx.push_back(ImVec2(start, x));
+        posx.push_back(ImVec2(end, x));
         mPointCount[1] = posx.size();
         mPts.push_back(posx);
 
         std::vector<ImVec2> posy;
-        posy.push_back(ImVec2(start, 15));
-        posy.push_back(ImVec2(end, 15));
+        posy.push_back(ImVec2(start, y));
+        posy.push_back(ImVec2(end, y));
         mPointCount[2] = posy.size();
         mPts.push_back(posy);
 
         std::vector<ImVec2> posz;
-        posz.push_back(ImVec2(start, 65));
-        posz.push_back(ImVec2(end, 65));
+        posz.push_back(ImVec2(start, z));
+        posz.push_back(ImVec2(end, z));
         mPointCount[3] = posz.size();
         mPts.push_back(posz);
 

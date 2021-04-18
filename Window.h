@@ -53,7 +53,9 @@ void UpdateTimeline() {
 			}
 		Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																	&solver.object_list[j].frame_range_max, false });
-		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
+											solver.object_list[j].get_location().x, solver.object_list[j].get_location().y,
+											solver.object_list[j].get_location().z));
 	}
 }
 
