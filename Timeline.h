@@ -63,7 +63,7 @@ namespace ImSequencer
 
 
 
-
+extern bool TimelineInitialized;
 
 
 
@@ -164,6 +164,7 @@ struct RampEdit : public ImCurveEdit::Delegate
     {
         mPts.at(curveIndex).push_back(value);
         SortValues(curveIndex);
+        mPointCount[0] = mPts.at(curveIndex).size();
     }
     virtual ImVec2& GetMax(int curve) { return mMax.at(curve); }
     virtual ImVec2& GetMin(int curve) { return mMin.at(curve); }
