@@ -137,7 +137,7 @@ void UpdateSolver() {
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
-	UpdateTimeline();
+	//UpdateTimeline();
 }
 
 
