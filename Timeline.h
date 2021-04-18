@@ -84,10 +84,7 @@ struct RampEdit : public ImCurveEdit::Delegate
     {
         std::vector<ImVec2> pSIZE;
         pSIZE.push_back(ImVec2(0.0f, 0));
-        pSIZE.push_back(ImVec2(2.0f, 0.6f));
-        pSIZE.push_back(ImVec2(25.0f, 0.2f));
-        pSIZE.push_back(ImVec2(70.0f, 0.4f));
-        pSIZE.push_back(ImVec2(120.0f, 1.0f));
+        pSIZE.push_back(ImVec2(10.0f, 10.0f));
         mPointCount[0] = pSIZE.size();
         mPts.push_back(pSIZE);
         /*
@@ -113,12 +110,12 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPointCount[2] = 6;
         */
         mbVisible[0] = true; //czy widoczny po otwarciu
-        mMax = ImVec2(1.f, 1.f);
-        mMin = ImVec2(0.f, 0.f);
+        mMax.push_back(ImVec2(1.f, 40.f));
+        mMin.push_back(ImVec2(0.f, 0.f));
     }
     size_t GetCurveCount()
     {
-        return 1;//3
+        return mPts.size();//3
     }
 
     bool IsVisible(size_t curveIndex)
@@ -165,20 +162,22 @@ struct RampEdit : public ImCurveEdit::Delegate
     }
     virtual void AddPoint(size_t curveIndex, ImVec2 value)
     {
-        if (mPointCount[curveIndex] >= 8)
-            return;
-        mPts[curveIndex][mPointCount[curveIndex]++] = value;
+        mPts.at(curveIndex).push_back(value);
         SortValues(curveIndex);
     }
-    virtual ImVec2& GetMax() { return mMax; }
-    virtual ImVec2& GetMin() { return mMin; }
+    virtual ImVec2& GetMax(int curve) { return mMax.at(curve); }
+    virtual ImVec2& GetMin(int curve) { return mMin.at(curve); }
+    virtual ImVec2& GetMax() { return mMax.at(0); }
+    virtual ImVec2& GetMin() { return mMin.at(0); }
     virtual unsigned int GetBackgroundColor() { return 0; }
     //ImVec2 mPts[1][8];//3,8
     std::vector<std::vector<ImVec2>> mPts;
+    std::vector<ImVec2> mMin;
+    std::vector<ImVec2> mMax;
     size_t mPointCount[1];//3
     bool mbVisible[1];//3
-    ImVec2 mMin;
-    ImVec2 mMax;
+    //Vec2 mMin;
+    //ImVec2 mMax;
 private:
     void SortValues(size_t curveIndex)
     {
@@ -265,8 +264,8 @@ struct MySequence : public ImSequencer::SequenceInterface
     { //opisy zaznaczanie i wykresy
         static const char* labels[] = { /*"Translation", "Rotation" ,*/ "Scale" };
 
-        rampEdit[index].mMax = ImVec2(float(mFrameMax), 1.f);
-        rampEdit[index].mMin = ImVec2(float(mFrameMin), 0.f);
+        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.f);
+        rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
         for (int i = 0; i < 1; i++) //liczba wykresow  3
         {
@@ -284,8 +283,8 @@ struct MySequence : public ImSequencer::SequenceInterface
 
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
     {
-        rampEdit[index].mMax = ImVec2(float(mFrameMax), 1.f);
-        rampEdit[index].mMin = ImVec2(float(mFrameMin), 0.f);
+        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.f);
+        rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
         draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
         for (int i = 0; i < 1; i++) //liczba wykresow 3
         {

@@ -197,10 +197,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
             //REAL ANIMATION
+            /*
             if (current.get_type() == "explosion") { // RESCALE
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
-                    /*
-                        */
                     float direction = 1.0f;
                     resize_sphere_vel << < grid, block >> > (
                         state.velocity->readTargett(current_device),
@@ -211,7 +210,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     //std::cout << cudaGetErrorString(cudaGetLastError());
                 }
             }
-
+            */
 
 
 
