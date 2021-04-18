@@ -65,10 +65,19 @@ void UpdateAnimation() {
 		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
 			frame <= solver.object_list[j].frame_range_max) {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
+
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(1, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(2, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(3, frame);
+			solver.object_list[j].set_location(make_float3(x,y,z));
 		}
 		//if (solver.object_list[j].get_type2() == "emitter") {
 		else {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(1, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(2, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(3, frame);
+			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 	}
 }
