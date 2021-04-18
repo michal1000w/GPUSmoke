@@ -146,9 +146,9 @@ struct RampEdit : public ImCurveEdit::Delegate
 
         mbVisible[0] = mbVisible[1] = mbVisible[2] = mbVisible[3] = true; //czy widoczny po otwarciu
         mMax.push_back(ImVec2(1.f, 40.f));
-        mMax.push_back(ImVec2(1.f, 100.f));
-        mMax.push_back(ImVec2(1.f, 100.f));
-        mMax.push_back(ImVec2(1.f, 100.f));
+        mMax.push_back(ImVec2(1.f, 40.f));
+        mMax.push_back(ImVec2(1.f, 40.f));
+        mMax.push_back(ImVec2(1.f, 40.f));
         mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
@@ -339,11 +339,14 @@ struct MySequence : public ImSequencer::SequenceInterface
 
         float maks = 0;
         for (int i = 0; i < rampEdit[index].mMax.size(); i++) {
-            maks = fmax(rampEdit[index].mMax[i].y, maks);
+            if (rampEdit[index].mbVisible[i])
+                maks = fmax(rampEdit[index].mMax[i].y, maks);
         }
 
+        float mini = 0;
+
         rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), maks);
-        rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
+        rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), mini);
         draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
         for (int i = 0; i < 4; i++) //liczba wykresow  3
         {

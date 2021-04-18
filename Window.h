@@ -280,6 +280,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("Left mouse + A/D - Camera rotation");
 			ImGui::Text("R - reset simulation");
 			ImGui::Text("F - stop exporting");
+			ImGui::Text("LM double click on curve - new point");
+			ImGui::Text("LCtrl+Scroll on animation panel - zoom in/out");
 
 			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
 
