@@ -206,6 +206,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         max_velocity, influence_on_velocity,
                         state.dim
                         );
+                    object_list.at(i).update();
                     //std::cout << cudaGetErrorString(cudaGetLastError());
                 }
             }

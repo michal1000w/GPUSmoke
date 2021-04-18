@@ -1061,6 +1061,8 @@ __global__ void sphere_vel(T* target, float3 c,
     float direction = prevSize - radius;
     if (dist <= (radius + direction) * 1.2 && dist >= radius) { //powiekszanie
         float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+        float3 vectorLoc = make_float3(c.x - prevLoc.x, c.y - prevLoc.y, c.z - prevLoc.z);
+
 
         float3* current = &target[get_voxel(x, y, z, vd)];
 
@@ -1073,11 +1075,15 @@ __global__ void sphere_vel(T* target, float3 c,
         current->z = min(current->z, maxx.z);
 
 
-        *current = *current - (*current * vector * direction * influence_on_velocity);
 
-        current->x = max(current->x, 0.0f);
-        current->y = max(current->y, 0.0f);
-        current->z = max(current->z, 0.0f);
+        //*current = *current - (*current * vector * direction * influence_on_velocity); //resize
+        //*current = *current - (*current * vectorLoc * influence_on_velocity * 5.0f); //normal
+        *current = *current - (*current * (vectorLoc + vector) * influence_on_velocity); //mix
+
+
+        //current->x = max(current->x, 0.0f);
+        //current->y = max(current->y, 0.0f);
+        //current->z = max(current->z, 0.0f);
     }
 }
 

@@ -698,9 +698,6 @@ public:
             }
         }
         cudaDeviceSynchronize();
-
-        for (int i = 0; i < this->object_list.size(); i++)
-            object_list.at(i).update();
     }
 
     void Render(int frame, int device = 0) {
