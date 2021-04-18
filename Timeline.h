@@ -226,8 +226,11 @@ struct MySequence : public ImSequencer::SequenceInterface
             *type = item.mType;
     }
     virtual void Add(int type) { 
+        /*
         myItems.push_back(MySequenceItem{ type, (int*)0, (int*)10, false });
         rampEdit.push_back(RampEdit());
+        ids.push_back(rampEdit.size()-1);
+        */
     };
     virtual void Del(int index) { 
         myItems.erase(myItems.begin() + index); 

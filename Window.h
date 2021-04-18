@@ -59,6 +59,7 @@ MySequence Timeline;
 
 void UpdateTimeline() {
 	Timeline.myItems.clear();
+	Timeline.rampEdit.clear();
 	//dodawanie elementow
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type() == "explosion") {
@@ -462,14 +463,21 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 						solver.object_list[object].cudaFree();
 					solver.object_list[object].free();
 					solver.object_list.erase(solver.object_list.begin() + object);
+					Timeline.Del(object);
 					goto REPEAT;
+					//TODO
 				}
 			}
-			TimelineInitialized = false;
+			//TimelineInitialized = false;
 		}
 		if (ImGui::Button("Add Emitter")) {
 			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
-			TimelineInitialized = false;
+			if (current_item == "explosion") {
+				int j = solver.object_list.size() - 1;
+				Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, &solver.object_list[j].frame_range_min,
+																		&solver.object_list[j].frame_range_max, false });
+				Timeline.rampEdit.push_back(RampEdit());
+			}
 		}
 
 		ImGui::Text("Object list:");
