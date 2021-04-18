@@ -40,14 +40,14 @@ namespace ImSequencer
         int cy = (int)(io.MousePos.y);
         static float framePixelWidth = 10.f;
         static float framePixelWidthTarget = 10.f;
-        int legendWidth = 200;
+        int legendWidth = 250;
 
         static int movingEntry = -1;
         static int movingPos = -1;
         static int movingPart = -1;
         int delEntry = -1;
         int dupEntry = -1;
-        int ItemHeight = 20;
+        int ItemHeight = 25;
 
         bool popupOpened = false;
         int sequenceCount = sequence->GetItemCount();
@@ -461,7 +461,7 @@ namespace ImSequencer
                 sequence->CustomDrawCompact(customDraw.index, draw_list, customDraw.customRect, customDraw.clippingRect);
 
             // copy paste
-            if (sequenceOptions & SEQUENCER_COPYPASTE)
+            if (sequenceOptions & SEQUENCER_COPYPASTE && false)
             {
                 ImRect rectCopy(ImVec2(contentMin.x + 100, canvas_pos.y + 2)
                     , ImVec2(contentMin.x + 100 + 30, canvas_pos.y + ItemHeight - 2));

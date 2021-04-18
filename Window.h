@@ -66,7 +66,8 @@ void UpdateAnimation() {
 			frame <= solver.object_list[j].frame_range_max) {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
 		}
-		if (solver.object_list[j].get_type2() == "emitter") {
+		//if (solver.object_list[j].get_type2() == "emitter") {
+		else {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
 		}
 	}

@@ -544,7 +544,7 @@ public:
         Fire_Max_Temperature = 1.1f;
         Image_Resolution[0] = 640;
         Image_Resolution[1] = 640;
-        STEPS = 100; //512 Rendering Samples
+        STEPS = 300; //512 Rendering Samples
         ZOOM = 0.45; //1.8
         Smoke_And_Fire = true;
 
