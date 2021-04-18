@@ -333,7 +333,7 @@ namespace ImCurveEdit
             delegate.AddPoint(overCurve, np);
             delegate.EndEdit();
             ret = 1;
-            std::cout << "Adding point to curve " << overCurve << std::endl;
+            //std::cout << "Adding point to curve " << overCurve << std::endl;
         }
 
         // move curve
