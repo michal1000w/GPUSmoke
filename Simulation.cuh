@@ -198,7 +198,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
             //REAL ANIMATION
             
-            if (current.get_type() == "explosion") { // RESCALE
+            if (current.get_type() == "explosion" || current.get_type() == "emitter") { // RESCALE
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
                     sphere_vel << < grid, block >> > (
                         state.velocity->readTargett(current_device),
