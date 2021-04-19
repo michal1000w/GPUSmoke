@@ -175,6 +175,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
             //INITIAL ANIMATION
+            /*
             if (MOVEMENT && current.get_type() != "explosion") {
                 if (EXAMPLE__ == 1) {
                     object_list[i].set_location(current.get_location().x + MOVEMENT_SIZE * 2.0 * sinf(-0.04f * MOVEMENT_SPEED * float(state.step)),
@@ -191,6 +192,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     );
                 }
             }
+            */
 
 
 
