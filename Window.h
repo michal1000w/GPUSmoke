@@ -80,14 +80,6 @@ void UpdateTimeline() {
 			}
 
 		AddObject2(current_item_id, j);
-		/*
-		
-		Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
-																	&solver.object_list[j].frame_range_max, false });
-		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
-											solver.object_list[j].get_location().x, solver.object_list[j].get_location().y,
-											solver.object_list[j].get_location().z));
-		*/
 	}
 }
 
@@ -194,7 +186,7 @@ void UpdateSolver() {
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
-	//UpdateTimeline();
+	UpdateTimeline();
 }
 
 
