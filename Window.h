@@ -281,7 +281,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("R - reset simulation");
 			ImGui::Text("F - stop exporting");
 			ImGui::Text("LM double click on curve - new point");
-			ImGui::Text("LCtrl+Scroll on animation panel - zoom in/out");
+			ImGui::Text("LCtrl+Scroll on animation panel\n - zoom in/out");
+			ImGui::Text("Space - pause simulation");
 
 			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
 
@@ -929,6 +930,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS) {
 		solver.EXPORT_VDB = false;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+		solver.SIMULATE = solver.SIMULATE ? false : true;
 	}
 
 
