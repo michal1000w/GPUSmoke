@@ -232,8 +232,8 @@ struct RampEdit : public ImCurveEdit::Delegate
     virtual void AddPoint(size_t curveIndex, ImVec2 value)
     {
         mPts.at(curveIndex).push_back(value);
-        SortValues(curveIndex);
         mPointCount[curveIndex] = mPts.at(curveIndex).size();
+        SortValues(curveIndex);
     }
     virtual ImVec2& GetMax(int curve) { return mMax.at(curve); }
     virtual ImVec2& GetMin(int curve) { return mMin.at(curve); }
