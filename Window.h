@@ -41,6 +41,24 @@ bool TimelineInitialized = false;
 static int selectedEntry = -1;
 MySequence Timeline;
 
+
+
+//////////////////FUNCTIONS
+int sinresolution = 8;
+float sinmid = 20;
+float sinspeed = 0.1;
+float sinsize = 8;
+float sinoffset = 0.0;
+
+
+
+
+
+
+
+
+
+
 void UpdateTimeline() {
 	
 	Timeline.myItems.clear();
@@ -704,7 +722,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			static const char* current_item2 = "sine";
 			int current_item_id = 0;
 
-			if (ImGui::BeginCombo("##combo", current_item2)) // The second parameter is the label previewed before opening the combo.
+			if (ImGui::BeginCombo("##combo1", current_item2)) // The second parameter is the label previewed before opening the combo.
 			{
 				for (int n = 0; n < IM_ARRAYSIZE(items2); n++)
 				{
@@ -717,12 +735,45 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 				ImGui::EndCombo();
 			}
-			ImGui::SameLine();
-			if (ImGui::Button("Add")) {
-				if (current_item2 == "sine") {
-					Timeline.rampEdit[selectedEntry].RemovePoints(1);
-					for (int i = 0; i < solver.END_FRAME; i+=8) {
-						Timeline.rampEdit[selectedEntry].AddPoint(1,ImVec2(i, 40. * std::sinf((float)i * 0.1) + 20.));
+
+			
+			const char* axes[] = { "size", "x" , "y", "z" };
+			static const char* axis = "size";
+			int ax = 0;
+
+
+			if (ImGui::BeginCombo("##combo2", axis)) {
+				for (int n = 0; n < IM_ARRAYSIZE(axes); n++)
+				{
+					bool is_selected = (axis == axes[n]); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(axes[n], is_selected)) {
+						axis = axes[n];
+					}
+					if (is_selected) {
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+					}
+				}
+				ImGui::EndCombo();
+			}
+			
+			if (current_item2 == "sine") {
+
+				ImGui::SliderInt("step_size", &sinresolution,1,16);
+				ImGui::SliderFloat("speed", &sinspeed, 0.01f, 5);
+				ImGui::SliderFloat("size", &sinsize, 0.01f, 500);
+				ImGui::SliderFloat("mid", &sinmid, 0, 500);
+				ImGui::SliderFloat("offset", &sinoffset, 0, 1);
+
+				if (ImGui::Button("Add")) {
+					for (int z = 0; z < IM_ARRAYSIZE(axes); z++) {
+						if (axes[z] == axis) {
+							ax = z;
+							break;
+						}
+					}
+					Timeline.rampEdit[selectedEntry].RemovePoints(ax);
+					for (int i = 0; i < solver.END_FRAME; i += sinresolution) {
+						Timeline.rampEdit[selectedEntry].AddPoint(ax, ImVec2(i, sinsize * std::sinf(sinoffset + (float)i * sinspeed) + sinmid));
 					}
 
 				}
