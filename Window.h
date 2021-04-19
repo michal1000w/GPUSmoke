@@ -186,7 +186,6 @@ void UpdateSolver() {
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
 	solver.Initialize_Simulation();
-	UpdateTimeline();
 }
 
 
@@ -367,6 +366,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				std::string filename = solver.OPEN_FOLDER;
 				filename = trim(filename);
 				solver.LoadSceneFromFile(filename);
+				UpdateTimeline();
 				OPEN_FILE_TAB = false;
 			}
 			if (ImGui::Button("Close")) {
@@ -446,6 +446,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				solver.SAMPLE_SCENE = 2;
 			solver.preserve_object_list = false;
 			UpdateSolver();
+			UpdateTimeline();
 			solver.preserve_object_list = true;
 		}
 		ImGui::Text("Exporting settings");

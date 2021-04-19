@@ -1076,7 +1076,9 @@ __global__ void sphere_vel(T* target, float3 c,
         //*current = *current + (*current * (vectorLoc) * influence_on_velocity); 
         *current = *current + (*current * (vectorLoc) * influence_on_velocity);
 
-        *current = *current + (*current * (vectorSize)*influence_on_velocity);
+        //*current = *current / 2.0f;
+
+        *current = *current - (*current * (vectorSize)*influence_on_velocity);
 
         //clamp
         
