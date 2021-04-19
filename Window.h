@@ -38,6 +38,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
 bool TimelineInitialized = false;
+static int selectedEntry = -1;
 MySequence Timeline;
 
 void UpdateTimeline() {
@@ -98,15 +99,16 @@ void UpdateAnimation() {
 }
 
 void AddObject2(int type, int j) {
-	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list[j].frame_range_min,
-																&solver.object_list[j].frame_range_max, false });
-	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
+	type = max(0, type)%EmitterCount;
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list.at(j).frame_range_min,
+																&solver.object_list.at(j).frame_range_max, false });
+	Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
 		(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f));
 }
 
 void AddObject(int type) {
 	//std::cout << "Adding object of index " << type << std::endl;
-	type = type % EmitterCount;
+	type = max(0,type) % EmitterCount;
 	std::string name = itemse[type];
 	solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
 	int j = solver.object_list.size() - 1;
@@ -565,6 +567,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				solver.object_list.clear();
 				confirm_button = false;
 				TimelineInitialized = false;
+				selectedEntry = -1;
 			}
 		}
 		if (ImGui::Button("Delete selected")) {
@@ -584,6 +587,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					//TODO
 				}
 			}
+			selectedEntry = min((int)selectedEntry, int(solver.object_list.size()-1));
 			//TimelineInitialized = false;
 		}
 		if (ImGui::Button("Add Emitter")) {
@@ -666,7 +670,6 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		UpdateAnimation();
 
 		// let's create the sequencer
-		static int selectedEntry = -1;
 		static bool expanded = true;//true
 
 		ImGui::PushItemWidth(130);
