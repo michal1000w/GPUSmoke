@@ -1058,9 +1058,9 @@ __global__ void sphere_vel(T* target, float3 c,
 
     float dist = length(p - c);
 
-    float direction = prevSize - radius;
-    if (dist <= (radius + direction) * 1.2 && dist >= radius) { //powiekszanie
-        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+    //float direction = prevSize - radius;
+    if (dist <= radius * 1.2 && dist >= 0) { //powiekszanie
+        float3 vectorSize = (p-c) * (prevSize - radius);
         float3 vectorLoc = make_float3(c.x - prevLoc.x, c.y - prevLoc.y, c.z - prevLoc.z);
 
 
@@ -1070,20 +1070,23 @@ __global__ void sphere_vel(T* target, float3 c,
         float3 minn = make_float3(-max_velocity, -max_velocity, -max_velocity);
 
         //*current = *current + (vector * direction * -1.0f * 0.05f);
+        
+        //*current = *current - (*current * vectorSize * influence_on_velocity); //resize
+        // 
+        // 
+        //*current = *current - (vectorLoc * influence_on_velocity); //translation new
+        *current = *current + (*current * (vectorLoc) * influence_on_velocity);
+
+        //clamp
+        
         current->x = min(current->x, maxx.x);
         current->y = min(current->y, maxx.y);
         current->z = min(current->z, maxx.z);
 
-
-
-        //*current = *current - (*current * vector * direction * influence_on_velocity); //resize
-        //*current = *current - (*current * vectorLoc * influence_on_velocity * 5.0f); //normal
-        *current = *current - (*current * (vectorLoc + vector) * influence_on_velocity); //mix
-
-
-        //current->x = max(current->x, 0.0f);
-        //current->y = max(current->y, 0.0f);
-        //current->z = max(current->z, 0.0f);
+        current->x = max(current->x, -maxx.x);
+        current->y = max(current->y, -maxx.y);
+        current->z = max(current->z, -maxx.z);
+        
     }
 }
 

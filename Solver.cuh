@@ -85,8 +85,8 @@ public:
     float noise_intensity;
     float time_anim = 0.5;
     float density_cutoff = 0.01;
-    float max_velocity = 1.0f;
-    float influence_on_velocity = 0.1f;
+    float max_velocity = 12.0f;
+    float influence_on_velocity = 1.1f;
     float render_step_size = 1.2f;
     float density_influence = 1.0f;
     float fire_multiply = 0.8f;
