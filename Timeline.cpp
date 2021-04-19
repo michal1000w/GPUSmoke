@@ -38,7 +38,7 @@ namespace ImSequencer
         ImGuiIO& io = ImGui::GetIO();
         int cx = (int)(io.MousePos.x);
         int cy = (int)(io.MousePos.y);
-        static float framePixelWidth = 10.f;
+        static float framePixelWidth = 10.f;//10.0f
         static float framePixelWidthTarget = 10.f;
         int legendWidth = 250;
 
@@ -318,7 +318,7 @@ namespace ImSequencer
                 customHeight = 0;
                 for (int i = 0; i < *selectedEntry; i++)
                     customHeight += sequence->GetCustomHeight(i);;
-                draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selectedEntry + 1) + customHeight), 0x801080FF, 1.f);
+                draw_list->AddRectFilled(ImVec2(contentMin.x, contentMin.y + ItemHeight * *selectedEntry + customHeight), ImVec2(contentMin.x + canvas_size.x, contentMin.y + ItemHeight * (*selectedEntry + 1) + customHeight), 0x801080FF, 1.f);//1.0f
             }
 
             // slots
@@ -358,7 +358,7 @@ namespace ImSequencer
                         ImRect& rc = rects[j];
                         if (!rc.Contains(io.MousePos))
                             continue;
-                        draw_list->AddRectFilled(rc.Min, rc.Max, quadColor[j], 2);
+                        draw_list->AddRectFilled(rc.Min, rc.Max, quadColor[j], 2);//2
                     }
 
                     for (int j = 0; j < 3; j++)
@@ -450,7 +450,7 @@ namespace ImSequencer
             // cursor
             if (currentFrame && firstFrame && *currentFrame >= *firstFrame && *currentFrame <= sequence->GetFrameMax())
             {
-                static const float cursorWidth = 8.f;
+                static const float cursorWidth = 8.f; //current frame cursor width
                 float cursorOffset = contentMin.x + legendWidth + (*currentFrame - firstFrameUsed) * framePixelWidth + framePixelWidth / 2 - cursorWidth * 0.5f;
                 draw_list->AddLine(ImVec2(cursorOffset, canvas_pos.y), ImVec2(cursorOffset, contentMax.y), 0xA02A2AFF, cursorWidth);
                 char tmps[512];

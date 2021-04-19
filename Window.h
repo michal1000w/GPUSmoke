@@ -86,7 +86,7 @@ void UpdateTimeline() {
 
 void UpdateAnimation() {
 	int frame = solver.frame;
-//#pragma omp parallel for num_threads(8)
+#pragma omp parallel for num_threads(4)
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
 			frame <= solver.object_list[j].frame_range_max) {
@@ -314,6 +314,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("LM double click on curve - new point");
 			ImGui::Text("LCtrl+Scroll on animation panel\n - zoom in/out");
 			ImGui::Text("Space - pause simulation");
+			ImGui::Text("LCtrl+LM on slider - writing mode");
 
 			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
 
