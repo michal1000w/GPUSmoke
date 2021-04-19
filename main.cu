@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
     */
 #else
     int no_menu_bar_width = 1400;
-    int no_menu_bar__height = 800;
+    int no_menu_bar_height = 800;
     double dpi = 1;
 #endif
     std::cout << "DPI: " << dpi << std::endl;

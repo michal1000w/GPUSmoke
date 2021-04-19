@@ -184,7 +184,7 @@
       </AdditionalCompilerOptions>
       <Defines>_USE_MATH_DEFINES</Defines>
       <AdditionalOptions>--expt-extended-lambda %(AdditionalOptions)</AdditionalOptions>
-      <InterleaveSourceInPTX>true</InterleaveSourceInPTX>
+      <InterleaveSourceInPTX>false</InterleaveSourceInPTX>
       <CodeGeneration>compute_50,sm_50</CodeGeneration>
     </CudaCompile>
     <CudaLink>
