@@ -711,7 +711,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
-			const char* items2[] = { "sine", "TODO"};
+			const char* items2[] = { "sine", "random_noise"};
 			static const char* current_item2 = "sine";
 			int current_item_id = 0;
 
@@ -751,7 +751,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			
 			if (current_item2 == "sine") {
 
-				ImGui::SliderInt("step_size", &sinresolution,1,16);
+				ImGui::SliderInt("step_size", &sinresolution, 1, 16);
 				ImGui::SliderFloat("speed", &sinspeed, 0.01f, 5);
 				ImGui::SliderFloat("size", &sinsize, 0.01f, 500);
 				ImGui::SliderFloat("mid", &sinmid, 0, 500);
@@ -771,6 +771,31 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 				}
 			}
+			else if (current_item2 == "random_noise") {
+
+				ImGui::SliderInt("step_size", &sinresolution, 1, 16);
+				//ImGui::SliderFloat("speed", &sinspeed, 0.01f, 5);
+				ImGui::SliderFloat("size", &sinsize, 0.01f, 500);
+				ImGui::SliderFloat("mid", &sinmid, 0, 500);
+				ImGui::SliderFloat("SEED", &sinoffset, 0, 1);
+
+				srand(unsigned int(sinoffset * 1000));
+
+				if (ImGui::Button("Add")) {
+					for (int z = 0; z < IM_ARRAYSIZE(axes); z++) {
+						if (axes[z] == axis) {
+							ax = z;
+							break;
+						}
+					}
+					Timeline.rampEdit[selectedEntry].RemovePoints(ax);
+					for (int i = 0; i < solver.END_FRAME; i += sinresolution) {
+						Timeline.rampEdit[selectedEntry].AddPoint(ax, ImVec2(i, sinsize * (float(rand() % 1000) / 1000.0f) + sinmid));
+					}
+
+				}
+			}
+			
 			
 
 		}
