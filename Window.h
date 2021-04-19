@@ -23,7 +23,7 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
-
+void AddObject2(int,int);
 //#define WINDOWS7_BUILD
 
 
@@ -36,33 +36,46 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 
 
-const char* items[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
+const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
 bool TimelineInitialized = false;
 MySequence Timeline;
 
 void UpdateTimeline() {
+	
 	Timeline.myItems.clear();
+	
+	for (int i = 0; i < Timeline.rampEdit.size(); i++)
+		for (int j = 0; j < Timeline.rampEdit[i].mMax.size(); j++) {
+			Timeline.rampEdit[i].RemovePoints(j);
+		}
+	Timeline.focused = false;
 	Timeline.rampEdit.clear();
+
 	//dodawanie elementow
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		int current_item_id = 0;
 		for (int i = 0; i < EmitterCount; i++)
-			if (solver.object_list.at(j).get_type2() == items[i]) {
+			if (solver.object_list.at(j).get_type2() == itemse[i]) {
 				current_item_id = i;
 				break;
 			}
+
+		AddObject2(current_item_id, j);
+		/*
+		
 		Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																	&solver.object_list[j].frame_range_max, false });
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 											solver.object_list[j].get_location().x, solver.object_list[j].get_location().y,
 											solver.object_list[j].get_location().z));
+		*/
 	}
 }
 
 
 void UpdateAnimation() {
 	int frame = solver.frame;
-#pragma omp parallel for num_threads(8)
+//#pragma omp parallel for num_threads(8)
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
 			frame <= solver.object_list[j].frame_range_max) {
@@ -84,15 +97,22 @@ void UpdateAnimation() {
 	}
 }
 
-void AddObject(int type) {
-	//std::cout << "Adding object of index " << type << std::endl;
-	std::string name = items[type];
-	solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
-	int j = solver.object_list.size() - 1;
+void AddObject2(int type, int j) {
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list[j].frame_range_min,
 																&solver.object_list[j].frame_range_max, false });
-	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
+	Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
+		(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f));
 }
+
+void AddObject(int type) {
+	//std::cout << "Adding object of index " << type << std::endl;
+	type = type % EmitterCount;
+	std::string name = itemse[type];
+	solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
+	int j = solver.object_list.size() - 1;
+	AddObject2(type,j);
+}
+
 
 void DuplicateObject(int index) {
 	OBJECT obj = solver.object_list[index];
@@ -105,7 +125,7 @@ void DuplicateObject(int index) {
 	int current_item_id = 0;
 #pragma unroll
 	for (int i = 0; i < EmitterCount; i++)
-		if (solver.object_list.at(j).get_type2() == items[i]) {
+		if (solver.object_list.at(j).get_type2() == itemse[i]) {
 			current_item_id = i;
 			break;
 		}
@@ -522,11 +542,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
 		{
-			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+			for (int n = 0; n < IM_ARRAYSIZE(itemse); n++)
 			{
-				bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
-				if (ImGui::Selectable(items[n], is_selected)) {
-					current_item = items[n];
+				bool is_selected = (current_item == itemse[n]); // You can store your selection however you want, outside or inside your objects
+				if (ImGui::Selectable(itemse[n], is_selected)) {
+					current_item = itemse[n];
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
@@ -570,14 +590,19 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
 			//if (current_item == "explosion") {
 			for (int i = 0; i < EmitterCount; i++)
-				if (current_item == items[i]) {
+				if (current_item == itemse[i]) {
 					current_item_id = i;
 					break;
 				}
 			int j = solver.object_list.size() - 1;
+
+			std::cout << current_item_id << " : " << j << std::endl;
+			AddObject2(current_item_id,j);
+			/*
 			Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
 																	&solver.object_list[j].frame_range_max, false });
 			Timeline.rampEdit.push_back(RampEdit());
+			*/
 			//}
 		}
 
@@ -662,13 +687,45 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		//Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &solver.START_FRAME, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
 		Sequencer(&Timeline, &solver.frame, &expanded, &selectedEntry, &begin_frame, ImSequencer::SEQUENCER_EDIT_STARTEND | ImSequencer::SEQUENCER_ADD | ImSequencer::SEQUENCER_DEL | ImSequencer::SEQUENCER_COPYPASTE | ImSequencer::SEQUENCER_CHANGE_FRAME);
 		// add a UI to edit that particular item
-		if (selectedEntry != -1)
+		if (selectedEntry != -1 && Timeline.rampEdit.size() > 0)
 		{
+			
 			const MySequence::MySequenceItem& item = Timeline.myItems[selectedEntry];
 			ImGui::SliderFloat("Minimum", &Timeline.rampEdit[selectedEntry].mMin[0].y, 0.0, 500);
 			ImGui::SliderFloat("Maksimum", &Timeline.rampEdit[selectedEntry].mMax[0].y, 0.0, 500);
 
+
+
+
+			const char* items2[] = { "sine", "TODO"};
+			static const char* current_item2 = "sine";
+			int current_item_id = 0;
+
+			if (ImGui::BeginCombo("##combo", current_item2)) // The second parameter is the label previewed before opening the combo.
+			{
+				for (int n = 0; n < IM_ARRAYSIZE(items2); n++)
+				{
+					bool is_selected = (current_item2 == items2[n]); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(items2[n], is_selected)) {
+						current_item2 = items2[n];
+					}
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
+			ImGui::SameLine();
+			if (ImGui::Button("Add")) {
+				if (current_item2 == "sine") {
+					Timeline.rampEdit[selectedEntry].RemovePoints(1);
+					for (int i = 0; i < solver.END_FRAME; i+=8) {
+						Timeline.rampEdit[selectedEntry].AddPoint(1,ImVec2(i, 40. * std::sinf((float)i * 0.1) + 20.));
+					}
+
+				}
+			}
 			
+
 		}
 
 

@@ -117,7 +117,7 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
-    RampEdit(float start, float end, float x = 45, float y = 15, float z = 65) {
+    RampEdit(float start, float end, float x = 45., float y = 15., float z = 65.) {
         std::vector<ImVec2> pSIZE;
         pSIZE.push_back(ImVec2(start, 0));
         pSIZE.push_back(ImVec2(end, end-start));
@@ -235,6 +235,11 @@ struct RampEdit : public ImCurveEdit::Delegate
         mPointCount[curveIndex] = mPts.at(curveIndex).size();
         SortValues(curveIndex);
     }
+    virtual void RemovePoints(size_t curveIndex) {
+        mPts.at(curveIndex).clear();
+        mPointCount[curveIndex] = 0;
+
+    }
     virtual ImVec2& GetMax(int curve) { return mMax.at(curve); }
     virtual ImVec2& GetMin(int curve) { return mMin.at(curve); }
     virtual ImVec2& GetMax() { return mMax.at(0); }
@@ -281,13 +286,13 @@ struct MySequence : public ImSequencer::SequenceInterface
     virtual const char* GetItemLabel(int index) const
     {
         static char tmps[512];
-        sprintf_s(tmps, "[%02d] %s", index, SequencerItemTypeNames[myItems[index].mType]);
+        sprintf_s(tmps, "[%02d] %s", index, SequencerItemTypeNames[myItems.at(index).mType]);
         return tmps;
     }
 
     virtual void Get(int index, int** start, int** end, int* type, unsigned int* color)
     {
-        MySequenceItem& item = myItems[index];
+        MySequenceItem& item = myItems.at(index);
         if (color)
             *color = 0xFFAA8080; // same color for everyone, return color based on type
         if (start)
@@ -323,14 +328,14 @@ struct MySequence : public ImSequencer::SequenceInterface
     std::vector<RampEdit> rampEdit;
 
     virtual void DoubleClick(int index) {
-        if (myItems[index].mExpanded)
+        if (myItems.at(index).mExpanded)
         {
-            myItems[index].mExpanded = false;
+            myItems.at(index).mExpanded = false;
             return;
         }
         for (auto& item : myItems)
             item.mExpanded = false;
-        myItems[index].mExpanded = !myItems[index].mExpanded;
+        myItems.at(index).mExpanded = !myItems.at(index).mExpanded;
     }
 
     virtual void CustomDraw(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& legendRect, const ImRect& clippingRect, const ImRect& legendClippingRect)
@@ -349,38 +354,42 @@ struct MySequence : public ImSequencer::SequenceInterface
         rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), maks);
         rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), mini);
         */
-        draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
-        for (int i = 0; i < 4; i++) //liczba wykresow  3
-        {
-            ImVec2 pta(legendRect.Min.x + 30, legendRect.Min.y + i * 14.f);
-            ImVec2 ptb(legendRect.Max.x, legendRect.Min.y + (i + 1) * 14.f);
-            draw_list->AddText(pta, rampEdit[index].mbVisible[i] ? 0xFFFFFFFF : 0x80FFFFFF, labels[i]);
-            if (ImRect(pta, ptb).Contains(ImGui::GetMousePos()) && ImGui::IsMouseClicked(0))
-                rampEdit[index].mbVisible[i] = !rampEdit[index].mbVisible[i];
-        }
-        draw_list->PopClipRect();
+        if (rampEdit.size() > 0) {
+            draw_list->PushClipRect(legendClippingRect.Min, legendClippingRect.Max, true);
+            for (int i = 0; i < 4; i++) //liczba wykresow  3
+            {
+                ImVec2 pta(legendRect.Min.x + 30, legendRect.Min.y + i * 14.f);
+                ImVec2 ptb(legendRect.Max.x, legendRect.Min.y + (i + 1) * 14.f);
+                draw_list->AddText(pta, rampEdit[index].mbVisible[i] ? 0xFFFFFFFF : 0x80FFFFFF, labels[i]);
+                if (ImRect(pta, ptb).Contains(ImGui::GetMousePos()) && ImGui::IsMouseClicked(0))
+                    rampEdit[index].mbVisible[i] = !rampEdit[index].mbVisible[i];
+            }
+            draw_list->PopClipRect();
 
-        ImGui::SetCursorScreenPos(rc.Min);
-        ImCurveEdit::Edit(rampEdit[index], rc.Max - rc.Min, 137 + index, &clippingRect);
+            ImGui::SetCursorScreenPos(rc.Min);
+            ImCurveEdit::Edit(rampEdit[index], rc.Max - rc.Min, 137 + index, &clippingRect);
+        }
     }
 
     virtual void CustomDrawCompact(int index, ImDrawList* draw_list, const ImRect& rc, const ImRect& clippingRect)
     {
-        rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.0f);
-        rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
-        draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
-        for (int i = 0; i < 4; i++) //liczba wykresow 3
-        {
-            for (int j = 0; j < rampEdit[index].mPointCount[i]; j++)
+        if (rampEdit.size() > 0) {
+            rampEdit[index].mMax[0] = ImVec2(float(mFrameMax), 40.0f);
+            rampEdit[index].mMin[0] = ImVec2(float(mFrameMin), 0.f);
+            draw_list->PushClipRect(clippingRect.Min, clippingRect.Max, true);
+            for (int i = 0; i < 4; i++) //liczba wykresow 3
             {
-                float p = rampEdit[index].mPts[i][j].x;
-                if (p < *myItems[index].mFrameStart || p > *myItems[index].mFrameEnd)
-                    continue;
-                float r = (p - mFrameMin) / float(mFrameMax - mFrameMin);
-                float x = ImLerp(rc.Min.x, rc.Max.x, r);
-                draw_list->AddLine(ImVec2(x, rc.Min.y + 6), ImVec2(x, rc.Max.y - 4), 0xAA000000, 4.f);
+                for (int j = 0; j < rampEdit[index].mPointCount[i]; j++)
+                {
+                    float p = rampEdit[index].mPts[i][j].x;
+                    if (p < *myItems[index].mFrameStart || p > *myItems[index].mFrameEnd)
+                        continue;
+                    float r = (p - mFrameMin) / float(mFrameMax - mFrameMin);
+                    float x = ImLerp(rc.Min.x, rc.Max.x, r);
+                    draw_list->AddLine(ImVec2(x, rc.Min.y + 6), ImVec2(x, rc.Max.y - 4), 0xAA000000, 4.f);
+                }
             }
+            draw_list->PopClipRect();
         }
-        draw_list->PopClipRect();
     }
 };
