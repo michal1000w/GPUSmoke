@@ -649,7 +649,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			float maxs[] = { solver.New_DOMAIN_RESOLUTION.x,solver.New_DOMAIN_RESOLUTION.y,solver.New_DOMAIN_RESOLUTION.z };
 			float minns[] = { 0.0f,0.0f,0.0f };
 			
-			
+
+
+			solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
+			solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
+			solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
+
+
 			SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
 			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
 			if (ImGui::Button("Apply current size as initial")) {
