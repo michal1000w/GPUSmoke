@@ -198,6 +198,16 @@ struct RampEdit : public ImCurveEdit::Delegate
         //return mPts[curveIndex];
         return &mPts[curveIndex].at(0);
     }
+    bool IsOnPoint(size_t curveIndex, int frame, int& position) {
+        for (int i = 0; i < mPts.at(curveIndex).size(); i++) {
+            if (mPts.at(curveIndex).at(i).x == frame) {
+                position = i;
+                return true;
+            }
+        }
+        position = -1;
+        return false;
+    }
     float GetPointYAtTime(size_t curveIndex, int frame) {
         ImVec2 minn = mPts.at(curveIndex).at(0);
         ImVec2 makss = mPts.at(curveIndex).at(1);

@@ -86,6 +86,8 @@ public:
 	int frame_range_max = 30;
 	float3 previous_location;
 	float previous_size;
+	bool edit_frame = false;
+	bool edit_frame_translation = false;
 private:
 	float impulseDensity;
 	float3 location;

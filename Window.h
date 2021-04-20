@@ -50,7 +50,10 @@ float sinspeed = 0.1;
 float sinsize = 8;
 float sinoffset = 0.0;
 
-
+#define CURVE_SIZE 0
+#define CURVE_X 1
+#define CURVE_Y 2
+#define CURVE_Z 3
 
 
 
@@ -92,17 +95,17 @@ void UpdateAnimation() {
 			frame <= solver.object_list[j].frame_range_max) {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
 
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(1, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(2, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(3, frame);
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x,y,z));
 		}
 		//if (solver.object_list[j].get_type2() == "emitter") {
 		else {
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(1, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(2, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(3, frame);
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 	}
@@ -650,17 +653,69 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			float minns[] = { 0.0f,0.0f,0.0f };
 			
 
+			if (solver.SIMULATE) {
+				solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
+				solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
+				solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
 
-			solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
-			solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
-			solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
+
+				SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+			}
+			else {
+				SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
 
 
-			SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
-			ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
-			if (ImGui::Button("Apply current size as initial")) {
+				int position = -1;
+				if (Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position) &&
+					Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position) &&
+					Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position)) {
+					ImGui::Checkbox("Edit Keyframe", &solver.object_list[object].edit_frame_translation);
+					if (solver.object_list[object].edit_frame_translation) {
+						Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+						Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+						Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+					}
+				}
+				else {
+					if (ImGui::Button("Add Keyframe XYZ")) {
+						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position))
+							Timeline.rampEdit[object].AddPoint(CURVE_X, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position))
+							Timeline.rampEdit[object].AddPoint(CURVE_Y, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position))
+							Timeline.rampEdit[object].AddPoint(CURVE_Z, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+					}
+				}
+			}
+
+
+
+
+
+			if (solver.SIMULATE) {
+				ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].size, 0.0, 200.0);
 				solver.object_list[object].initial_size = solver.object_list[object].size;
 			}
+			else {
+				ImGui::SliderFloat(("size-" + std::to_string(object)).c_str(), &solver.object_list[object].initial_size, 0.0, 200.0);
+				
+				//solver.object_list[object].initial_size = solver.object_list[object].size;
+				int position = -1;
+				if (Timeline.rampEdit[object].IsOnPoint(CURVE_SIZE, solver.frame, position)) {
+					ImGui::Checkbox("Edit Keyframe", &solver.object_list[object].edit_frame);
+					if (solver.object_list[object].edit_frame) {
+						Timeline.rampEdit[object].EditPoint(CURVE_SIZE, position, ImVec2(solver.frame, solver.object_list[object].initial_size));
+					}
+				}
+				else {
+					if (ImGui::Button("Add Keyframe S")) {
+						Timeline.rampEdit[object].AddPoint(CURVE_SIZE, ImVec2(solver.frame, solver.object_list[object].initial_size));
+					}
+				}
+				
+			}
+
+
 			if (solver.object_list[object].type >= 5 && solver.object_list[object].type < 9) {
 				ImGui::SliderFloat(("force strength-" + std::to_string(object)).c_str(), &solver.object_list[object].force_strength, -100.0, 100.0);
 				ImGui::SameLine();
