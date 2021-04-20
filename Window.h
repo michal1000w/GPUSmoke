@@ -663,9 +663,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_particle_path;
 					prt.LoadParticles();
-					solver.object_list.push_back(prt);
-					int j = solver.object_list.size() - 1;
-					AddObject2(PARTICLE, j);
+					if (prt.velocities.size() != 0) {
+						if (prt.velocities.at(0).size() != 0) {
+							solver.object_list.push_back(prt);
+							int j = solver.object_list.size() - 1;
+							AddObject2(PARTICLE, j);
+						}
+					}
 					AddParticleSystem = false;
 				}
 			}

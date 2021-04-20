@@ -97,7 +97,8 @@ public:
 		inFile.open(this->filename, std::ios::binary | std::ios::in);
 		if (!inFile) {
 			std::cout << "Unable to open file" << std::endl;
-			exit(1); // terminate with error
+			return;
+			//exit(1); // terminate with error
 		}
 
 		inFile.seekg(0, std::ios::end);
@@ -116,7 +117,8 @@ public:
 		if (Magic != "BPHYSICS") {
 			std::cout << "Error loading: " << filename << std::endl;
 			std::cout << "   ->   " << Magic << std::endl;
-			exit(1);
+			return;
+			//exit(1);
 		}
 
 
@@ -156,7 +158,8 @@ public:
 		}
 		else {
 			std::cout << "Not a pointache!!!!" << std::endl;
-			exit(1);
+			return;
+			//exit(1);
 		}
 
 
