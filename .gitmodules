@@ -1,0 +1,6 @@
+[submodule "third_party/openvdb"]
+	path = third_party/openvdb
+	url = https://github.com/AcademySoftwareFoundation/openvdb/tree/feature/nanovdb
+[submodule ".\\third_party\\c-blosc"]
+	path = .\\third_party\\c-blosc
+	url = https://github.com/Blosc/c-blosc
