@@ -669,7 +669,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				if (Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position) &&
 					Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position) &&
 					Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position)) {
-					ImGui::Checkbox("Edit Keyframe", &solver.object_list[object].edit_frame_translation);
+					ImGui::Checkbox("Edit Keyframe XYZ", &solver.object_list[object].edit_frame_translation);
 					if (solver.object_list[object].edit_frame_translation) {
 						Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
 						Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
@@ -702,7 +702,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				//solver.object_list[object].initial_size = solver.object_list[object].size;
 				int position = -1;
 				if (Timeline.rampEdit[object].IsOnPoint(CURVE_SIZE, solver.frame, position)) {
-					ImGui::Checkbox("Edit Keyframe", &solver.object_list[object].edit_frame);
+					ImGui::Checkbox("Edit Keyframe S", &solver.object_list[object].edit_frame);
 					if (solver.object_list[object].edit_frame) {
 						Timeline.rampEdit[object].EditPoint(CURVE_SIZE, position, ImVec2(solver.frame, solver.object_list[object].initial_size));
 					}
