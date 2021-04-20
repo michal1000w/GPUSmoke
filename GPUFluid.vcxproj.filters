@@ -124,6 +124,9 @@
     <ClInclude Include="Timeline.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="BPPointCloud.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

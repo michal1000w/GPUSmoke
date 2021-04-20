@@ -1093,7 +1093,25 @@ __global__ void sphere_vel(T* target, float3 c,
     }
 }
 
+template <typename T>
+__global__ void particle_vel(T* target, float3 c,
+    float radius, float3 velocity, float max_velocity, float influence_on_velocity, int3 vd)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
 
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    //float direction = prevSize - radius;
+    if (dist <= radius * 1.2 && dist >= 0) { //powiekszanie
+        target[get_voxel(x, y, z, vd)] = velocity;
+    }
+}
 
 
 

@@ -41,6 +41,39 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->previous_size = size;
 }
 
+
+
+OBJECT::OBJECT(std::string type, float size, std::vector<std::vector<float3>> velocities, std::vector<std::vector<float3>> positions, float3 location, float Temp, float Density, int number, int deviceCount) {
+	this->set_type(type);
+	this->size = size;
+	this->initial_size = size;
+	this->initial_velocity = 1;
+	this->set_velocity_frequence(1);
+	this->location = location;
+	this->set_impulseDensity(Density);
+	this->set_impulseTemp(Temp);
+	this->name = get_object();
+	if (number != -1)
+		this->name += std::to_string(number);
+	this->selected = false;
+	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
+	this->force_strength = 0.0f;
+	this->vdb_object = GRID3D(deviceCount);
+
+	this->previous_location = location;
+	this->previous_size = size;
+
+	this->velocities = velocities;
+	this->positions = positions;
+}
+
+
+
+
+
+
+
+
 OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
 	this->type = obj.type;
 	this->size = size;
@@ -95,6 +128,8 @@ std::string OBJECT::get_type() {
 		return "cols";
 	else if (this->type == EXPLOSION)
 		return "explosion";
+	else if (this->type == PARTICLE)
+		return "particle";
 }
 
 std::string OBJECT::get_type2() {
@@ -118,6 +153,8 @@ std::string OBJECT::get_type2() {
 		return "sphere";
 	else if (this->type == EXPLOSION)
 		return "explosion";
+	else if (this->type == PARTICLE)
+		return "particle";
 }
 
 void OBJECT::set_type(std::string type) {
@@ -141,6 +178,8 @@ void OBJECT::set_type(std::string type) {
 		this->type = COLLISION_SPHERE;
 	else if (type == "explosion" || type == "Explosion" || type == "EXPLOSION")
 		this->type = EXPLOSION;
+	else if (type == "particle" || type == "prt")
+		this->type = PARTICLE;
 	else {
 		std::cout << "Type: " << type << " not known!!!" << std::endl;
 		exit(1);

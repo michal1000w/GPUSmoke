@@ -15,7 +15,7 @@
 #include <tbb/parallel_reduce.h>
 #include <tbb/atomic.h>
 
-
+#include "BPPointCloud.h"
 
 //#include "OpenVDB/tinyvdbio.h"
 

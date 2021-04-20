@@ -101,12 +101,14 @@ void UpdateAnimation() {
 			solver.object_list[j].set_location(make_float3(x,y,z));
 		}
 		//if (solver.object_list[j].get_type2() == "emitter") {
-		else {
+		else if (solver.object_list[j].type != PARTICLE){
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
 			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
 			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
 			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
+		}
+		else {
 		}
 	}
 }
@@ -653,39 +655,47 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			float minns[] = { 0.0f,0.0f,0.0f };
 			
 
-			if (solver.SIMULATE) {
+			if (solver.object_list[object].type != PARTICLE) {
+				if (solver.SIMULATE) {
+					solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
+					solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
+					solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
+
+
+					SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+				}
+				else {
+					SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+
+
+					int position = -1;
+					if (Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position) &&
+						Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position) &&
+						Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position)) {
+						ImGui::Checkbox(std::string("Edit Keyframe XYZ-" + std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
+						if (solver.object_list[object].edit_frame_translation) {
+							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+						}
+					}
+					else {
+						if (ImGui::Button(std::string("Add Keyframe XYZ" + std::to_string(object)).c_str())) {
+							if (!Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position))
+								Timeline.rampEdit[object].AddPoint(CURVE_X, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+							if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position))
+								Timeline.rampEdit[object].AddPoint(CURVE_Y, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+							if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position))
+								Timeline.rampEdit[object].AddPoint(CURVE_Z, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+						}
+					}
+				}
+			}
+			else {
 				solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
 				solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
 				solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
-
-
 				SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
-			}
-			else {
-				SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
-
-
-				int position = -1;
-				if (Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position) &&
-					Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position) &&
-					Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position)) {
-					ImGui::Checkbox(std::string("Edit Keyframe XYZ-"+std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
-					if (solver.object_list[object].edit_frame_translation) {
-						Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
-						Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
-						Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(solver.frame, solver.object_list[object].Location[2]));
-					}
-				}
-				else {
-					if (ImGui::Button(std::string("Add Keyframe XYZ" + std::to_string(object)).c_str())) {
-						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position))
-							Timeline.rampEdit[object].AddPoint(CURVE_X, ImVec2(solver.frame, solver.object_list[object].Location[0]));
-						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position))
-							Timeline.rampEdit[object].AddPoint(CURVE_Y, ImVec2(solver.frame, solver.object_list[object].Location[1]));
-						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position))
-							Timeline.rampEdit[object].AddPoint(CURVE_Z, ImVec2(solver.frame, solver.object_list[object].Location[2]));
-					}
-				}
 			}
 
 

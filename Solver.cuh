@@ -481,6 +481,7 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
 
+        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -491,7 +492,7 @@ public:
                 positionx += ((vol_d.x * 0.25) * std::sinf(3.312313f * float(i)));
                 positionz += ((vol_d.z * 0.25) * std::cosf(2.1998443f * float(i)));
                 
-                OBJECT temp2("explosion", 3.0f, /*size*/ 1, 0.3, temp, 0.9, make_float3(
+                OBJECT temp2("explosion", 3.0f, 1, 0.3, temp, 0.9, make_float3(
                     positionx, 5, positionz), object_list.size(),
                     this->devicesCount);
                 temp2.frame_range_min = i;
@@ -499,13 +500,32 @@ public:
                 object_list.push_back(temp2);
             }
         }
-        /*
-        if (!preserve_object_list || force) {
-            object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.9, 5, 0.9, make_float3(vol_d.x * 0.25, 10.0, vol_d.z/2.0), object_list.size()));
-            //object_list.push_back(OBJECT("emitter", 18.0f, 50, 0.6, 5, 0.9, make_float3(vol_d.x * 0.5, 0.0, vol_d.z / 2.0), object_list.size()));
-            object_list.push_back(OBJECT("explosion", 18.0f, 50, 0.3, 5, 0.9, make_float3(vol_d.x * 0.75, 10.0, vol_d.z / 2.0), object_list.size()));
-        }
         */
+        if (!preserve_object_list || force) {
+            auto filelist = get_file_list("./input/exp1/");
+            std::vector<std::vector<float3>> positions;
+            std::vector<std::vector<float3>> velocities;
+            for (int i = 0; i < filelist.size(); i++) {
+                std::cout << i << "/" << filelist.size() << "\n";
+                BPReader bpr(filelist[i]);
+                bpr.ReadData();
+                std::vector<float3> poss;
+                std::vector<float3> vell;
+                for (int j = 0; j < bpr.particles.size(); j++) {
+                    poss.push_back(bpr.particles[j].position);
+                    vell.push_back(bpr.particles[j].velocity);
+                }
+                positions.push_back(poss);
+                velocities.push_back(vell);
+            }
+            OBJECT prt("particle", 1.0f, velocities, positions, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
+            prt.frame_range_min = 0;
+            prt.frame_range_max = filelist.size();
+            object_list.push_back(prt);
+        }
+        //bpr.PrintParticles();
+
+
     }
 
     void Initialize(int DevicesCount = 1, int Best_Device_Index = 0) {
