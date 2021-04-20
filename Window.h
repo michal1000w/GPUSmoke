@@ -669,7 +669,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				if (Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position) &&
 					Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position) &&
 					Timeline.rampEdit[object].IsOnPoint(CURVE_Z, solver.frame, position)) {
-					ImGui::Checkbox("Edit Keyframe XYZ", &solver.object_list[object].edit_frame_translation);
+					ImGui::Checkbox(std::string("Edit Keyframe XYZ-"+std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
 					if (solver.object_list[object].edit_frame_translation) {
 						Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
 						Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
@@ -677,7 +677,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					}
 				}
 				else {
-					if (ImGui::Button("Add Keyframe XYZ")) {
+					if (ImGui::Button(std::string("Add Keyframe XYZ" + std::to_string(object)).c_str())) {
 						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_X, solver.frame, position))
 							Timeline.rampEdit[object].AddPoint(CURVE_X, ImVec2(solver.frame, solver.object_list[object].Location[0]));
 						if (!Timeline.rampEdit[object].IsOnPoint(CURVE_Y, solver.frame, position))
@@ -702,13 +702,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				//solver.object_list[object].initial_size = solver.object_list[object].size;
 				int position = -1;
 				if (Timeline.rampEdit[object].IsOnPoint(CURVE_SIZE, solver.frame, position)) {
-					ImGui::Checkbox("Edit Keyframe S", &solver.object_list[object].edit_frame);
+					ImGui::Checkbox(std::string("Edit Keyframe S" + std::to_string(object)).c_str(), &solver.object_list[object].edit_frame);
 					if (solver.object_list[object].edit_frame) {
 						Timeline.rampEdit[object].EditPoint(CURVE_SIZE, position, ImVec2(solver.frame, solver.object_list[object].initial_size));
 					}
 				}
 				else {
-					if (ImGui::Button("Add Keyframe S")) {
+					if (ImGui::Button(std::string("Add Keyframe S" + std::to_string(object)).c_str())) {
 						Timeline.rampEdit[object].AddPoint(CURVE_SIZE, ImVec2(solver.frame, solver.object_list[object].initial_size));
 					}
 				}
