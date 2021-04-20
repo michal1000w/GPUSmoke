@@ -109,6 +109,7 @@ void UpdateAnimation() {
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 		else {
+			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
 		}
 	}
 }
