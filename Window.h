@@ -24,7 +24,7 @@ extern Solver solver;
 #include <imgui/misc/single_file/imgui_single_file.h>
 
 void AddObject2(int,int);
-//#define WINDOWS7_BUILD
+#define WINDOWS7_BUILD
 
 
 static void cursorPositionCallback(GLFWwindow* window, double xPos, double yPos);
