@@ -78,12 +78,14 @@ int main(int argc, char* argv[]) {
     cudaSetDevice(Best_Device_Index);
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
 
+#ifndef WINDOWS7_BUILD
     if (false) {
         cudaDeviceProp deviceProperties;
         cudaGetDeviceProperties(&deviceProperties, Best_Device_Index);
         cudaDeviceSetLimit(cudaLimitPersistingL2CacheSize, deviceProperties.persistingL2CacheMaxSize); /* Set aside max possible size of L2 cache for persisting accesses */
         std::cout << "Setting L2 max cache: " << deviceProperties.persistingL2CacheMaxSize << std::endl;
     }
+#endif // !WINDOWS7_BUILD
 
     EnableP2Psharing(devicesCount);
     cudaSetDevice(Best_Device_Index);
