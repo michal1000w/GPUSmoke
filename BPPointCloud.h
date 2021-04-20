@@ -87,6 +87,82 @@ public:
 		inFile.close();
 	}
 
+	void ReadData1() {
+		std::ifstream inFile;
+
+
+		inFile.open(this->filename, std::ios::binary | std::ios::in);
+		if (!inFile) {
+			std::cout << "Unable to open file" << std::endl;
+			exit(1); // terminate with error
+		}
+
+		inFile.seekg(0, std::ios::end);
+		int length = inFile.tellg();
+		inFile.seekg(0, std::ios::beg);
+
+		//std::cout << length << std::endl;
+
+
+		char magic[8] = "";
+		inFile.read(magic, sizeof(magic));
+		std::string Magic = "";
+		for (int j = 0; j < 8; j++)
+			Magic += magic[j];
+
+		if (Magic != "BPHYSICS") {
+			std::cout << "Error loading: " << filename << std::endl;
+			std::cout << "   ->   " << Magic << std::endl;
+			exit(1);
+		}
+
+
+		int flavor[3];
+		inFile.read((char*)flavor, sizeof(flavor));
+		//std::cout << "Flavour: " << flavor[0] << "   Count: " << flavor[1] << "   Something: " << flavor[2] << std::endl;
+
+		length -= sizeof(magic) + sizeof(flavor);
+
+		if (flavor[0] == 1) {
+			std::cout << "Point Cache" << std::endl;
+
+
+			while (true) {
+				int ID[1];
+				float numbers[6];
+
+				length -= 7 * sizeof(float);
+				if (length < 0) {
+					std::cout << "Too short!!!" << std::endl;
+					break;
+				}
+				//std::cout << length << std::endl;
+
+				inFile.read((char*)ID, sizeof(ID));
+				inFile.read((char*)numbers, sizeof(numbers));
+				
+				Particle particle;
+				particle.ID = ID[0];
+				particle.position = make_float3(numbers[0], numbers[2], numbers[1]);
+				particle.velocity = make_float3(numbers[3], numbers[5], numbers[4]);
+				this->particles.push_back(particle);
+			}
+
+			inFile.close();
+
+		}
+		else {
+			std::cout << "Not a pointache!!!!" << std::endl;
+			exit(1);
+		}
+
+
+
+		//std::cout << "No error" << std::endl;
+		//PrintParticles();
+		//exit(1);
+	}
+
 	void PrintParticles() {
 		for (int i = 0; i < particles.size(); i++) {
 			particles[i].print();

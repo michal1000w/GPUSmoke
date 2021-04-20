@@ -502,13 +502,16 @@ public:
         }
         */
         if (!preserve_object_list || force) {
-            auto filelist = get_file_list("./input/exp1/");
+            auto filelist = get_file_list("./input/exp2/"); //exp1
             std::vector<std::vector<float3>> positions;
             std::vector<std::vector<float3>> velocities;
             for (int i = 0; i < filelist.size(); i++) {
                 std::cout << i << "/" << filelist.size() << "\n";
                 BPReader bpr(filelist[i]);
-                bpr.ReadData();
+                bpr.ReadData1();
+                //bpr.PrintParticles();
+
+                //bpr.ReadData();
                 std::vector<float3> poss;
                 std::vector<float3> vell;
                 for (int j = 0; j < bpr.particles.size(); j++) {
@@ -523,7 +526,6 @@ public:
             prt.frame_range_max = filelist.size();
             object_list.push_back(prt);
         }
-        //bpr.PrintParticles();
 
 
     }
