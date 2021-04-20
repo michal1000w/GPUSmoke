@@ -36,7 +36,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 
 
-const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere" };
+const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle" };
 bool TimelineInitialized = false;
 static int selectedEntry = -1;
 MySequence Timeline;
@@ -125,9 +125,14 @@ void AddObject(int type) {
 	//std::cout << "Adding object of index " << type << std::endl;
 	type = max(0,type) % EmitterCount;
 	std::string name = itemse[type];
-	solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
-	int j = solver.object_list.size() - 1;
-	AddObject2(type,j);
+	if (name == "particle") {
+		std::cout << "Currently not supported" << std::endl;
+	}
+	else {
+		solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
+		int j = solver.object_list.size() - 1;
+		AddObject2(type, j);
+	}
 }
 
 
@@ -622,6 +627,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			//TimelineInitialized = false;
 		}
 		if (ImGui::Button("Add Emitter")) {
+			/*
 			solver.object_list.push_back(OBJECT(current_item, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size()));
 			//if (current_item == "explosion") {
 			for (int i = 0; i < EmitterCount; i++)
@@ -633,12 +639,13 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 			std::cout << current_item_id << " : " << j << std::endl;
 			AddObject2(current_item_id,j);
-			/*
-			Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
-																	&solver.object_list[j].frame_range_max, false });
-			Timeline.rampEdit.push_back(RampEdit());
 			*/
-			//}
+			for (int i = 0; i < EmitterCount; i++)
+				if (current_item == itemse[i]) {
+					current_item_id = i;
+					break;
+				}
+			AddObject(current_item_id);
 		}
 
 		ImGui::Text("Object list:");
