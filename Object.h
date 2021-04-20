@@ -94,6 +94,7 @@ public:
 
 	std::vector<std::vector<float3>> velocities;
 	std::vector<std::vector<float3>> positions;
+	float scale = 1.0f;
 private:
 	float impulseDensity;
 	float3 location;

@@ -218,25 +218,26 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     for (int zz = 0; zz < current.positions[frame].size(); zz++) {
                         impulse << <grid, block >> > (
                             state.flame->readTargett(current_device),
-                            current.get_location() + current.positions[frame][zz], current.get_size(),
+                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
                             current.get_impulseTemp(),
                             state.dim
                             );
                         impulse << <grid, block >> > (
                             state.temperature->readTargett(current_device),
-                            current.get_location() + current.positions[frame][zz], current.get_size(),
+                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
                             current.get_impulseTemp(),
                             state.dim
                             );
                         impulse << <grid, block >> > (
                             state.density->readTargett(current_device),
-                            current.get_location() + current.positions[frame][zz], current.get_size(),
+                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
                             current.get_impulseDensity(),
                             state.dim
                             );
                         particle_vel << < grid, block >> > (
                             state.velocity->readTargett(current_device),
-                            current.get_location() + current.positions[frame][zz], current.size, current.velocities[frame][zz],
+                            (current.get_location() + current.positions[frame][zz] * current.scale),
+                            current.size, current.velocities[frame][zz] * current.scale,
                             max_velocity, influence_on_velocity,
                             state.dim
                             );
