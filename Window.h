@@ -476,9 +476,23 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	{
 		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Domain Resolution");
-		ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, 490);
-		ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, 490);
-		ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, 490);
+
+
+
+
+		int maxx = round(MAX_BOK * ratioo);
+		int maxy = round(MAX_BOK * ratioo);
+		int maxz = round(MAX_BOK * ratioo);
+
+		ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, maxx);
+		ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, maxy);
+		ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, maxz);
+
+		solver.New_DOMAIN_RESOLUTION.x = min(solver.New_DOMAIN_RESOLUTION.x, maxx);
+		solver.New_DOMAIN_RESOLUTION.y = min(solver.New_DOMAIN_RESOLUTION.y, maxy);
+		solver.New_DOMAIN_RESOLUTION.z = min(solver.New_DOMAIN_RESOLUTION.z, maxz);
+
+		ratioo = (MAX_BOK * 3.f) / float(solver.New_DOMAIN_RESOLUTION.x + solver.New_DOMAIN_RESOLUTION.y + solver.New_DOMAIN_RESOLUTION.z);
 
 
 
@@ -491,7 +505,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
 		ImGui::SliderFloat("Max Velocity", &solver.max_velocity, 0.0f, 20.0f);
 		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 5.1f);
-		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 96);
+		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 150);
 		if (ImGui::Button("Simulate")) {
 			if (solver.SIMULATE == false)
 				solver.SIMULATE = true;

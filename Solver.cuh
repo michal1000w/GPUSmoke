@@ -9,6 +9,9 @@
 #define OBJECTS_EXPERIMENTAL
 #define CPU_WAVELET false
 
+#define MAX_BOK 490.0f
+#define MAX_VOXEL_COUNT MAX_BOK*MAX_BOK*MAX_BOK*2.0
+float ratioo = 1.0f;
 
 
 #ifdef EXPERIMENTAL
@@ -407,7 +410,7 @@ public:
         time_step = speed * 0.1; //chyba dobre
     }
     void UpdateDomainResolution() {
-        if (New_DOMAIN_RESOLUTION.x * New_DOMAIN_RESOLUTION.y * New_DOMAIN_RESOLUTION.z <= 490*490*490){
+        if (New_DOMAIN_RESOLUTION.x * New_DOMAIN_RESOLUTION.y * New_DOMAIN_RESOLUTION.z <= MAX_VOXEL_COUNT){
             DOMAIN_RESOLUTION = New_DOMAIN_RESOLUTION;
             std::cout << "New domain resolution set\n";
             }
