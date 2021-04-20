@@ -129,7 +129,7 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LibraryPath>C:\Users\micha\source\repos\GPUFluid\third_party\openvdb_headers\bin;$(LibraryPath)</LibraryPath>
+    <LibraryPath>third_party\openvdb_headers\bin;$(LibraryPath)</LibraryPath>
     <TargetName>JFlowAlpha</TargetName>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
