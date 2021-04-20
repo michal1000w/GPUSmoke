@@ -15,7 +15,9 @@ extern Solver solver;
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 
-
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <filesystem>
+#include <experimental/filesystem>
 #include <thread>
 
 #include <imgui/imgui_internal.h>
@@ -39,6 +41,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle" };
 bool TimelineInitialized = false;
 bool AddParticleSystem = false;
+char temp_particle_path[512] = { "./input/exp2/" };
 static int selectedEntry = -1;
 MySequence Timeline;
 
@@ -128,7 +131,7 @@ void AddObject(int type) {
 	type = max(0,type) % EmitterCount;
 	std::string name = itemse[type];
 	if (name == "particle") {
-		std::cout << "Currently not supported" << std::endl;
+		
 	}
 	else {
 		solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
@@ -647,7 +650,25 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					current_item_id = i;
 					break;
 				}
-			AddObject(current_item_id);
+			if (current_item == "particle")
+				AddParticleSystem = true;
+			else
+				AddObject(current_item_id);
+		}
+
+		if (AddParticleSystem && current_item == "particle") {
+			ImGui::InputText("filepath", temp_particle_path, IM_ARRAYSIZE(temp_particle_path));
+			if (std::experimental::filesystem::is_directory(temp_particle_path)) {
+				if (ImGui::Button("Confirm")) {
+					OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
+					prt.particle_filepath = temp_particle_path;
+					prt.LoadParticles();
+					solver.object_list.push_back(prt);
+					int j = solver.object_list.size() - 1;
+					AddObject2(PARTICLE, j);
+					AddParticleSystem = false;
+				}
+			}
 		}
 
 		ImGui::Text("Object list:");
