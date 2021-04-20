@@ -1,6 +1,9 @@
 #include "Object.h"
 
 
+#include "BPPointCloud.h"
+#include "GetFileList.h"
+
 ////////////////////////CONSTRUCTORS//////////////////////////////////
 /*
 OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float3 location, int number) {
@@ -19,6 +22,24 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 }
 */
+void OBJECT::LoadParticles() {
+	auto filelist = get_file_list(this->particle_filepath);
+	for (int i = 0; i < filelist.size(); i++) {
+		std::cout << i << "/" << filelist.size() << "\n";
+		BPReader bpr(filelist[i]);
+		bpr.ReadData1();
+		std::vector<float3> poss;
+		std::vector<float3> vell;
+		for (int j = 0; j < bpr.particles.size(); j++) {
+			poss.push_back(bpr.particles[j].position);
+			vell.push_back(bpr.particles[j].velocity);
+		}
+		positions.push_back(poss);
+		velocities.push_back(vell);
+	}
+	frame_range_min = 0;
+	frame_range_max = filelist.size();
+}
 
 OBJECT::OBJECT(std::string type, float size, float initial_velocity, float velocity_frequence, float Temp, float Density, float3 location, int number, int deviceCount) {
 	this->set_type(type);
@@ -66,7 +87,26 @@ OBJECT::OBJECT(std::string type, float size, std::vector<std::vector<float3>> ve
 	this->velocities = velocities;
 	this->positions = positions;
 }
+OBJECT::OBJECT(std::string type, float size, float3 location, float Temp, float Density, int number, int deviceCount) {
+	this->set_type(type);
+	this->size = size;
+	this->initial_size = size;
+	this->initial_velocity = 1;
+	this->set_velocity_frequence(1);
+	this->location = location;
+	this->set_impulseDensity(Density);
+	this->set_impulseTemp(Temp);
+	this->name = get_object();
+	if (number != -1)
+		this->name += std::to_string(number);
+	this->selected = false;
+	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
+	this->force_strength = 0.0f;
+	this->vdb_object = GRID3D(deviceCount);
 
+	this->previous_location = location;
+	this->previous_size = size;
+}
 
 
 

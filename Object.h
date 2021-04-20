@@ -36,6 +36,7 @@ public:
 	//OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f, float3 location = make_float3(0.0,0.0,0.0), int number = -1);
 	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f,float Temp = 5.0f, float Density = 0.9f, float3 location = make_float3(0.0, 0.0, 0.0), int number = -1, int deviceCount = 1);
 	OBJECT(std::string type, float size, std::vector<std::vector<float3>> velocities, std::vector<std::vector<float3>> positions, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
+	OBJECT(std::string type, float size, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
 	OBJECT(OBJECT &obj, int number, int deviceCount);
 	//SETTERS-GETTERS
 	std::string get_type();
@@ -67,6 +68,8 @@ public:
 	void reset();
 	void update();
 	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
+	void LoadParticles();
+
 
 	bool selected;
 	float Location[3];
@@ -95,6 +98,7 @@ public:
 	std::vector<std::vector<float3>> velocities;
 	std::vector<std::vector<float3>> positions;
 	float scale = 1.0f;
+	std::string particle_filepath = "";
 private:
 	float impulseDensity;
 	float3 location;

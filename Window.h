@@ -38,6 +38,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle" };
 bool TimelineInitialized = false;
+bool AddParticleSystem = false;
 static int selectedEntry = -1;
 MySequence Timeline;
 

@@ -127,6 +127,9 @@
     <ClInclude Include="BPPointCloud.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="GetFileList.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

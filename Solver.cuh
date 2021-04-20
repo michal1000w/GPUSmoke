@@ -4,7 +4,6 @@
 #include "Renderer.cuh"
 
 
-
 #define EXPERIMENTAL
 #define OBJECTS_EXPERIMENTAL
 #define CPU_WAVELET false
@@ -17,6 +16,15 @@ float ratioo = 1.0f;
 
 
 #ifdef EXPERIMENTAL
+
+std::vector<std::string> get_file_list2(std::string directory) {
+    std::vector<std::string> list;
+    for (const auto& entry : std::experimental::filesystem::directory_iterator(directory)) {
+        //std::cout << entry.path() << std::endl;
+        list.push_back(entry.path().string());
+    }
+    return list;
+}
 
 std::string trim(const std::string& str,
     const std::string& whitespace = " \t")
@@ -144,7 +152,7 @@ public:
     }
 
     std::vector<std::string> getFilesList(std::string directory) {
-        return get_file_list(directory);
+        return get_file_list2(directory);
     }
 
     void SaveSceneToFile(std::string fielname) {
@@ -502,6 +510,7 @@ public:
         }
         */
         if (!preserve_object_list || force) {
+            /*
             auto filelist = get_file_list("./input/exp2/"); //exp1
             std::vector<std::vector<float3>> positions;
             std::vector<std::vector<float3>> velocities;
@@ -524,6 +533,10 @@ public:
             OBJECT prt("particle", 1.0f, velocities, positions, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
             prt.frame_range_min = 0;
             prt.frame_range_max = filelist.size();
+            */
+            OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
+            prt.particle_filepath = "./input/exp2/";
+            prt.LoadParticles();
             object_list.push_back(prt);
         }
 

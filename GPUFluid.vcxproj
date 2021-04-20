@@ -20,6 +20,7 @@
     <ClInclude Include="Fluid_Kernels_Fast.cuh" />
     <ClInclude Include="Fluid_Kernels_Faster.cuh" />
     <ClInclude Include="Fluid_State.cuh" />
+    <ClInclude Include="GetFileList.h" />
     <ClInclude Include="GRID3D.h" />
     <ClInclude Include="ImCurveEdit.h" />
     <ClInclude Include="IO.h" />

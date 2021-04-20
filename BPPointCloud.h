@@ -3,12 +3,15 @@
 #include <fstream>
 #include <vector>
 #include "cutil_math.h"
-
+#define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
+#include <filesystem>
+#include <experimental/filesystem>
 
 #include <string>
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+
 
 template <class Container>
 void split(const std::string& str, Container& cont, char delim = ' ') {
