@@ -158,7 +158,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>third_party\GLFW\include;third_party\openvdb_headers\include;third_party/openvdb/nanovdb/;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third_party\GLFW\include;third_party\openvdb_headers\include;third_party\openvdb\nanovdb\;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard_C>stdc17</LanguageStandard_C>

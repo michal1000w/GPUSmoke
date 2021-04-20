@@ -6,6 +6,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING
 #include <filesystem>
 #include <experimental/filesystem>
+#include <nanovdb/util/Primitives.h>
 
 #include <vector>
 
