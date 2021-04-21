@@ -388,6 +388,22 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 }
             }
             else if (current.get_type() == "fft") {
+                force_field_turbulance2 << <grid, block >> > (
+                    state.velocity->readTargett(current_device),
+                    state.velocity->readTargett(current_device),
+                    state.noise->readTargett(current_device),
+                    current.size,
+                    current.get_location(),
+                    state.dim,
+                    current.square ? current.force_strength : current.force_strength * 0.01,
+                    0.7f,
+                    current.scale,
+                    frame,
+                    current.velocity_frequence,
+                    NOISE_R
+                    );
+            /*
+            
                 if (current.square) {
                     force_field_turbulance << < grid, block >> > (
                         state.velocity->readTargett(current_device),
@@ -406,6 +422,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         frame
                         );
                 }
+                */
                 if (current.vel_freq_mov) {
                     current.set_vel_freq += current.vel_freq_step;
                     if (current.set_vel_freq >= current.max_vel_freq)

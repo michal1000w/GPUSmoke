@@ -76,9 +76,6 @@
     <ClInclude Include="openvdb-old\blosc.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
-    <ClInclude Include="openvdb-old\blosc-export.h">
-      <Filter>OpenVDB</Filter>
-    </ClInclude>
     <ClInclude Include="openvdb-old\tinyvdbio.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
@@ -129,6 +126,9 @@
     </ClInclude>
     <ClInclude Include="GetFileList.h">
       <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h">
+      <Filter>OpenVDB</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

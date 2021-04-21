@@ -483,6 +483,30 @@ __global__ void force_field_turbulance(T* target, float3 c,
     }
 }
 
+template <typename V, typename T>
+__global__ void force_field_turbulance2(T* v_src, T* v_dest, V* noise, float radius, float3 c,
+    int3 vd, float intensity, float offset, float scale, int frame = 1, float time_anim = 0.5f, float NOISE_R = 64)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+    T cur = v_dest[get_voxel(x, y, z, vd)];
+
+    if (dist < radius) {
+        float power = intensity * (1.0f / ((dist * dist) + EPSILON));
+        v_dest[get_voxel(x, y, z, vd)] = cur + (evaluateCurlGPU(make_float3(x, y, z), vd, noise,
+            NOISE_R, offset * 10.0, scale * 2.0, time_anim * float(frame % 256)/*Time Anim*/, 0/*frame % 128*/) * intensity * 1.5f)
+            * power;
+    }
+}
+
 template <typename T>
 __global__ void wavey_impulse_temperature(T* target, float3 c,
     float3 size, T base, float amp, float freq, int3 vd, int frame)

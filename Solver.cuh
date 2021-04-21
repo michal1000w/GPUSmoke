@@ -489,7 +489,6 @@ public:
     void ExampleScene(bool force = false) {
         //adding emitters
 
-        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -508,38 +507,15 @@ public:
                 object_list.push_back(temp2);
             }
         }
-        */
+        /*
         if (!preserve_object_list || force) {
-            /*
-            auto filelist = get_file_list("./input/exp2/"); //exp1
-            std::vector<std::vector<float3>> positions;
-            std::vector<std::vector<float3>> velocities;
-            for (int i = 0; i < filelist.size(); i++) {
-                std::cout << i << "/" << filelist.size() << "\n";
-                BPReader bpr(filelist[i]);
-                bpr.ReadData1();
-                //bpr.PrintParticles();
-
-                //bpr.ReadData();
-                std::vector<float3> poss;
-                std::vector<float3> vell;
-                for (int j = 0; j < bpr.particles.size(); j++) {
-                    poss.push_back(bpr.particles[j].position);
-                    vell.push_back(bpr.particles[j].velocity);
-                }
-                positions.push_back(poss);
-                velocities.push_back(vell);
-            }
-            OBJECT prt("particle", 1.0f, velocities, positions, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
-            prt.frame_range_min = 0;
-            prt.frame_range_max = filelist.size();
-            */
             OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
             prt.particle_filepath = "./input/exp2/";
             prt.LoadParticles();
             object_list.push_back(prt);
         }
 
+        */
 
     }
 

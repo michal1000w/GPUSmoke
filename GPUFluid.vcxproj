@@ -27,7 +27,6 @@
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="LoadTexture.h" />
     <ClInclude Include="Object.h" />
-    <ClInclude Include="openvdb-old\blosc-export.h" />
     <ClInclude Include="openvdb-old\blosc.h" />
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
@@ -36,6 +35,7 @@
     <ClInclude Include="Solver.cuh" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="IndexBuffer.h" />
+    <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="third_party\imgui\imconfig.h" />
@@ -159,7 +159,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;NANOVDB_USE_BLOSC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>third_party\GLFW\include;third_party\openvdb_headers\include;third_party\openvdb\nanovdb\;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
