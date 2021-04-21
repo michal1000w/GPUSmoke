@@ -744,11 +744,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					ImGui::Checkbox(std::string("Edit Keyframe XYZ-" + std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
 					if (solver.object_list[object].edit_frame_translation) {
 						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_X]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_X].at(position).x, solver.object_list[object].Location[0]));
 						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Y]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_Y].at(position).x, solver.object_list[object].Location[1]));
 						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Z]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_Z].at(position).x, solver.object_list[object].Location[2]));
 					}
 				}
 
