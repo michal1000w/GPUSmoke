@@ -126,7 +126,13 @@ void UpdateAnimation() {
 
 void AddObject2(int type, int j, int particle_system) {
 	type = max(0, type)%EmitterCount;
-	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list.at(j).frame_range_min,
+	int current_item_id = 0;
+	for (int i = 0; i < EmitterCount; i++)
+		if (solver.object_list.at(j).get_type2() == itemse[i]) {
+			current_item_id = i;
+			break;
+		}
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list.at(j).frame_range_min,
 																&solver.object_list.at(j).frame_range_max, false });
 
 	if (type == EXPLOSION || type == PARTICLE) {
