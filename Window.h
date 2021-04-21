@@ -25,7 +25,7 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
-void AddObject2(int,int);
+void AddObject2(int,int,bool ps = false);
 //#define WINDOWS7_BUILD
 
 
@@ -85,8 +85,10 @@ void UpdateTimeline() {
 				current_item_id = i;
 				break;
 			}
-
-		AddObject2(current_item_id, j);
+		if (solver.object_list.at(j).get_type2() == "particle")
+			AddObject2(current_item_id, j, true);
+		else
+			AddObject2(current_item_id, j);
 	}
 }
 
@@ -118,12 +120,12 @@ void UpdateAnimation() {
 	}
 }
 
-void AddObject2(int type, int j) {
+void AddObject2(int type, int j, bool particle_system) {
 	type = max(0, type)%EmitterCount;
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list.at(j).frame_range_min,
 																&solver.object_list.at(j).frame_range_max, false });
 	Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
-		(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f));
+		(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
 }
 
 void AddObject(int type) {
@@ -667,7 +669,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 						if (prt.velocities.at(0).size() != 0) {
 							solver.object_list.push_back(prt);
 							int j = solver.object_list.size() - 1;
-							AddObject2(PARTICLE, j);
+							AddObject2(PARTICLE, j, true);
 						}
 					}
 					AddParticleSystem = false;
