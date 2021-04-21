@@ -117,15 +117,22 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMin.push_back(ImVec2(0.f, 0.f));
         mMin.push_back(ImVec2(0.f, 0.f));
     }
-    RampEdit(float start, float end, float x = 45., float y = 15., float z = 65., bool particle_system = false) {
-        if (particle_system) {
+    RampEdit(float start, float end, float x = 45., float y = 15., float z = 65., int particle_system = 0) {
+        if (particle_system == 1) { //PARTICLE
             std::vector<ImVec2> pSIZE;
             pSIZE.push_back(ImVec2(start, 2.5));
             pSIZE.push_back(ImVec2(end, 0));
             mPointCount[0] = pSIZE.size();
             mPts.push_back(pSIZE);
         }
-        else {
+        else if (particle_system == 2) { //OTHER
+            std::vector<ImVec2> pSIZE;
+            pSIZE.push_back(ImVec2(start, 10.0f));
+            pSIZE.push_back(ImVec2(end, 10.0f));
+            mPointCount[0] = pSIZE.size();
+            mPts.push_back(pSIZE);
+        }
+        else { //EMITTER EXPLOSITON
             std::vector<ImVec2> pSIZE;
             pSIZE.push_back(ImVec2(start, 0));
             pSIZE.push_back(ImVec2(end, end - start));

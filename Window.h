@@ -25,7 +25,7 @@ extern Solver solver;
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
 
-void AddObject2(int,int,bool ps = false);
+void AddObject2(int,int,int ps = 0);
 //#define WINDOWS7_BUILD
 
 
@@ -86,9 +86,9 @@ void UpdateTimeline() {
 				break;
 			}
 		if (solver.object_list.at(j).get_type2() == "particle")
-			AddObject2(current_item_id, j, true);
+			AddObject2(solver.object_list.at(j).type, j, 1);
 		else
-			AddObject2(current_item_id, j);
+			AddObject2(solver.object_list.at(j).type, j);
 	}
 }
 
@@ -124,12 +124,19 @@ void UpdateAnimation() {
 	}
 }
 
-void AddObject2(int type, int j, bool particle_system) {
+void AddObject2(int type, int j, int particle_system) {
 	type = max(0, type)%EmitterCount;
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ type, &solver.object_list.at(j).frame_range_min,
 																&solver.object_list.at(j).frame_range_max, false });
-	Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
-		(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
+
+	if (type == EXPLOSION || type == PARTICLE) {
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
+	}
+	else {
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, 2));
+	}
 }
 
 void AddObject(int type) {
@@ -142,7 +149,7 @@ void AddObject(int type) {
 	else {
 		solver.object_list.push_back(OBJECT(name, 18.0f, 50, 5.2, 5, 0.9, make_float3(float(solver.getDomainResolution().x) * 0.5f, 5.0f, float(solver.getDomainResolution().z) * 0.5f), solver.object_list.size(), solver.devicesCount));
 		int j = solver.object_list.size() - 1;
-		AddObject2(type, j);
+		AddObject2(solver.object_list[j].type, j);
 	}
 }
 
@@ -673,7 +680,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 						if (prt.velocities.at(0).size() != 0) {
 							solver.object_list.push_back(prt);
 							int j = solver.object_list.size() - 1;
-							AddObject2(PARTICLE, j, true);
+							AddObject2(PARTICLE, j, 1);
 						}
 					}
 					AddParticleSystem = false;
