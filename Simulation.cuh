@@ -261,6 +261,14 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     state.dim,
                     frame
                     );
+                wavey_impulse_temperature_new << < grid, block >> > (
+                    state.flame->readTargett(current_device),
+                    state.velocity->readTargett(current_device),
+                    current.get_location(), SIZEE,
+                    current.get_impulseTemp(), current.get_initial_velocity(), current.get_velocity_frequence(),
+                    state.dim,
+                    frame
+                    );
                 wavey_impulse_density_new << < grid, block >> > (
                     state.density->readTargett(current_device),
                     current.get_location(), SIZEE,
@@ -269,6 +277,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     frame
                     );
             }
+            /*
             else if (current.get_type() == "smoke") {
                 impulse << <grid, block >> > (
                     state.temperature->readTargett(current_device),
@@ -283,6 +292,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     state.dim
                     );
             }
+            */
             else if (current.get_type() == "explosion") {
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
                     impulse << <grid, block >> > (
