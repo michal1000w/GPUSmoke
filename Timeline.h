@@ -230,7 +230,7 @@ struct RampEdit : public ImCurveEdit::Delegate
             minn = mPts.at(curveIndex).at(i);
             makss = mPts.at(curveIndex).at(i + 1);
         }
-        if (makss.x <= frame)
+        if (makss.x < frame) //<=
             return mPts.at(curveIndex).at(i).y;
 
         return minn.y + ((makss.y - minn.y) / (makss.x - minn.x)) * ((float)frame - minn.x);

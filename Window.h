@@ -114,8 +114,12 @@ void UpdateAnimation() {
 			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
-		else {
+		else if (solver.object_list[j].type == PARTICLE){
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 	}
 }
@@ -728,10 +732,27 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 			}
 			else { /////PARTICLE
-				solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
-				solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
-				solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
-				SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+				if (solver.SIMULATE) {
+					solver.object_list[object].Location[0] = solver.object_list[object].get_location().x;
+					solver.object_list[object].Location[1] = solver.object_list[object].get_location().y;
+					solver.object_list[object].Location[2] = solver.object_list[object].get_location().z;
+					SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+				}
+				else {
+					SliderPos(("position-" + std::to_string(object)).c_str(), ImGuiDataType_Float, solver.object_list[object].Location, 3, minns, maxs);
+					
+					ImGui::Checkbox(std::string("Edit Keyframe XYZ-" + std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
+					if (solver.object_list[object].edit_frame_translation) {
+						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_X]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(solver.frame, solver.object_list[object].Location[0]));
+						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Y]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(solver.frame, solver.object_list[object].Location[1]));
+						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Z]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(solver.frame, solver.object_list[object].Location[2]));
+					}
+				}
+
+
 				ImGui::SliderFloat(("scale-" + std::to_string(object)).c_str(), &solver.object_list[object].scale, 0.01f, 10.f);
 			}
 
