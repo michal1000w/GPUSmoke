@@ -24,7 +24,7 @@ const long long LocLoc = std::pow(2 , (BLOCK_SIZE + (2 * PADDING)));
 //#define LOC_SIZE 1024
 
 
-
+#define EPSILON 0.00001f
 
 
 
@@ -327,7 +327,7 @@ __global__ void force_field_power(T* target, float3 c,
     T cur = target[get_voxel(x, y, z, vd)];
 
     if (dist < radius) {
-        target[get_voxel(x, y, z, vd)] = cur + force * (1.0f / (dist * dist));
+        target[get_voxel(x, y, z, vd)] = cur + force * (1.0f / ((dist * dist)+EPSILON));
     }
 }
 
@@ -348,7 +348,7 @@ __global__ void force_field_force(T* target, float3 c,
     T cur = target[get_voxel(x, y, z, vd)];
 
     if (dist < radius) {
-        float power = force * (1.0f / (dist * dist));
+        float power = force * (1.0f / ((dist * dist)+EPSILON));
         float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
 
         target[get_voxel(x, y, z, vd)] = cur + vector * power;
@@ -408,7 +408,7 @@ __global__ void collision_sphere2(V* v_src, T* temperature, Z* density,
             temp += 0.1;
         else if (temp >= -0.2 && direction < 0)
             temp -= 0.1;
-        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * 2.0 * (1.0 / (dist * dist)));
+        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * 2.0 * (1.0 / ((dist * dist)+EPSILON)));
     }
 }
 
@@ -449,7 +449,7 @@ __global__ void force_field_wind(T* target, float3 c,
     T cur = target[get_voxel(x, y, z, vd)];
 
     if (dist < radius) {
-        float power = force * (1.0f / (dist * dist));
+        float power = force * (1.0f / ((dist * dist)+EPSILON));
 
 
         target[get_voxel(x, y, z, vd)] = cur + direction * power;
@@ -473,7 +473,7 @@ __global__ void force_field_turbulance(T* target, float3 c,
     T cur = target[get_voxel(x, y, z, vd)];
 
     if (dist < radius) {
-        float power = force * (1.0f / (dist * dist));
+        float power = force * (1.0f / ((dist * dist)+EPSILON));
         float random = float((frame * (x + y - z)) % 1000) / 1000.0;
         float v = (sin(freq * p.x + random) + sin(freq * p.z + random) - 0.1f);
         //v = v * v * v * v * v;
