@@ -216,7 +216,7 @@ struct RampEdit : public ImCurveEdit::Delegate
     }
     bool IsOnPoint(size_t curveIndex, int frame, int& position) {
         for (int i = 0; i < mPts.at(curveIndex).size(); i++) {
-            if (mPts.at(curveIndex).at(i).x == frame) {
+            if (std::round(mPts.at(curveIndex).at(i).x) == frame) {
                 position = i;
                 return true;
             }
