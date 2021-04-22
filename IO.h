@@ -792,7 +792,7 @@ int save_scene_to_file(std::string filename, std::vector<std::string> lines) {
 }
 
 std::vector<std::string> load_scene_from_file(std::string filename) {
-    filename = "scenes\\" + filename + ".txt";
+    //filename = "scenes\\" + filename + ".txt";
 
     std::vector<std::string> lines;
 

@@ -395,7 +395,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		{
 			ImGui::SetWindowFontScale(InterfaceScale);
 			ImGui::Text("Enter filename");
-			ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
+			//ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
 			if (ImGui::Button("Open")) {
 				solver.ThreadsJoin();
 				std::string filename = solver.OPEN_FOLDER;
@@ -414,7 +414,15 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			std::vector <std::string> list = solver.getFilesList(directory);
 			for (int object = 0; object < list.size(); object++) {
 				std::string name = (" -> " + list[object]);
-				ImGui::Text(name.c_str());
+				//ImGui::Text(name.c_str());
+				if (ImGui::Button(name.c_str())) {
+					solver.ThreadsJoin();
+					std::string filename = list[object];
+					filename = trim(filename);
+					solver.LoadSceneFromFile(filename);
+					UpdateTimeline();
+					OPEN_FILE_TAB = false;
+				}
 			}
 			ImGui::EndChild();
 			///////////////////////////////////////
