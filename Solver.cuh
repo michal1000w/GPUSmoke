@@ -521,7 +521,7 @@ public:
 
         std::cout << "creating grid" << std::endl;
         cudaSetDevice(deviceIndex);
-        float* grid = LoadAndVoxelize(getDomainResolution(), "input/obj/suzanne2.obj", 0.7, deviceIndex);
+        float* grid = LoadAndVoxelize(getDomainResolution(), "input/obj/suzanne.obj", 0.67, deviceIndex, false);
         
         std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
         std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;

@@ -387,17 +387,19 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
     fprintf(stdout, "[Mesh] Computing bbox \n");
     themesh->need_bbox(); // Trimesh: Compute the bounding box (in model coordinates)
 
+    int gsize = min(min(grid_size.x, grid_size.y), grid_size.z);
+
     // SECTION: Compute some information needed for voxelization (bounding box, unit vector, ...)
     fprintf(stdout, "\n## VOXELISATION SETUP \n");
     // Initialize our own AABox
     AABox<glm::vec3> bbox_mesh(trimesh_to_glm(themesh->bbox.min), trimesh_to_glm(themesh->bbox.max));
     // Transform that AABox to a cubical box (by padding directions if needed)
     // Create voxinfo struct, which handles all the rest
-    voxinfo voxelization_info(createMeshBBCube<glm::vec3>(bbox_mesh), glm::uvec3(grid_size.x,grid_size.y,grid_size.z), themesh->faces.size());
+    voxinfo voxelization_info(createMeshBBCube<glm::vec3>(bbox_mesh), glm::uvec3(gsize,gsize,gsize), themesh->faces.size());
     voxelization_info.print();
     // Compute space needed to hold voxel table (1 voxel / bit)
-    //size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)) / 8.0f);
-    size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)));
+    size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)) / 8.0f);
+    //size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)));
     unsigned int* vtable; // Both voxelization paths (GPU and CPU) need this
 
     bool cuda_ok = false;
@@ -460,31 +462,37 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
     //	char* vtable_p = (char*)vtable;
     //	cout << (int) vtable_p[i] << endl;
     //}
-    std::cout << "Copying" << std::endl;
-    int sizex = voxelization_info.gridsize.x;
-    int sizey = voxelization_info.gridsize.y;
-    int sizez = voxelization_info.gridsize.z;
-    std::cout << vtable_size;
-    int sizee = voxelization_info.gridsize.x * voxelization_info.gridsize.y * voxelization_info.gridsize.z;
-    std::cout << "\n" << sizee << std::endl;
-
-    std::cout << "device" << voxelization_info.gridsize.x <<";"<< voxelization_info.gridsize.y <<";"<< voxelization_info.gridsize.z << std::endl;
-
     std::cout << "Allocating memory"<< grid_size.x * grid_size.y * grid_size.z << std::endl;
     float* resultf = new float[grid_size.x * grid_size.y * grid_size.z];
 
     unsigned int sum = 0;
     unsigned int licznik = 0;
+    for (size_t x = 0; x < grid_size.x; x++) {
+        for (size_t y = 0; y < grid_size.y; y++) {
+            for (size_t z = 0; z < grid_size.z; z++) {
+                if ((x < gsize && y < gsize && z < gsize)
+                    && checkVoxel(x, y, z, voxelization_info.gridsize, vtable)) {
+                    sum++;
+                    resultf[z * grid_size.y * grid_size.x + y * grid_size.x + x] = density;
+                }
+                else {
+                    resultf[z * grid_size.y * grid_size.x + y * grid_size.x + x] = 0.0f;
+                }
+            }
+        }
+    }
+    /*
     for (size_t x = 0; x < voxelization_info.gridsize.x; x++) {
         for (size_t y = 0; y < voxelization_info.gridsize.y; y++) {
             for (size_t z = 0; z < voxelization_info.gridsize.z; z++) {
                 if (checkVoxel(x, y, z, voxelization_info.gridsize, vtable)) {
                     sum++;
-                    resultf[z * voxelization_info.gridsize.y * voxelization_info.gridsize.x + y * voxelization_info.gridsize.x + x] = density;
+                    resultf[z * grid_size.y * grid_size.x + y * grid_size.x + x] = density;
                 }
             }
         }
     }
+    */
     std::cout << std::endl << "All count: " << grid_size.x * grid_size.y * grid_size.z << std::endl;
     std::cout << "Sum: " << sum << std::endl;
 
