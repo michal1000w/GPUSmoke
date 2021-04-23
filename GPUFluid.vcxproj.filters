@@ -177,6 +177,9 @@
     <Filter Include="Dll">
       <UniqueIdentifier>{2889f796-11fd-4c69-a0d1-710028ba09bf}</UniqueIdentifier>
     </Filter>
+    <Filter Include="CUDAVoxelizer">
+      <UniqueIdentifier>{1accb6ec-44f6-45f7-b4ba-ef1e7a3462c0}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp">
@@ -255,6 +258,12 @@
     </CudaCompile>
     <CudaCompile Include="main.cu">
       <Filter>Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu">
+      <Filter>CUDAVoxelizer</Filter>
+    </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh">
+      <Filter>CUDAVoxelizer</Filter>
     </CudaCompile>
   </ItemGroup>
   <ItemGroup>

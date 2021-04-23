@@ -4,6 +4,7 @@
 
 #define VOXELIZER_IMPLEMENTATION
 #include "Voxelizer.h"
+#include "third_party/cuda_voxelizer/src/voxelize.cuh"
 
 #define TINYOBJLOADER_IMPLEMENTATION // define this in only *one* .cc
 #include "third_party/tinyobjloader/tiny_obj_loader.h"
