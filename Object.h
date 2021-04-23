@@ -38,6 +38,8 @@ public:
 	OBJECT(std::string type, float size, std::vector<std::vector<float3>> velocities, std::vector<std::vector<float3>> positions, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
 	OBJECT(std::string type, float size, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
 	OBJECT(OBJECT &obj, int number, int deviceCount);
+	~OBJECT() {
+	}
 	//SETTERS-GETTERS
 	std::string get_type();
 	std::string get_type2();
@@ -99,6 +101,8 @@ public:
 	std::vector<std::vector<float3>> positions;
 	float scale = 1.0f;
 	std::string particle_filepath = "";
+
+
 private:
 	float impulseDensity;
 	float3 location;

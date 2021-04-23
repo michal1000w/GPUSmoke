@@ -2,6 +2,7 @@
 #include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
+#include "ObjIO.h"
 
 
 #define EXPERIMENTAL
@@ -488,7 +489,31 @@ public:
 
     void ExampleScene(bool force = false) {
         //adding emitters
+        
 
+        //LoadTest();
+        OBJECT obj("vdb", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
+
+        float final_size = 0.25;
+        //float* grid = Voxelize2("input/obj/suzanne.obj",New_DOMAIN_RESOLUTION.x * final_size
+        //    , New_DOMAIN_RESOLUTION.y * final_size, New_DOMAIN_RESOLUTION.z * final_size);
+        std::cout << "creating grid" << std::endl;
+        float* grid = Voxelize2("input/obj/suzanne.obj", getDomainResolution().x
+            , getDomainResolution().y, getDomainResolution().z, obj.get_impulseDensity());
+        std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z;
+
+        std::cout << "copying grid" << std::endl;
+        GRID3D grid_3d(getDomainResolution().x,getDomainResolution().y,getDomainResolution().z,grid,devicesCount,deviceIndex);
+        
+        delete[] grid;
+
+        std::cout << "pushing grid" << std::endl;
+
+        obj.load_density_grid(grid_3d, 5, deviceIndex);
+
+        object_list.push_back(obj);
+
+        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -506,7 +531,7 @@ public:
                 temp2.frame_range_max = i + 10;
                 object_list.push_back(temp2);
             }
-        }
+        }*/
         /*
         if (!preserve_object_list || force) {
             OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);

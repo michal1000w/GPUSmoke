@@ -107,7 +107,7 @@ void UpdateAnimation() {
 			solver.object_list[j].set_location(make_float3(x,y,z));
 		}
 		//if (solver.object_list[j].get_type2() == "emitter") {
-		else if (solver.object_list[j].type != PARTICLE){
+		else if (solver.object_list[j].type != PARTICLE && solver.object_list[j].type != VDBOBJECT){
 			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
 			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
 			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);

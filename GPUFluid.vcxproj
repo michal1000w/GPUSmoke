@@ -27,6 +27,7 @@
     <ClInclude Include="Libraries.h" />
     <ClInclude Include="LoadTexture.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="ObjIO.h" />
     <ClInclude Include="openvdb-old\blosc.h" />
     <ClInclude Include="openvdb-old\miniz.h" />
     <ClInclude Include="openvdb-old\tinyvdbio.h" />
@@ -48,6 +49,7 @@
     <ClInclude Include="VertexArray.h" />
     <ClInclude Include="VertexBuffer.h" />
     <ClInclude Include="VertexBufferLayout.h" />
+    <ClInclude Include="Voxelizer.h" />
     <ClInclude Include="Window.h" />
     <CudaCompile Include="openvdb\common.h" />
     <CudaCompile Include="openvdb\ComputePrimitives.h" />

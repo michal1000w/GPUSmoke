@@ -130,6 +130,12 @@
     <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h">
       <Filter>OpenVDB</Filter>
     </ClInclude>
+    <ClInclude Include="ObjIO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxelizer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">

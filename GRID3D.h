@@ -437,10 +437,10 @@ public:
         this->deviceCount = deviceCount;
 
 #ifdef NEW_HOST_ALLOC
-        checkCudaErrors(cudaHostAlloc(&grid, elem * sizeof(float), cudaHostAllocMapped));
+        checkCudaErrors(cudaHostAlloc(&this->grid, elem * sizeof(float), cudaHostAllocMapped));
         checkCudaErrors(cudaHostAlloc(&grid_temp, elem * sizeof(float), cudaHostAllocMapped));
 #else
-        grid = new float[elem];
+        this->grid = new float[elem];
         grid_temp = new float[elem];
 #endif
         for (int i = 0; i < elem; i++) {
@@ -768,6 +768,45 @@ public:
         this->cuda_velocity_initialized = false;
     }
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

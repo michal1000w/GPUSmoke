@@ -315,24 +315,26 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         );
                 }
             }
-            /*
             else if (current.get_type() == "vdb") {
+                /*
                 impulse_vdb << <grid, block >> > (
-                    state.temperature->readTarget(),
+                    state.temperature->readTargett(current_device),
                     current.get_location(),
                     current.get_impulseTemp(),
                     state.dim,
-                    current.get_density_grid().get_grid_device_temp(),
+                    current.get_density_grid().get_grid_device_temp()->at(current_device),
                     current.get_initial_temp()
                     );
+                    */
                 impulse_vdb << <grid, block >> > (
-                    state.density->readTarget(),
+                    state.density->readTargett(current_device),
                     current.get_location(),
                     current.get_impulseDensity(),
                     state.dim
-                    ,current.get_density_grid().get_grid_device()
+                    ,current.get_density_grid().get_grid_device()->at(current_device)
                     );
             }
+            /*
             else if (current.get_type() == "vdbs") {
                 impulse_vdb_single << <grid, block >> > (
                     state.temperature->readTarget(),
