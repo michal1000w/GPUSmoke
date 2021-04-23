@@ -37,6 +37,7 @@
     <ClInclude Include="Texture.h" />
     <ClInclude Include="IndexBuffer.h" />
     <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h" />
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu" />
     <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h" />
@@ -59,7 +60,7 @@
     <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h" />
     <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\NanoVDB.h" />
     <ClInclude Include="Unified_Buffer.h" />
-    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu" />
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize_solid.cu" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="double_buffer.cpp" />
@@ -164,7 +165,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;NANOVDB_USE_BLOSC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>third_party\GLFW\include;third_party\openvdb_headers\include;third_party\openvdb\nanovdb\;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third_party\GLFW\include;third_party\openvdb_headers\include;third_party\openvdb\nanovdb\;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;third_party\trimesh2\build\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -178,8 +179,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <SubSystem>Console</SubSystem>
-      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;openvdb.lib;libopenvdb.lib;blosc.lib;Half-2_5.lib;zlib.lib;tbb.lib;lz4.lib;boost_system-vc140-mt.lib;boost_iostreams-vc140-mt.lib;glfw3.lib;opengl32.lib;glu32.lib;glew32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>third_party\GLFW\lib;third_party\all\lib;third_party\openvdb_headers\lib;third_party\GLEW\x64;third_party\GL;third_party\freeglut\lib;third_party\usd\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>cudart_static.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;cudart.lib;openvdb.lib;libopenvdb.lib;blosc.lib;Half-2_5.lib;zlib.lib;tbb.lib;lz4.lib;boost_system-vc140-mt.lib;boost_iostreams-vc140-mt.lib;glfw3.lib;opengl32.lib;glu32.lib;glew32.lib;trimesh.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>third_party\trimesh2\lib.Win64.vs142;third_party\GLFW\lib;third_party\all\lib;third_party\openvdb_headers\lib;third_party\GLEW\x64;third_party\GL;third_party\freeglut\lib;third_party\usd\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <CudaCompile>
       <TargetMachinePlatform>64</TargetMachinePlatform>

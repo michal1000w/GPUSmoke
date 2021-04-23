@@ -259,10 +259,13 @@
     <CudaCompile Include="main.cu">
       <Filter>Sources</Filter>
     </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh">
+      <Filter>CUDAVoxelizer</Filter>
+    </CudaCompile>
     <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu">
       <Filter>CUDAVoxelizer</Filter>
     </CudaCompile>
-    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh">
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize_solid.cu">
       <Filter>CUDAVoxelizer</Filter>
     </CudaCompile>
   </ItemGroup>

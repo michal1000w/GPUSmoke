@@ -14,6 +14,13 @@
 float ratioo = 1.0f;
 
 
+__global__ void uint_to_float(float* dst, unsigned int* src, int n)
+{
+    for (int i = 0; i < n; i++) {
+        dst[n] = *reinterpret_cast<float*>(src[n]);
+    }
+}
+
 
 
 #ifdef EXPERIMENTAL
@@ -494,14 +501,12 @@ public:
         //LoadTest();
         OBJECT obj("vdb", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
 
+        /*
         float final_size = 0.25;
-        //float* grid = Voxelize2("input/obj/suzanne.obj",New_DOMAIN_RESOLUTION.x * final_size
-        //    , New_DOMAIN_RESOLUTION.y * final_size, New_DOMAIN_RESOLUTION.z * final_size);
         std::cout << "creating grid" << std::endl;
         float* grid = Voxelize2("input/obj/suzanne.obj", getDomainResolution().x
             , getDomainResolution().y, getDomainResolution().z, obj.get_impulseDensity());
         std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z;
-
         std::cout << "copying grid" << std::endl;
         GRID3D grid_3d(getDomainResolution().x,getDomainResolution().y,getDomainResolution().z,grid,devicesCount,deviceIndex);
         
@@ -512,7 +517,24 @@ public:
         obj.load_density_grid(grid_3d, 5, deviceIndex);
 
         object_list.push_back(obj);
+        */
 
+        std::cout << "creating grid" << std::endl;
+        cudaSetDevice(deviceIndex);
+        float* grid = LoadAndVoxelize(getDomainResolution(), "input/obj/suzanne2.obj", 0.7, deviceIndex);
+        
+        std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
+        std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;
+        std::cout << "copying grid" << std::endl;
+        GRID3D grid_3d(getDomainResolution().x, getDomainResolution().y, getDomainResolution().z, grid, devicesCount, deviceIndex);
+
+        std::cout << "pushing grid" << std::endl;
+        delete[] grid;
+
+
+        obj.load_density_grid(grid_3d, 5, deviceIndex);
+
+        object_list.push_back(obj);
         /*
         if (!preserve_object_list || force) {
             float temp = 5;

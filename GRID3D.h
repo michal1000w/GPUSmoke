@@ -478,8 +478,8 @@ public:
         grid = new float[size()];
         grid_temp = new float[size()];
 #endif
-        //checkCudaErrors(cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost,0));
-        multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
+        checkCudaErrors(cudaMemcpyAsync(grid, grid_src, sizeof(float) * size(), cudaMemcpyDeviceToHost));
+        //multiGPU_copy(deviceCount, grid, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
 
 
 

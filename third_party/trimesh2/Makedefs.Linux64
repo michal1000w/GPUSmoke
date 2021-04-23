@@ -1,0 +1,5 @@
+include $(MAKERULESDIR)/Makedefs.Linux
+
+ARCHOPTS = -m64 -march=core2 -mfpmath=sse -mtune=native
+XLIBDIR = /usr/X11R6/lib64
+
