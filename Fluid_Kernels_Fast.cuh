@@ -273,10 +273,10 @@ __global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb, flo
 
     float adding = temp * get_voxel_density(x, y, z, vd, vdb);
     float sum = adding + target[get_voxel(x, y, z, vd)];
-    //if (target[get_voxel(x, y, z, vd)] < adding * 0.7)
-        //target[get_voxel(x, y, z, vd)] = sum;
+    if (target[get_voxel(x, y, z, vd)] < adding * 0.7)
+        target[get_voxel(x, y, z, vd)] = sum;
 
-    target[get_voxel(x, y, z, vd)] = get_voxel_density(x, y, z, vd, vdb);
+    //target[get_voxel(x, y, z, vd)] = get_voxel_density(x, y, z, vd, vdb);
 }
 
 template <typename T>

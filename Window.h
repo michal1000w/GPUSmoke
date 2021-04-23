@@ -1145,9 +1145,12 @@ int Window(float* Img_res, float dpi) {
 
 
 			//////////////////
-			if (solver.SIMULATE) {
+			//if (solver.SIMULATE) {
 				solver.Simulation_Frame();
-			}
+			//}
+			
+			 
+			 
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			//texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");

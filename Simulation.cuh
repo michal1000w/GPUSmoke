@@ -315,8 +315,15 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         );
                 }
             }
-            else if (current.get_type() == "vdb") {
-                /*
+            else if (current.get_type() == "vdb" && frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                impulse_vdb << <grid, block >> > (
+                    state.flame->readTargett(current_device),
+                    current.get_location(),
+                    current.get_impulseTemp(),
+                    state.dim,
+                    current.get_density_grid().get_grid_device_temp()->at(current_device),
+                    current.get_initial_temp()
+                    );
                 impulse_vdb << <grid, block >> > (
                     state.temperature->readTargett(current_device),
                     current.get_location(),
@@ -325,7 +332,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     current.get_density_grid().get_grid_device_temp()->at(current_device),
                     current.get_initial_temp()
                     );
-                    */
+                
                 impulse_vdb << <grid, block >> > (
                     state.density->readTargett(current_device),
                     current.get_location(),

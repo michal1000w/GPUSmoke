@@ -827,8 +827,8 @@ public:
         DONE_FRAME = false;
         std::cout << "\rFrame " << frame + 1 << "  -  ";
         
-
-        Simulate(frame, deviceIndex);
+        if (SIMULATE)
+            Simulate(frame, deviceIndex);
 
         /*
         state->sync_devices();
@@ -841,12 +841,15 @@ public:
         }));
         */
         Render(frame, 0);
-        Save(frame, 0);
+
+        if (SIMULATE)
+            Save(frame, 0);
 
         //threads.push_back(std::thread([&, device_id]() {
         //}));
 
-        frame++;
+        if (SIMULATE)
+            frame++;
         DONE_FRAME = true;
     }
     std::vector<std::thread> threads;
