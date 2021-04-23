@@ -9,6 +9,109 @@
 #include "third_party/tinyobjloader/tiny_obj_loader.h"
 
 
+unsigned int* vx_voxelize_snap_3dgrid_correct_ratio(vx_mesh_t const* m,
+    unsigned int width,
+    unsigned int height,
+    unsigned int depth)
+{
+    vx_aabb_t* aabb = NULL;
+    vx_aabb_t* meshaabb = NULL;
+    float ax, ay, az;
+
+    VX_ASSERT(m->colors);
+
+    for (size_t i = 0; i < m->nindices; i += 3) {
+        vx_triangle_t triangle;
+        unsigned int i1, i2, i3;
+
+        VX_ASSERT(m->indices[i + 0] < m->nvertices);
+        VX_ASSERT(m->indices[i + 1] < m->nvertices);
+        VX_ASSERT(m->indices[i + 2] < m->nvertices);
+
+        i1 = m->indices[i + 0];
+        i2 = m->indices[i + 1];
+        i3 = m->indices[i + 2];
+
+        triangle.p1 = m->vertices[i1];
+        triangle.p2 = m->vertices[i2];
+        triangle.p3 = m->vertices[i3];
+
+        if (!meshaabb) {
+            meshaabb = VX_MALLOC(vx_aabb_t, 1);
+            *meshaabb = vx__triangle_aabb(&triangle);
+        }
+        else {
+            vx_aabb_t naabb = vx__triangle_aabb(&triangle);
+            *meshaabb = vx__aabb_merge(meshaabb, &naabb);
+        }
+    }
+
+    float resx = (meshaabb->max.x - meshaabb->min.x) / min(min(width,height),depth);
+    float resy = (meshaabb->max.y - meshaabb->min.y) / min(min(width, height), depth);
+    float resz = (meshaabb->max.z - meshaabb->min.z) / min(min(width, height), depth);
+
+    vx_point_cloud_t* pc = vx_voxelize_pc(m, resx, resy, resz, 0.0);
+
+    aabb = VX_MALLOC(vx_aabb_t, 1);
+
+    vx__aabb_init(aabb);
+
+    for (size_t i = 0; i < pc->nvertices; i++) {
+        for (size_t j = 0; j < 3; j++) {
+            aabb->max.v[j] = VX_MAX(aabb->max.v[j], pc->vertices[i].v[j]);
+            aabb->min.v[j] = VX_MIN(aabb->min.v[j], pc->vertices[i].v[j]);
+        }
+    }
+
+    ax = aabb->max.x - aabb->min.x;
+    ay = aabb->max.y - aabb->min.y;
+    az = aabb->max.z - aabb->min.z;
+
+    unsigned int* data = VX_CALLOC(unsigned int, width * height * depth);
+
+    for (size_t i = 0; i < pc->nvertices; ++i) {
+        float rgba[4] = { pc->colors[i].r, pc->colors[i].g, pc->colors[i].b, 1.0 };
+        unsigned int color;
+        float ox, oy, oz;
+        int ix, iy, iz;
+        unsigned int index;
+
+        ox = pc->vertices[i].x + fabs(aabb->min.x);
+        oy = pc->vertices[i].y + fabs(aabb->min.y);
+        oz = pc->vertices[i].z + fabs(aabb->min.z);
+
+        VX_ASSERT(ox >= 0.f);
+        VX_ASSERT(oy >= 0.f);
+        VX_ASSERT(oz >= 0.f);
+
+        ix = (ax == 0.0) ? 0 : (ox / ax) * (min(min(width, height), depth) - 1);
+        iy = (ay == 0.0) ? 0 : (oy / ay) * (min(min(width, height), depth) - 1);
+        iz = (az == 0.0) ? 0 : (oz / az) * (min(min(width, height), depth) - 1);
+
+
+        VX_ASSERT(ix >= 0);
+        VX_ASSERT(iy >= 0);
+        VX_ASSERT(iz >= 0);
+
+        VX_ASSERT(ix + iy * width + iz * (width * height) < width * height * depth);
+
+        color = vx__rgbaf32_to_abgr8888(rgba);
+        index = ix + iy * width + iz * (width * height);
+
+        if (data[index] != 0) {
+            data[index] = vx__mix(color, data[index]);
+        }
+        else {
+            data[index] = color;
+        }
+    }
+
+    VX_FREE(aabb);
+    VX_FREE(meshaabb);
+    vx_point_cloud_free(pc);
+
+    return data;
+}
 
 
 void LoadTest() {
@@ -166,7 +269,8 @@ float* Voxelize2(const char* filename, int x, int y, int z, float density = 0.7f
             mesh->vertices[v].z = attrib.vertices[3 * v + 2];
         }
 
-        result = vx_voxelize_snap_3dgrid(mesh, x, y, z);
+        //result = vx_voxelize_snap_3dgrid(mesh, x, y, z);
+        result = vx_voxelize_snap_3dgrid_correct_ratio(mesh, x, y, z);
 
         float* resultf = new float[x * y * z];
 
@@ -187,3 +291,4 @@ float* Voxelize2(const char* filename, int x, int y, int z, float density = 0.7f
     }
     return nullptr;
 }
+
