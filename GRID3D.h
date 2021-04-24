@@ -77,7 +77,7 @@ template <typename T>
 inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, int deviceIndex) {
     std::vector<std::thread> threads;
 
-    std::cout << "ZEROOO(" << size << ")";
+    //std::cout << "ZEROOO(" << size << ")";
 
     auto lista = enumerate(deviceIndex, devices_count);
 
@@ -91,7 +91,7 @@ inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, 
             checkCudaErrors(cudaMemsetAsync(gridd->at(device_id), 0, size));
             //checkCudaErrors(cudaMemcpy(&dst[device_id], &src, sizeof(float) * size, cudaMemcpyHostToDevice));
 
-            std::cout << "Zeroed";
+            //std::cout << "Zeroed";
             cudaDeviceSynchronize();
             }));
     }

@@ -132,6 +132,13 @@ struct RampEdit : public ImCurveEdit::Delegate
             mPointCount[0] = pSIZE.size();
             mPts.push_back(pSIZE);
         }
+        else if (particle_system == 3) {//VDBOBJECT
+            std::vector<ImVec2> pSIZE;
+            pSIZE.push_back(ImVec2(start, 1));
+            pSIZE.push_back(ImVec2(end, 1));
+            mPointCount[0] = pSIZE.size();
+            mPts.push_back(pSIZE);
+        }
         else { //EMITTER EXPLOSITON
             std::vector<ImVec2> pSIZE;
             pSIZE.push_back(ImVec2(start, 0));

@@ -89,6 +89,8 @@ void UpdateTimeline() {
 			}
 		if (solver.object_list.at(j).get_type2() == "particle")
 			AddObject2(solver.object_list.at(j).type, j, 1);
+		else if (solver.object_list.at(j).type == VDBOBJECT)
+			AddObject2(solver.object_list.at(j).type, j, 3);
 		else
 			AddObject2(solver.object_list.at(j).type, j);
 	}
@@ -143,9 +145,13 @@ void AddObject2(int type, int j, int particle_system) {
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list.at(j).frame_range_min,
 																&solver.object_list.at(j).frame_range_max, false });
 
-	if (type == EXPLOSION || type == PARTICLE || type == VDBOBJECT) {
+	if (type == EXPLOSION || type == PARTICLE) {
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
+	}
+	else if (type == VDBOBJECT) {
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+			0, 5.f, 0, particle_system));
 	}
 	else {
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
