@@ -501,7 +501,7 @@ public:
 
 
         if (!preserve_object_list || force) {
-            OBJECT obj("object", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
+            OBJECT obj("object", 1, make_float3(0), 5, 0.9, object_list.size(), this->devicesCount);
 
             obj.particle_filepath = "./input/obj/suzanne/";
 
@@ -704,19 +704,18 @@ public:
     }
 
     void Clear_Simulation_Data() {
-        GRID->free_noise();
-        delete state;
+        //GRID->free_noise();
+        //delete state;
         delete[] img;
-        delete GRID;
-
+        //delete GRID;
+        
         if (!preserve_object_list || SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
-                //if (i.type != VDBOBJECT) 
                     i.free();
             }
             object_list.clear();
         }
-
+        
         printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
         cudaThreadExit();

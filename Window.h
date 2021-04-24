@@ -235,7 +235,6 @@ void UpdateSolver() {
 	solver.THIS_IS_THE_END = true;
 	for (auto& thread : threads)
 		thread.join();
-	threads.clear();
 
 	std::cout << "\nRestarting\n";
 	solver.ThreadsJoin();
@@ -247,14 +246,21 @@ void UpdateSolver() {
 	solver.THIS_IS_THE_END = false;
 	//solver.SIMULATE = true;
 
-	//solver.Clear_Simulation_Data(); //tutaj
-	solver.Clear_Simulation_Data2();
+	if ((solver.New_DOMAIN_RESOLUTION.x == solver.getDomainResolution().x) &&
+		(solver.New_DOMAIN_RESOLUTION.y == solver.getDomainResolution().y) &&
+		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z)) {
+		solver.Clear_Simulation_Data2();
+	}
+	else {
+	solver.Clear_Simulation_Data();
+	solver.UpdateDomainResolution();
+	solver.Initialize_Simulation();
+	}
 
 
 	solver.ResetObjects(); //loc rot scale
 	//preparation
 	//solver.Initialize();
-	solver.UpdateDomainResolution();
 	//solver.UpdateTimeStep();
 	// 
 	//solver.Initialize_Simulation(); //tutaj
@@ -266,6 +272,7 @@ void UpdateSolver() {
 
 	
 	solver.writing = false;
+	threads.clear();
 }
 
 
