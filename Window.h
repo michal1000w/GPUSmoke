@@ -65,7 +65,14 @@ float sinoffset = 0.0;
 
 
 
+void UpdateTimelinePartially() {
 
+	for (int i = 0; i < Timeline.myItems.size(); i++) {
+		Timeline.myItems.at(i).mFrameStart = &solver.object_list[i].frame_range_min;
+		Timeline.myItems.at(i).mFrameEnd = &solver.object_list[i].frame_range_max;
+	}
+
+}
 
 
 void UpdateTimeline() {
@@ -251,26 +258,19 @@ void UpdateSolver() {
 		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z)) {
 		solver.Clear_Simulation_Data2();
 		solver.ResetObjects1(); //loc rot scale
-
-		if (solver.SAMPLE_SCENE == 0)
-			solver.ExampleScene();
-		else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
-			solver.ExportVDBScene();
 	}
 	else {
 		solver.Clear_Simulation_Data();
 		solver.UpdateDomainResolution();
 		solver.ResetObjects();
 		solver.Initialize_Simulation();
-
-
-
-		if (solver.SAMPLE_SCENE == 0)
-			solver.ExampleScene();
-		else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
-			solver.ExportVDBScene();
+		UpdateTimelinePartially();
 	}
 
+	if (solver.SAMPLE_SCENE == 0)
+		solver.ExampleScene();		
+	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
+		solver.ExportVDBScene();
 
 	//preparation
 	//solver.Initialize();
