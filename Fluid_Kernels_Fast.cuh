@@ -1342,8 +1342,8 @@ __global__ void impulse_vdb_compressed(T* target, float3 c, T val, int3 vd, unsi
     vdd.x = minf(minf(vd.x, vd.y), vd.z);
     vdd.y = minf(minf(vd.x, vd.y), vd.z);
     vdd.z = minf(minf(vd.x, vd.y), vd.z);
-    //bool if_add = checkVoxel(x-(int)c.x, y - (int)c.y, z - (int)c.z, vdd, vdb);
-    bool if_add = checkVoxel(x, y, z, vdd, vdb);
+    bool if_add = checkVoxel(x-(int)c.x, y - (int)c.y, z - (int)c.z, vdd, vdb);
+    //bool if_add = checkVoxel(x, y, z, vdd, vdb);
 
     if (if_add) {
         float sum = temp + target[get_voxel(x, y, z, vd)];
