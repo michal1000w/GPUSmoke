@@ -706,7 +706,7 @@ public:
     void Clear_Simulation_Data() {
         //GRID->free_noise();
         //delete state;
-        delete[] img;
+        //delete[] img;
         //delete GRID;
         
         if (!preserve_object_list || SAMPLE_SCENE == 2) {
