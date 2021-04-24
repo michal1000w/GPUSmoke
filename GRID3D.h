@@ -1486,6 +1486,9 @@ public:
 
 
 
+
+
+
     long long size() {
         return (long long)resolution.x * (long long)resolution.y * (long long)resolution.z;
     }
@@ -1504,6 +1507,56 @@ private:
     std::vector<float*> vdb_noise;
     std::vector<float3*> grid_vel_gpu;
     
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     static inline int Mod(int x, int n) { int m = x % n; return (m < 0) ? m + n : m; }
 

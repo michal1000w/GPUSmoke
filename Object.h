@@ -37,7 +37,7 @@ public:
 	OBJECT(std::string type = "SMOKE", float size = 1.0f, float initial_velocity = 0.0f, float velocity_frequence = 0.0f,float Temp = 5.0f, float Density = 0.9f, float3 location = make_float3(0.0, 0.0, 0.0), int number = -1, int deviceCount = 1);
 	OBJECT(std::string type, float size, std::vector<std::vector<float3>> velocities, std::vector<std::vector<float3>> positions, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
 	OBJECT(std::string type, float size, float3 location, float Temp = 5.0f, float Density = 0.9f, int number = -1, int deviceCount = 1);
-	OBJECT(OBJECT &obj, int number, int deviceCount);
+	OBJECT(OBJECT obj, int number, int deviceCount);
 	~OBJECT() {
 	}
 	//SETTERS-GETTERS

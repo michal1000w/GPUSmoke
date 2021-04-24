@@ -114,7 +114,7 @@ OBJECT::OBJECT(std::string type, float size, float3 location, float Temp, float 
 
 
 
-OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
+OBJECT::OBJECT(OBJECT obj, int number, int deviceCount) {
 	this->type = obj.type;
 	this->size = size;
 	this->initial_size = size;
@@ -134,6 +134,11 @@ OBJECT::OBJECT(OBJECT &obj, int number, int deviceCount) {
 
 	this->previous_location = location;
 	this->previous_size = size;
+
+	this->positions = obj.positions;
+	this->velocities = obj.velocities;
+
+	this->particle_filepath = obj.particle_filepath;
 }
 
 void OBJECT::reset() {

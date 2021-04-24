@@ -173,10 +173,9 @@ void DuplicateObject(int index) {
 
 	solver.object_list.push_back(OBJECT(obj, solver.object_list.size(), solver.devicesCount));
 	int j = solver.object_list.size() - 1;
-	solver.object_list.at(j).vdb_object = solver.object_list[index].vdb_object;
-	solver.object_list.at(j).particle_filepath = solver.object_list[index].particle_filepath;
-	solver.object_list.at(j).velocities = solver.object_list[index].velocities;
-	solver.object_list.at(j).positions = solver.object_list[index].positions;
+	if (solver.object_list[j].type == VDBOBJECT)
+		solver.object_list.at(j).load_density_grid(obj.get_density_grid(), obj.get_initial_temp(), solver.deviceIndex);
+	//solver.object_list.at(j).vdb_object = obj.vdb_object;
 
 	int current_item_id = 0;
 #pragma unroll
@@ -186,10 +185,15 @@ void DuplicateObject(int index) {
 			break;
 		}
 
-	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
-																&solver.object_list[j].frame_range_max, false });
+
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min, 
+														&solver.object_list[j].frame_range_max, false });
 	//Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max));
-	Timeline.rampEdit.push_back(RampEdit(Timeline.rampEdit.at(index)));
+	RampEdit ramp = RampEdit();
+	ramp.Copy(Timeline.rampEdit[index]);
+	Timeline.rampEdit.push_back(&ramp); //tu problem?
+
+	UpdateTimeline();
 }
 
 void DeleteObject(const int object) {
@@ -246,6 +250,23 @@ void UpdateSolver() {
 	
 	solver.writing = false;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1003,6 +1024,23 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 	ImGui::End();
 	
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

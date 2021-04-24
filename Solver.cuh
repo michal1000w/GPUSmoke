@@ -709,7 +709,7 @@ public:
             for (auto i : object_list) {
                 //if (i.get_type() == "vdb" || i.get_type() == "vdbs")
                     //i.cudaFree();
-                if (i.get_type() != "vdb")
+                if (i.get_type() != "object")
                     i.free();
             }
             object_list.clear();

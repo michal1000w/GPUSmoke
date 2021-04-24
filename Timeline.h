@@ -171,24 +171,48 @@ struct RampEdit : public ImCurveEdit::Delegate
         mMin.push_back(ImVec2(0.f, 0.f));
     }
     RampEdit(RampEdit& rhs) {
-        this->mPts = rhs.mPts;
-        mPointCount[0] = mPts.at(0).size();
-        mPointCount[1] = mPts.at(1).size();
-        mPointCount[2] = mPts.at(2).size();
-        mPointCount[3] = mPts.at(3).size();
+        for (int i = 0; i < 4; i++) {
+            std::vector<ImVec2> punkty;
+            this->mPts.push_back(punkty);
+            for (int j = 0; j < rhs.mPts.at(i).size(); j++) {
+                this->mPts[i].push_back(rhs.mPts[i][j]);
+            }
+            mPointCount[i] = mPts.at(i).size();
+            mbVisible[i] = rhs.mbVisible[i]; //czy widoczny po otwarciu
+            mMax.push_back(rhs.mMax[i]);
+            mMin.push_back(rhs.mMin[i]);
+        }
 
-        mbVisible[0] = rhs.mbVisible[0]; //czy widoczny po otwarciu
-        mbVisible[1] = rhs.mbVisible[1];
-        mbVisible[2] = rhs.mbVisible[2];
-        mbVisible[3] = rhs.mbVisible[3];
-        mMax.push_back(rhs.mMax[0]);
-        mMax.push_back(rhs.mMax[1]);
-        mMax.push_back(rhs.mMax[2]);
-        mMax.push_back(rhs.mMax[3]);
-        mMin.push_back(rhs.mMin[0]);
-        mMin.push_back(rhs.mMin[1]);
-        mMin.push_back(rhs.mMin[2]);
-        mMin.push_back(rhs.mMin[3]);
+    }
+    RampEdit(RampEdit* rhs) {
+        for (int i = 0; i < 4; i++) {
+            std::vector<ImVec2> punkty;
+            this->mPts.push_back(punkty);
+            for (int j = 0; j < rhs->mPts.at(i).size(); j++) {
+                this->mPts[i].push_back(rhs->mPts[i][j]);
+            }
+            mPointCount[i] = mPts.at(i).size();
+            mbVisible[i] = rhs->mbVisible[i]; //czy widoczny po otwarciu
+            mMax.push_back(rhs->mMax[i]);
+            mMin.push_back(rhs->mMin[i]);
+        }
+
+    }
+    void Copy(RampEdit rhs) {
+        this->mPts.clear();
+        this->mMax.clear();
+        this->mMin.clear();
+        for (int i = 0; i < 4; i++) {
+            std::vector<ImVec2> punkty;
+            this->mPts.push_back(punkty);
+            for (int j = 0; j < rhs.mPts.at(i).size(); j++) {
+                this->mPts[i].push_back(rhs.mPts[i][j]);
+            }
+            mPointCount[i] = mPts.at(i).size();
+            mbVisible[i] = rhs.mbVisible[i]; //czy widoczny po otwarciu
+            mMax.push_back(rhs.mMax[i]);
+            mMin.push_back(rhs.mMin[i]);
+        }
     }
     size_t GetCurveCount()
     {
