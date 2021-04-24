@@ -121,6 +121,12 @@ void UpdateAnimation() {
 			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
+		else if (solver.object_list[j].type == VDBOBJECT) {
+			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			solver.object_list[j].set_location(make_float3(x, y, z));
+		}
 	}
 }
 
@@ -860,7 +866,6 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			UpdateTimeline();
 			TimelineInitialized = true;
 		}
-		UpdateAnimation();
 
 		// let's create the sequencer
 		static bool expanded = true;//true
@@ -1007,6 +1012,30 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #include <Windows.h>
 #include <WinUser.h>
 
@@ -1103,7 +1132,7 @@ int Window(float* Img_res, float dpi) {
 		IndexBuffer ib(indices, 6);
 
 		/////////////////SHADERS/////////////////////
-		Shader shader("Shaders.shader");
+		Shader shader("./Shaders.shader");
 		shader.Bind();
 
 		//////////////////UNIFORM SHADER////////////////////
@@ -1153,12 +1182,19 @@ int Window(float* Img_res, float dpi) {
 		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 0, 10, 30, false });
 		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
 
-		
+		solver.frame = 0;
+		solver.state->time_step = solver.speed * 0.1;
+		solver.DONE_FRAME = false;
+
+
+		//UpdateSolver();
+		UpdateTimeline();
 		///////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			//clock_t startTime = clock();
 
 
+			UpdateAnimation();
 			//////////////////
 			//solver.Simulation_Frame();
 			if (threads.size() == 0) {
@@ -1185,7 +1221,7 @@ int Window(float* Img_res, float dpi) {
 			//texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
 			if (!solver.writing) {
 				solver.writing = true;
-				texture.UpdateTexture("output/temp.bmp");
+				texture.UpdateTexture("./output/temp.bmp");
 				solver.writing = false;
 				texture.Bind(/*slot*/0);
 			}

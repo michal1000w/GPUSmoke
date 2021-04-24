@@ -55,7 +55,12 @@ inline __device__ int get_voxel(int x, int y, int z, int3 d)
 
 inline __device__ float get_voxel_density(int x, int y, int z, int3 d, float* vdb)
 {
-    return vdb[z * d.y * d.x + y * d.x + x];
+    if (z * d.y * d.x + y * d.x + x > 0 && z * d.y * d.x + y * d.x + x < d.x * d.y * d.z) {
+        return vdb[z * d.y * d.x + y * d.x + x];
+    }
+    else {
+        return 0.0;
+    }
 }
 
 template <typename T> inline __device__ T zero() { return 0.0; }
@@ -271,7 +276,9 @@ __global__ void impulse_vdb(T* target, float3 c, T val, int3 vd, float* vdb, flo
 
     if (x >= vd.x || y >= vd.y || z >= vd.z) return;
 
-    float adding = temp * get_voxel_density(x, y, z, vd, vdb);
+    float adding = temp * get_voxel_density(x+c.x, y+c.y, z+c.z, vd, vdb); //translation
+
+
     float sum = adding + target[get_voxel(x, y, z, vd)];
     if (target[get_voxel(x, y, z, vd)] < adding * 0.7)
         target[get_voxel(x, y, z, vd)] = sum;

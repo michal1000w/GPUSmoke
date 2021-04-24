@@ -126,6 +126,7 @@ public:
     bool UpsamplingTemperature = false;
     int frame;
 
+    fluid_state* state;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
@@ -141,7 +142,6 @@ private:
 
     float3 Camera;
     float3 Light;
-    fluid_state* state;
     dim3 full_grid;
     dim3 full_block;
 
