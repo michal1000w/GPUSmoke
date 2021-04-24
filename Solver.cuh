@@ -488,9 +488,27 @@ public:
         
     }
 
+    void ResetObjects1() {
+        for (int i = 0; i < this->object_list.size(); i++) {
+            object_list[i].reset();
+        }
+    }
+
     void ResetObjects() {
         for (int i = 0; i < this->object_list.size(); i++) {
             object_list[i].reset();
+
+            if (object_list[i].type == PARTICLE) {
+                object_list[i].velocities.clear();
+                object_list[i].positions.clear();
+                object_list[i].LoadParticles();
+            }
+            else if (object_list[i].type == VDBOBJECT) {
+                //for (int z = 0; z < object_list[i].collisions.size(); z++)
+                    //delete[]  object_list[i].collisions[i];
+                object_list[i].collisions.clear();
+                object_list[i].LoadObjects(New_DOMAIN_RESOLUTION, devicesCount, deviceIndex);
+            }
         }
     }
 
@@ -704,10 +722,11 @@ public:
     }
 
     void Clear_Simulation_Data() {
+        
         GRID->free_noise();
+        delete GRID;
         delete state;
         delete[] img;
-        delete GRID;
         
         
         if (!preserve_object_list || SAMPLE_SCENE == 2) {
@@ -719,6 +738,7 @@ public:
         
         printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
+        cudaThreadSynchronize();
         cudaThreadExit();
     }
 

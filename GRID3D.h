@@ -1529,20 +1529,19 @@ public:
 
     int3 resolution;
     
-    void clearAll(int deviceIndex) {
+    void clearAllObjects(int deviceIndex) {
         multiGPU_clear(&vdb, size(), deviceCount, deviceIndex);
-        multiGPU_clear(&vdb_temp, size(), deviceCount, deviceIndex);
+        //multiGPU_clear(&vdb_temp, size(), deviceCount, deviceIndex);
         //multiGPU_clear(vdb_noise, 64, deviceCount, deviceIndex);
-        multiGPU_clear(&grid_vel_gpu, size() * 3, deviceCount, deviceIndex);
+        //multiGPU_clear(&grid_vel_gpu, size() * 3, deviceCount, deviceIndex);
 
         for (int i = 0; i < size(); i++) {
             grid[i] = 0;
-            grid_temp[i] = 0;
-            grid_vel[i].x = 0;
-            grid_vel[i].y = 0;
-            grid_vel[i].z = 0;
+            //grid_temp[i] = 0;
+            //grid_vel[i].x = 0;
+            //grid_vel[i].y = 0;
+            //grid_vel[i].z = 0;
         }
-
         //no noise
     }
 private:
