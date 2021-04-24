@@ -395,6 +395,13 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
                         0.7f
                         );
+                    collision_vdb << <grid, block >> > (
+                        state.collision->readTargett(current_device),
+                        current.get_location(),
+                        current.get_impulseDensity(),
+                        state.dim,
+                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()]
+                        );
                     /*
                         */
 

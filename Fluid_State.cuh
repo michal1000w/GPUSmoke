@@ -23,6 +23,7 @@ struct fluid_state {
     DoubleBuffer<float>* noise;
     //std::vector<float*> diverge;
     DoubleBuffer<float>* diverge;
+    DoubleBuffer<float>* collision;
     int devicesCount = 1;
 
     
@@ -42,6 +43,8 @@ struct fluid_state {
         pressure->setDim(dims);
         flame = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
         flame->setDim(dims);
+        collision = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
+        collision->setDim(dims);
 
         //diverge = multiGPU_malloc<float>(devicesCount,deviceIndex, nelems);
         diverge = new DoubleBuffer<float>((int)nelems, devicesCount, deviceIndex);
@@ -65,6 +68,7 @@ struct fluid_state {
         diverge->zeros(deviceIndex);
         noise->zeros(deviceIndex);
         velocity->zeros(deviceIndex);
+        collision->zeros(deviceIndex);
     }
 
     fluid_state() {
@@ -78,6 +82,7 @@ struct fluid_state {
         delete pressure;
         delete flame;
         delete noise;
+        delete collision;
         //cudaFree(diverge);
         //multiGPU_free(devicesCount, diverge);
         delete diverge;

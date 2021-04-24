@@ -584,7 +584,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		}
 		if (solver.EXPORT_VDB) {
 			ImGui::ProgressBar(progress, ImVec2(-1, 0));
-			progress += 1.0 / ((float)solver.EXPORT_END_FRAME);
+			//progress += 1.0 / ((float)solver.EXPORT_END_FRAME);
+			progress = (float)solver.frame / ((float)solver.EXPORT_END_FRAME);
 
 		}
 		if (solver.EXPORT_VDB)
