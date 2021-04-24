@@ -250,15 +250,22 @@ void UpdateSolver() {
 		(solver.New_DOMAIN_RESOLUTION.y == solver.getDomainResolution().y) &&
 		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z)) {
 		solver.Clear_Simulation_Data2();
+		solver.ResetObjects(); //loc rot scale
 	}
 	else {
-	solver.Clear_Simulation_Data();
-	solver.UpdateDomainResolution();
-	solver.Initialize_Simulation();
+		bool temp = solver.preserve_object_list;
+		solver.preserve_object_list = false;
+		solver.Clear_Simulation_Data();
+		solver.UpdateDomainResolution();
+		solver.Initialize_Simulation();
+		if (solver.SAMPLE_SCENE == 0)
+			solver.ExampleScene();
+		else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
+			solver.ExportVDBScene();
+		solver.preserve_object_list = temp;
 	}
 
 
-	solver.ResetObjects(); //loc rot scale
 	//preparation
 	//solver.Initialize();
 	//solver.UpdateTimeStep();
