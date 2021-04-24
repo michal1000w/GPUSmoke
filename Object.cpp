@@ -153,7 +153,7 @@ std::string OBJECT::get_type() {
 	else if (this->type == SMOKE)
 		return "smoke";
 	else if (this->type == VDBOBJECT)
-		return "vdb";
+		return "object";
 	else if (this->type == VDBSINGLE)
 		return "vdbs";
 	else if (this->type == FORCE_FIELD_FORCE)
@@ -178,7 +178,7 @@ std::string OBJECT::get_type2() {
 	else if (this->type == SMOKE)
 		return "smoke";
 	else if (this->type == VDBOBJECT)
-		return "vdb";
+		return "object";
 	else if (this->type == VDBSINGLE)
 		return "vdbs";
 	else if (this->type == FORCE_FIELD_FORCE)
@@ -202,9 +202,9 @@ void OBJECT::set_type(std::string type) {
 		this->type = EMITTER;
 	else if (type == "SMOKE" || type == "smoke")
 		this->type = SMOKE;
-	else if (type == "VDB" || type == "vdb")
+	else if (type == "VDB" || type == "vdb" || type == "object")
 		this->type = VDBOBJECT;
-	else if (type == "VDBSINGLE" || type == "vdbsingle" || type == "vdbs")
+	else if (type == "VDBSINGLE" || type == "vdbsingle" || type == "vdbs" || type == "object")
 		this->type = VDBSINGLE;
 	else if (type == "FFieldFORCE" || type == "force" || type == "fff")
 		this->type = FORCE_FIELD_FORCE;

@@ -497,46 +497,31 @@ public:
 
     void ExampleScene(bool force = false) {
         //adding emitters
-        object_list.clear();
 
         //LoadTest();
-        OBJECT obj("vdb", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
+
 
         /*
-        float final_size = 0.25;
-        std::cout << "creating grid" << std::endl;
-        float* grid = Voxelize2("input/obj/suzanne.obj", getDomainResolution().x
-            , getDomainResolution().y, getDomainResolution().z, obj.get_impulseDensity());
-        std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z;
-        std::cout << "copying grid" << std::endl;
-        GRID3D grid_3d(getDomainResolution().x,getDomainResolution().y,getDomainResolution().z,grid,devicesCount,deviceIndex);
-        
-        delete[] grid;
+        if (!preserve_object_list || force) {
+            object_list.clear();
+            OBJECT obj("object", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
+            std::cout << "creating grid" << std::endl;
+            cudaSetDevice(deviceIndex);
+            float* grid = LoadAndVoxelize(getDomainResolution(), "./input/obj/suzanne.obj", 0.67, deviceIndex, false);
 
-        std::cout << "pushing grid" << std::endl;
+            std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
+            std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;
+            std::cout << "copying grid" << std::endl;
+            GRID3D grid_3d(getDomainResolution().x, getDomainResolution().y, getDomainResolution().z, grid, devicesCount, deviceIndex);
 
-        obj.load_density_grid(grid_3d, 5, deviceIndex);
-
-        object_list.push_back(obj);
-        */
-
-        std::cout << "creating grid" << std::endl;
-        cudaSetDevice(deviceIndex);
-        float* grid = LoadAndVoxelize(getDomainResolution(), "./input/obj/suzanne.obj", 0.67, deviceIndex, false);
-        
-        std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
-        std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;
-        std::cout << "copying grid" << std::endl;
-        GRID3D grid_3d(getDomainResolution().x, getDomainResolution().y, getDomainResolution().z, grid, devicesCount, deviceIndex);
-
-        std::cout << "pushing grid" << std::endl;
-        delete[] grid;
+            std::cout << "pushing grid" << std::endl;
+            delete[] grid;
 
 
-        obj.load_density_grid(grid_3d, 5, deviceIndex);
+            obj.load_density_grid(grid_3d, 5, deviceIndex);
 
-        object_list.push_back(obj);
-        /*
+            object_list.push_back(obj);
+        }
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -555,7 +540,7 @@ public:
                 object_list.push_back(temp2);
             }
         }*/
-        /*
+        
         if (!preserve_object_list || force) {
             OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
             prt.particle_filepath = "./input/exp2/";
@@ -563,7 +548,7 @@ public:
             object_list.push_back(prt);
         }
 
-        */
+        
 
     }
 

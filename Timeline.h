@@ -66,9 +66,9 @@ extern bool TimelineInitialized;
 
 
 
-static const int EmitterCount = 8;
+static const int EmitterCount = 9;
 static const char* SequencerItemTypeNames[EmitterCount] = { "emitter","explosion", "force", "power",
-            "turbulance", "wind", "sphere", "particle" };
+            "turbulance", "wind", "sphere", "particle", "object" };
 
 
 #include <vector>

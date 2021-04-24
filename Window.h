@@ -38,7 +38,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 
 
-const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle" };
+const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle", "object" };
 bool TimelineInitialized = false;
 bool AddParticleSystem = false;
 char temp_particle_path[512] = { "./input/exp2/" };
@@ -189,7 +189,7 @@ void DuplicateObject(int index) {
 }
 
 void DeleteObject(const int object) {
-	if (solver.object_list[object].get_type() == "vdb" ||
+	if (solver.object_list[object].get_type() == "object" ||
 		solver.object_list[object].get_type() == "vdbs")
 		solver.object_list[object].cudaFree();
 	solver.object_list[object].free();
@@ -217,8 +217,6 @@ void UpdateSolver() {
 		thread.join();
 	threads.clear();
 
-
-
 	std::cout << "\nRestarting\n";
 	solver.ThreadsJoin();
 	//clearing
@@ -227,19 +225,21 @@ void UpdateSolver() {
 
 
 	solver.THIS_IS_THE_END = false;
-	solver.SIMULATE = true;
+	//solver.SIMULATE = true;
 
 	solver.Clear_Simulation_Data();
-	solver.ResetObjects();
+	solver.ResetObjects(); //loc rot scale
 	//preparation
 	//solver.Initialize();
 	solver.UpdateDomainResolution();
 	//solver.UpdateTimeStep();
 	solver.Initialize_Simulation();
+	
 	if (solver.SAMPLE_SCENE == 0)
 		solver.ExampleScene();
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
+	
 	solver.writing = false;
 }
 

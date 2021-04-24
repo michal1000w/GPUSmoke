@@ -215,29 +215,29 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             
             if (current.get_type() == "particle") {
                 if (frame >= current.frame_range_min && frame < current.frame_range_max) {
-                    for (int zz = 0; zz < current.positions[frame].size(); zz++) {
+                    for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
                         impulse << <grid, block >> > (
                             state.flame->readTargett(current_device),
-                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
+                            (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
                             current.get_impulseTemp(),
                             state.dim
                             );
                         impulse << <grid, block >> > (
                             state.temperature->readTargett(current_device),
-                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
+                            (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
                             current.get_impulseTemp(),
                             state.dim
                             );
                         impulse << <grid, block >> > (
                             state.density->readTargett(current_device),
-                            (current.get_location() + current.positions[frame][zz] * current.scale), current.get_size(),
+                            (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
                             current.get_impulseDensity(),
                             state.dim
                             );
                         particle_vel << < grid, block >> > (
                             state.velocity->readTargett(current_device),
-                            (current.get_location() + current.positions[frame][zz] * current.scale),
-                            current.size, current.velocities[frame][zz] * current.scale,
+                            (current.get_location() + current.positions[(frame-current.frame_range_min)%current.positions.size()][zz] * current.scale),
+                            current.size, current.velocities[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale,
                             max_velocity, influence_on_velocity,
                             state.dim
                             );
@@ -315,7 +315,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         );
                 }
             }
-            else if (current.get_type() == "vdb" && frame >= current.frame_range_min && frame <= current.frame_range_max) {
+            else if (current.get_type() == "object" && frame >= current.frame_range_min && frame <= current.frame_range_max) {
                 impulse_vdb << <grid, block >> > (
                     state.flame->readTargett(current_device),
                     current.get_location(),
