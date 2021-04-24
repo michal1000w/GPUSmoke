@@ -377,7 +377,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         current.get_impulseTemp(),
                         state.dim,
                         current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
-                        current.get_initial_temp()
+                        current.get_impulseTemp()
                         );
                     impulse_vdb_compressed << <grid, block >> > (
                         state.temperature->readTargett(current_device),
@@ -385,7 +385,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         current.get_impulseTemp(),
                         state.dim,
                         current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
-                        current.get_initial_temp()
+                        current.get_impulseTemp()
                         );
                     impulse_vdb_compressed << <grid, block >> > (
                         state.density->readTargett(current_device),
