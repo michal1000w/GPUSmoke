@@ -1,0 +1,8 @@
+﻿  mesh_make.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_make.cc(66,52): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_make.cc(69,52): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 951 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_make.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_make.exe

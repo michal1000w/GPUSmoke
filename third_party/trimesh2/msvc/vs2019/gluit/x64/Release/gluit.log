@@ -1,0 +1,82 @@
+﻿  freeglut_callbacks.c
+  freeglut_cursor.c
+  freeglut_display.c
+  freeglut_ext.c
+  freeglut_font.c
+  freeglut_font_data.c
+  freeglut_gamemode.c
+  freeglut_geometry.c
+  freeglut_glutfont_definitions.c
+  freeglut_init.c
+  freeglut_input_devices.c
+  freeglut_joystick.c
+  freeglut_main.c
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\freeglut_main.c(84,81): warning C4312: 'type cast': conversion from 'unsigned int' to 'pGetTouchInputInfo' of greater size
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\freeglut_main.c(85,93): warning C4312: 'type cast': conversion from 'unsigned int' to 'pCloseTouchInputHandle' of greater size
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\freeglut_main.c(2559,61): warning C4312: 'type cast': conversion from 'unsigned int' to 'pGetTouchInputInfo' of greater size
+  freeglut_menu.c
+  freeglut_misc.c
+  freeglut_overlay.c
+  freeglut_spaceball.c
+  freeglut_state.c
+  freeglut_stroke_mono_roman.c
+  freeglut_stroke_roman.c
+  Compiling...
+  freeglut_structure.c
+  freeglut_teapot.c
+  freeglut_videoresize.c
+  freeglut_window.c
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\freeglut_window.c(146,89): warning C4312: 'type cast': conversion from 'unsigned int' to 'pRegisterTouchWindow' of greater size
+  fgSetupPixelFormat(): there is still some work to do here!
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\freeglut_window.c(1449,71): warning C4312: 'type cast': conversion from 'unsigned int' to 'pRegisterTouchWindow' of greater size
+  freeglut_xinput.c
+  glui_img_checkbox_0.c
+  glui_img_checkbox_0_dis.c
+  glui_img_checkbox_1.c
+  glui_img_checkbox_1_dis.c
+  glui_img_downarrow.c
+  glui_img_leftarrow.c
+  glui_img_listbox_down.c
+  glui_img_listbox_up.c
+  glui_img_listbox_up_dis.c
+  glui_img_radiobutton_0.c
+  glui_img_radiobutton_0_dis.c
+  glui_img_radiobutton_1.c
+  glui_img_radiobutton_1_dis.c
+  glui_img_rightarrow.c
+  glui_img_spindown_0.c
+  Compiling...
+  glui_img_spindown_1.c
+  glui_img_spindown_dis.c
+  glui_img_spinup_0.c
+  glui_img_spinup_1.c
+  glui_img_spinup_dis.c
+  glui_img_uparrow.c
+  glui.cc
+  glui_add_controls.cc
+  glui_algebra3.cc
+  glui_arcball.cc
+  glui_bitmaps.cc
+  glui_bitmap_img_data.cc
+  glui_button.cc
+  glui_checkbox.cc
+  glui_column.cc
+  glui_control.cc
+  glui_edittext.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\glui_edittext.cc(317,25): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  glui_listbox.cc
+  glui_mouse_iaction.cc
+  glui_node.cc
+  glui_panel.cc
+  glui_quaternion.cc
+  glui_radio.cc
+  glui_rollout.cc
+  glui_rotation.cc
+  glui_separator.cc
+  Compiling...
+  glui_slider.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\gluit\glui_slider.cc(456,20): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  glui_spinner.cc
+  glui_statictext.cc
+  glui_translation.cc
+  gluit.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\lib.Win64.vs142\gluit.lib

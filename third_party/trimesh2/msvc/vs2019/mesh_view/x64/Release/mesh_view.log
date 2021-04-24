@@ -1,0 +1,19 @@
+﻿  mesh_view.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(10,1): warning C4005: '_CRT_SECURE_NO_WARNINGS': macro redefinition
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc : message : see previous definition of '_CRT_SECURE_NO_WARNINGS'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(292,20): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(391,14): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(453,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(513,2): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(521,64): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(539,16): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(542,31): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(660,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(707,14): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(724,35): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_view.cc(727,20): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 2272 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_view.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_view.exe

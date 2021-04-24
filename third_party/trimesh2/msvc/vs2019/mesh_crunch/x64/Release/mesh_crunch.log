@@ -1,0 +1,16 @@
+﻿  mesh_crunch.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_crunch.cc(97,21): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=unsigned int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_crunch.cc(115,52): warning C4267: 'argument': conversion from 'size_t' to 'const T', possible loss of data
+          with
+          [
+              T=int
+          ]
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 969 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_crunch.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_crunch.exe

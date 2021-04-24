@@ -1,0 +1,22 @@
+﻿  mesh_shade.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(35,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(45,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(56,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(57,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(83,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(123,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(147,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(166,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(191,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(275,10): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(276,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(313,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(337,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(366,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(385,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_shade.cc(480,21): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1129 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_shade.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_shade.exe

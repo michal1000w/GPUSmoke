@@ -1,0 +1,7 @@
+﻿  mesh_cat.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_cat.cc(39,14): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1382 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_cat.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_cat.exe

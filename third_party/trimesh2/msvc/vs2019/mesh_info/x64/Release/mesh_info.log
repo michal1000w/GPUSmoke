@@ -1,0 +1,6 @@
+﻿  mesh_info.cc
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1227 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_info.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_info.exe

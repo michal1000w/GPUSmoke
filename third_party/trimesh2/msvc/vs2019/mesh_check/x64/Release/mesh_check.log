@@ -1,0 +1,16 @@
+﻿  mesh_check.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(68,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(68,41): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(131,46): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(184,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(193,27): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(212,27): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(264,25): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(292,24): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(364,26): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_check.cc(366,34): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1243 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_check.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_check.exe

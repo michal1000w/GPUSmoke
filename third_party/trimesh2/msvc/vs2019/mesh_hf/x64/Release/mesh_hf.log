@@ -1,0 +1,38 @@
+﻿  mesh_hf.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(244,41): warning C4267: 'argument': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(336,33): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(343,30): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(369,41): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(400,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(472,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(476,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(714,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(716,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(743,44): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(745,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(754,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(789,44): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(791,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(800,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(835,44): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(837,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(846,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(878,56): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(879,42): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(1084,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(1104,32): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\mesh_hf.cc(1117,31): warning C4244: 'argument': conversion from 'int' to 'float', possible loss of data
+  wingetopt.c
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\wingetopt.c(14,1): warning C4005: 'NULL': macro redefinition
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Tools\MSVC\14.28.29910\include\vcruntime.h(235): message : see previous definition of 'NULL'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\wingetopt.c(49,30): warning C4013: 'strchr' undefined; assuming extern returning int
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utilsrc\wingetopt.c(49,39): warning C4047: '=': 'char *' differs in levels of indirection from 'int'
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 1490 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  mesh_hf.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\utils.Win64.vs142\mesh_hf.exe

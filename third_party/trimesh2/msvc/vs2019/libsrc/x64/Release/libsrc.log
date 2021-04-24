@@ -1,0 +1,358 @@
+﻿  conn_comps.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(77,1): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(81,19): warning C4267: 'argument': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(95,23): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(102,36): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(131,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(140,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(155,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(175,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(180,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(199,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\conn_comps.cc(204,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  diffuse.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(137,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(138,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(251,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(321,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(357,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(397,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(288,1): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\diffuse.cc(423): message : see reference to function template instantiation 'void trimesh::diffuse_vector<float>(trimesh::TriMesh *,std::vector<float,std::allocator<float>> &,float)' being compiled
+  edgeflip.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\edgeflip.cc(139,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(738,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(735): message : while compiling class template member function 'int trimesh::Vec<3,int>::indexof(const T &) const'
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\edgeflip.cc(78): message : see reference to function template instantiation 'int trimesh::Vec<3,int>::indexof(const T &) const' being compiled
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\TriMesh.h(142): message : see reference to class template instantiation 'trimesh::Vec<3,int>' being compiled
+  faceflip.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\faceflip.cc(24,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  filter.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(32,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(45,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(109,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(137,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(159,20): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(191,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(254,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(297,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(384,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(460,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(473,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(479,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(738,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(735): message : while compiling class template member function 'int trimesh::Vec<3,int>::indexof(const T &) const'
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\filter.cc(405): message : see reference to function template instantiation 'int trimesh::Vec<3,int>::indexof(const T &) const' being compiled
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\TriMesh.h(142): message : see reference to class template instantiation 'trimesh::Vec<3,int>' being compiled
+  GLCamera.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(128,16): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(128,13): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(128,10): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(285,25): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(285,21): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLCamera.cc(285,17): warning C4244: 'argument': conversion from 'GLdouble' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+  GLManager.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(772,34): warning C4267: 'argument': conversion from 'size_t' to 'GLenum', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(934,37): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(969,32): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1034,31): warning C4267: 'argument': conversion from 'size_t' to 'GLuint', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1050,65): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1063,62): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1077,64): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1091,64): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1104,67): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1118,60): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1132,57): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1147,59): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1162,59): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1176,62): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1687,40): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1687,40): warning C4267: 'argument': conversion from 'size_t' to 'GLint', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1693,68): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1700,42): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1708,13): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1716,40): warning C4244: 'argument': conversion from '__int64' to 'GLsizei', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\GLManager.cc(1728,43): warning C4267: 'argument': conversion from 'size_t' to 'GLsizei', possible loss of data
+  ICP.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(63,11): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(79,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(79,40): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(79,70): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(79,70): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(179,17): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(369,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(369,40): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(369,70): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(369,70): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(444,15): warning C4244: 'argument': conversion from 'size_t' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(445,15): warning C4244: 'argument': conversion from 'size_t' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(562,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(568,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(589,33): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(589,33): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(589,56): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(589,56): warning C4267: 'initializing': conversion from 'size_t' to 'const int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(599,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\ICP.cc(605,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+  KDtree.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\KDtree.cc(153,11): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+  make.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(159,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(183,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(225,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(267,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(309,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(387,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(447,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(543,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(639,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(699,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(801,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(987,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1113,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1219,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1249,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1279,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1321,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1375,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1429,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1513,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1579,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1675,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1777,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1867,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(1993,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(2209,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\shape_data.inc(2581,1): warning C4305: 'initializing': truncation from 'double' to 'const float'
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(78,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(95,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(112,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(335,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(343,39): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(470,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(800,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(838,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\make.cc(895,34): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  merge.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(22,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(37,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(73,18): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(128,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(130,39): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(132,36): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(162,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(163,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(195,34): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(213,28): warning C4267: '=': conversion from 'size_t' to '_Ty', possible loss of data
+          with
+          [
+              _Ty=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(214,7): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\merge.cc(222,19): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+  overlap.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\overlap.cc(31,33): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\overlap.cc(43,12): warning C4244: 'initializing': conversion from '__int64' to 'int', possible loss of data
+  remove.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\remove.cc(20,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\remove.cc(48,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\remove.cc(54,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\remove.cc(74,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\remove.cc(114,35): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  reorder_verts.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\reorder_verts.cc(34,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\reorder_verts.cc(111,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\reorder_verts.cc(123,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\reorder_verts.cc(135,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\reorder_verts.cc(192,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  subdiv.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(73,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(123,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(288,29): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(290,36): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(315,46): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(347,43): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(738,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(735): message : while compiling class template member function 'int trimesh::Vec<3,int>::indexof(const T &) const'
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\subdiv.cc(34): message : see reference to function template instantiation 'int trimesh::Vec<3,int>::indexof(const T &) const' being compiled
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\TriMesh.h(142): message : see reference to class template instantiation 'trimesh::Vec<3,int>' being compiled
+  TriMesh_bounding.cc
+  TriMesh_connectivity.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(27,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(27,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(67,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(67,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(102,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(738,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(735): message : while compiling class template member function 'int trimesh::Vec<3,int>::indexof(const T &) const'
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_connectivity.cc(115): message : see reference to function template instantiation 'int trimesh::Vec<3,int>::indexof(const T &) const' being compiled
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\TriMesh.h(142): message : see reference to class template instantiation 'trimesh::Vec<3,int>' being compiled
+  TriMesh_curvature.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_curvature.cc(154,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_curvature.cc(154,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_curvature.cc(260,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_curvature.cc(260,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  TriMesh_grid.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_grid.cc(28,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_grid.cc(62,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  TriMesh_io.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(522,35): warning C4267: '=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(542,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(692,36): warning C4267: '+=': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(774,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(827,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(915,48): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(940,40): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1011,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1059,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1109,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1131,41): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1277,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1650,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1762,33): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1769,27): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1833,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1833,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1902,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(1902,57): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(263,15): warning C4244: '=': conversion from 'const double' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(599): message : see reference to function template instantiation 'trimesh::Vec<3,float> &trimesh::Vec<3,float>::operator =<double[3]>(const S (&))' being compiled
+          with
+          [
+              S=double [3]
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_io.cc(599): message : see reference to function template instantiation 'trimesh::Vec<3,float> &trimesh::Vec<3,float>::operator =<double[3]>(const S (&))' being compiled
+          with
+          [
+              S=double [3]
+          ]
+  Compiling...
+  TriMesh_normals.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_normals.cc(127,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_normals.cc(149,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_normals.cc(171,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_normals.cc(176,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_normals.cc(205,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  TriMesh_pointareas.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_pointareas.cc(25,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_pointareas.cc(25,45): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  TriMesh_stats.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(26,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(33,25): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(40,25): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(48,25): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(59,25): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(68,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(74,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(80,28): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(89,21): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(177,26): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_stats.cc(179,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+  TriMesh_tstrips.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_tstrips.cc(38,23): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_tstrips.cc(154,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_tstrips.cc(200,30): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(738,1): warning C4267: 'return': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\Vec.h(735): message : while compiling class template member function 'int trimesh::Vec<3,int>::indexof(const T &) const'
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\TriMesh_tstrips.cc(96): message : see reference to function template instantiation 'int trimesh::Vec<3,int>::indexof(const T &) const' being compiled
+          with
+          [
+              T=int
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\include\TriMesh.h(142): message : see reference to class template instantiation 'trimesh::Vec<3,int>' being compiled
+  umbrella.cc
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(23,32): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(47,38): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(52,15): warning C4244: 'argument': conversion from 'int' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(96,31): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(100,37): warning C4267: 'initializing': conversion from 'size_t' to 'int', possible loss of data
+C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\libsrc\umbrella.cc(105,14): warning C4244: 'argument': conversion from 'int' to 'const T', possible loss of data
+          with
+          [
+              T=float
+          ]
+  libsrc.vcxproj -> C:\Users\micha\source\repos\GPUFluid\third_party\trimesh2\lib.Win64.vs142\trimesh.lib
