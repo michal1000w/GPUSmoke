@@ -115,7 +115,8 @@ public:
     bool render_shadows = true;
     float transparency_compensation = 1.0f;
     float shadow_quality = 1.0f;
-
+    bool THIS_IS_THE_END = false;
+    bool writing = false;
     int deviceIndex = 0;
 
     int devicesCount = 1;
@@ -496,7 +497,7 @@ public:
 
     void ExampleScene(bool force = false) {
         //adding emitters
-        
+        object_list.clear();
 
         //LoadTest();
         OBJECT obj("vdb", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
@@ -521,7 +522,7 @@ public:
 
         std::cout << "creating grid" << std::endl;
         cudaSetDevice(deviceIndex);
-        float* grid = LoadAndVoxelize(getDomainResolution(), "input/obj/suzanne.obj", 0.67, deviceIndex, false);
+        float* grid = LoadAndVoxelize(getDomainResolution(), "./input/obj/suzanne.obj", 0.67, deviceIndex, false);
         
         std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
         std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;
@@ -641,7 +642,7 @@ public:
         SAMPLE_SCENE = 0;
         EXPORT_START_FRAME = 0;
         EXPORT_END_FRAME = 500;
-        std::string folder = "output/cache/";
+        std::string folder = "./output/cache/";
         for (int i = 0; i < folder.length(); i++)
             EXPORT_FOLDER[i] = folder[i];
         EXPORT_VDB = false;
@@ -779,7 +780,11 @@ public:
             PrepareRender(img, img_d);
                 */
             //generateBitmapImage(img, img_d.y, img_d.x, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
-            generateBitmapImage(img, img_d.y, img_d.x, std::string("output/temp.bmp").c_str());
+            if (!this->writing) {
+                this->writing = true;
+                generateBitmapImage(img, img_d.y, img_d.x, std::string("output/temp.bmp").c_str());
+                this->writing = false;
+            }
         }
     }
 

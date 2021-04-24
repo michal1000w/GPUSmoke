@@ -201,25 +201,40 @@ void DeleteObject(const int object) {
 
 
 
+std::vector<std::thread> threads;
 
 
 void UpdateSolver() {
+
+	solver.THIS_IS_THE_END = true;
+	for (auto& thread : threads)
+		thread.join();
+	threads.clear();
+
+
+
 	std::cout << "\nRestarting\n";
 	solver.ThreadsJoin();
 	//clearing
 	//solver.ClearCache();
 	solver.frame = 0;
+
+
+	solver.THIS_IS_THE_END = false;
+	solver.SIMULATE = true;
+
 	solver.Clear_Simulation_Data();
 	solver.ResetObjects();
 	//preparation
 	//solver.Initialize();
 	solver.UpdateDomainResolution();
 	//solver.UpdateTimeStep();
+	solver.Initialize_Simulation();
 	if (solver.SAMPLE_SCENE == 0)
 		solver.ExampleScene();
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
-	solver.Initialize_Simulation();
+	solver.writing = false;
 }
 
 
@@ -1138,24 +1153,42 @@ int Window(float* Img_res, float dpi) {
 		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 0, 10, 30, false });
 		//Timeline.myItems.push_back(MySequence::MySequenceItem{ 1, 20, 30, true });
 
-
+		
 		///////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
-			clock_t startTime = clock();
+			//clock_t startTime = clock();
 
 
 			//////////////////
-			//if (solver.SIMULATE) {
-				solver.Simulation_Frame();
-			//}
+			//solver.Simulation_Frame();
+			if (threads.size() == 0) {
+				threads.push_back(std::thread([&]() {
+					while (true) {
+						clock_t startTime = clock();
+
+						solver.Simulation_Frame();
+
+						fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+
+						if (solver.THIS_IS_THE_END) {
+							std::cout << "I'm breaking out" << std::endl;
+							break;
+						}
+					}
+				}));
+			}
 			
 			 
 			 
 			//////////////////
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			//texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
-			texture.UpdateTexture("output/temp.bmp");
-			texture.Bind(/*slot*/0);
+			if (!solver.writing) {
+				solver.writing = true;
+				texture.UpdateTexture("output/temp.bmp");
+				solver.writing = false;
+				texture.Bind(/*slot*/0);
+			}
 			//shader.SetUniform1i("u_Texture", /*slot*/0);
 			//////////////////
 			renderer.Clear();
@@ -1179,8 +1212,13 @@ int Window(float* Img_res, float dpi) {
 			GLCall(glfwSwapBuffers(window));
 			GLCall(glfwPollEvents());
 
-			fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+			//fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
 		}
+		solver.THIS_IS_THE_END = true;
+		std::cout << "Threads join together" << std::endl;
+		for (auto& thread : threads)
+			thread.join();
+		threads.clear();
 	}
 	//Shutdown
 	ImGui_ImplOpenGL3_Shutdown();
