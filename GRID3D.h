@@ -73,6 +73,33 @@ inline void __checkCudaErrors(cudaError err, const char* file, const int line)
     }
 }
 
+template <typename T>
+inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, int deviceIndex) {
+    std::vector<std::thread> threads;
+
+    std::cout << "ZEROOO(" << size << ")";
+
+    auto lista = enumerate(deviceIndex, devices_count);
+
+    for (unsigned int device_id = 0; device_id < devices_count; device_id++)
+    {
+        threads.push_back(std::thread([&, device_id]() {
+            checkCudaErrors(cudaSetDevice(lista[device_id]));
+
+
+            std::cout << device_id;
+            checkCudaErrors(cudaMemsetAsync(gridd->at(device_id), 0, size));
+            //checkCudaErrors(cudaMemcpy(&dst[device_id], &src, sizeof(float) * size, cudaMemcpyHostToDevice));
+
+            std::cout << "Zeroed";
+            cudaDeviceSynchronize();
+            }));
+    }
+
+    for (auto& thread : threads)
+        thread.join();
+}
+
 inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float* src, int size, int deviceIndex) {
     std::vector<std::thread> threads;
 
@@ -98,6 +125,8 @@ inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float*
     for (auto& thread : threads)
         thread.join();
 }
+
+
 
 inline void multiGPU_copy(int devices_count, std::vector<float3*>& dst, float3* src, int size, cudaMemcpyKind type, int deviceIndex) {
     std::vector<std::thread> threads;
@@ -1500,7 +1529,22 @@ public:
 
     int3 resolution;
     
+    void clearAll(int deviceIndex) {
+        multiGPU_clear(&vdb, size(), deviceCount, deviceIndex);
+        multiGPU_clear(&vdb_temp, size(), deviceCount, deviceIndex);
+        //multiGPU_clear(vdb_noise, 64, deviceCount, deviceIndex);
+        multiGPU_clear(&grid_vel_gpu, size() * 3, deviceCount, deviceIndex);
 
+        for (int i = 0; i < size(); i++) {
+            grid[i] = 0;
+            grid_temp[i] = 0;
+            grid_vel[i].x = 0;
+            grid_vel[i].y = 0;
+            grid_vel[i].z = 0;
+        }
+
+        //no noise
+    }
 private:
     std::vector<float*> vdb;
     std::vector<float*> vdb_temp;

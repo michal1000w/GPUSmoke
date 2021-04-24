@@ -54,6 +54,10 @@ public:
         //cudaFree(B);
         multiGPU_free(devicesCount, &B);
     }
+    void zeros(int deviceIndex) {
+        multiGPU_clear(&A, nbytes, devicesCount, deviceIndex);
+        multiGPU_clear(&B, nbytes, devicesCount, deviceIndex);
+    }
     T* temporary;
 
 

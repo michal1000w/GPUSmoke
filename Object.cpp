@@ -26,7 +26,7 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
 	auto filelist = get_file_list(this->particle_filepath);
 
-	this->vdb_object = new GRID3D(resolution, deviceCount, deviceIndex);
+	//this->vdb_object = new GRID3D(resolution, deviceCount, deviceIndex);
 
 	for (int i = 0; i < filelist.size(); i++) {
 		std::vector<std::string> elements;
@@ -45,7 +45,7 @@ void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
 	if (filelist.size() > 2)
 		frame_range_max = filelist.size();
 	else
-		frame_range_max = 100;
+		frame_range_max = 800;
 }
 
 void OBJECT::LoadParticles() {

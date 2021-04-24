@@ -41,6 +41,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle", "object" };
 bool TimelineInitialized = false;
 bool AddParticleSystem = false;
+bool AddObjectSystem = false;
+char temp_object_path[512] = { "./input/obj/suzanne/" };
 char temp_particle_path[512] = { "./input/exp2/" };
 static int selectedEntry = -1;
 MySequence Timeline;
@@ -141,7 +143,7 @@ void AddObject2(int type, int j, int particle_system) {
 	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list.at(j).frame_range_min,
 																&solver.object_list.at(j).frame_range_max, false });
 
-	if (type == EXPLOSION || type == PARTICLE) {
+	if (type == EXPLOSION || type == PARTICLE || type == VDBOBJECT) {
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
 	}
@@ -199,9 +201,11 @@ void DuplicateObject(int index) {
 }
 
 void DeleteObject(const int object) {
+	/*
 	if (solver.object_list[object].get_type() == "object" ||
 		solver.object_list[object].get_type() == "vdbs")
 		solver.object_list[object].cudaFree();
+	*/
 	solver.object_list[object].free();
 	solver.object_list.erase(solver.object_list.begin() + object);
 	//Timeline.Del(object);
@@ -237,18 +241,23 @@ void UpdateSolver() {
 	solver.THIS_IS_THE_END = false;
 	//solver.SIMULATE = true;
 
-	solver.Clear_Simulation_Data();
+	//solver.Clear_Simulation_Data(); //tutaj
+	solver.Clear_Simulation_Data2();
+
+
 	solver.ResetObjects(); //loc rot scale
 	//preparation
 	//solver.Initialize();
 	solver.UpdateDomainResolution();
 	//solver.UpdateTimeStep();
-	solver.Initialize_Simulation();
+	// 
+	//solver.Initialize_Simulation(); //tutaj
 	
 	if (solver.SAMPLE_SCENE == 0)
 		solver.ExampleScene();
 	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 		solver.ExportVDBScene();
+
 	
 	solver.writing = false;
 }
@@ -727,6 +736,8 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 			if (current_item == "particle")
 				AddParticleSystem = true;
+			else if (current_item == "object")
+				AddObjectSystem = true;
 			else
 				AddObject(current_item_id);
 		}
@@ -746,6 +757,22 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 						}
 					}
 					AddParticleSystem = false;
+				}
+			}
+		}
+		if (AddObjectSystem && current_item == "object") {
+			ImGui::InputText("filepath2", temp_object_path, IM_ARRAYSIZE(temp_object_path));
+			if (std::experimental::filesystem::is_directory(temp_object_path)) {
+				if (ImGui::Button("Confirm")) {
+					OBJECT prt("object", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
+					prt.particle_filepath = temp_object_path;
+					prt.LoadObjects(solver.getDomainResolution(),solver.devicesCount,solver.deviceIndex);
+					if (prt.collisions.size() != 0) {
+							solver.object_list.push_back(prt);
+							int j = solver.object_list.size() - 1;
+							AddObject2(VDBOBJECT, j, 1);
+					}
+					AddObjectSystem = false;
 				}
 			}
 		}

@@ -691,8 +691,6 @@ public:
         GRID = new GRID3D(devicesCount, deviceIndex);
         GRID->deviceCount = this->devicesCount;
         InitGPUNoise(NOISE_SC);
-
-        
         
 
         state->f_weight = 0.05;
@@ -711,20 +709,23 @@ public:
         delete[] img;
         delete GRID;
 
-        if (!preserve_object_list || /*SAMPLE_SCENE == 1 || */SAMPLE_SCENE == 2) {
+        if (!preserve_object_list || SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
-                //if (i.get_type() == "vdb" || i.get_type() == "vdbs")
-                    //i.cudaFree();
-                if (i.get_type() != "object")
+                //if (i.type != VDBOBJECT) 
                     i.free();
             }
             object_list.clear();
         }
 
-
         printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
         cudaThreadExit();
+    }
+
+    void Clear_Simulation_Data2() {
+        state->zeros(devicesCount,deviceIndex);
+        //for (auto i : object_list)
+            //i.vdb_object.clearAll(deviceIndex);
     }
 
     void Simulate(int frame, int device = 0) {

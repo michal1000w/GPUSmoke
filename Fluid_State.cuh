@@ -57,6 +57,24 @@ struct fluid_state {
         noise->setDim(noiseDims);
     }
 
+    void zeros(int devicesCount, int deviceIndex) {
+        std::cout << "c->";
+        density->zeros(deviceIndex);
+        std::cout << "d;";
+        temperature->zeros(deviceIndex);
+        std::cout << "t;";
+        pressure->zeros(deviceIndex);
+        std::cout << "p;";
+        flame->zeros(deviceIndex);
+        std::cout << "f;";
+        diverge->zeros(deviceIndex);
+        std::cout << "d;";
+        noise->zeros(deviceIndex);
+        std::cout << "n;";
+        velocity->zeros(deviceIndex);
+        std::cout << "v;";
+    }
+
     fluid_state() {
 
     }

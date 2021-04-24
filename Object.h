@@ -61,7 +61,9 @@ public:
     GRID3D get_density_grid();
     float get_initial_temp();
     void cudaFree() { vdb_object.freeCuda(); }
-	void free() { vdb_object.free(); }
+	void free() {
+		vdb_object.free();
+	}
 	std::string get_object();
 	std::string get_name();
 	void set_name(std::string);
