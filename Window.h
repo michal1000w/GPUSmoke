@@ -173,6 +173,10 @@ void DuplicateObject(int index) {
 
 	solver.object_list.push_back(OBJECT(obj, solver.object_list.size(), solver.devicesCount));
 	int j = solver.object_list.size() - 1;
+	solver.object_list.at(j).vdb_object = solver.object_list[index].vdb_object;
+	solver.object_list.at(j).particle_filepath = solver.object_list[index].particle_filepath;
+	solver.object_list.at(j).velocities = solver.object_list[index].velocities;
+	solver.object_list.at(j).positions = solver.object_list[index].positions;
 
 	int current_item_id = 0;
 #pragma unroll

@@ -103,10 +103,10 @@ public:
 	std::string particle_filepath = "";
 
 
+    GRID3D vdb_object;
 private:
 	float impulseDensity;
 	float3 location;
-    GRID3D vdb_object;
     float initial_temperature;
 	std::string name;
 

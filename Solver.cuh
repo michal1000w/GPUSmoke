@@ -501,9 +501,7 @@ public:
         //LoadTest();
 
 
-        /*
         if (!preserve_object_list || force) {
-            object_list.clear();
             OBJECT obj("object", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
             std::cout << "creating grid" << std::endl;
             cudaSetDevice(deviceIndex);
@@ -522,6 +520,7 @@ public:
 
             object_list.push_back(obj);
         }
+        /*
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -539,7 +538,7 @@ public:
                 temp2.frame_range_max = i + 10;
                 object_list.push_back(temp2);
             }
-        }*/
+        }
         
         if (!preserve_object_list || force) {
             OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, object_list.size(), this->devicesCount);
@@ -548,6 +547,7 @@ public:
             object_list.push_back(prt);
         }
 
+        */
         
 
     }
