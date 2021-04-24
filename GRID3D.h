@@ -596,7 +596,7 @@ public:
         }
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        //initNoiseGrid();
+        std::cout << "But in the end" << std::endl;
         return *this;
     }
     GRID3D operator=(const GRID3D* rhs) {

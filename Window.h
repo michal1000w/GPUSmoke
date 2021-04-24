@@ -167,14 +167,16 @@ void AddObject(int type) {
 
 
 void DuplicateObject(int index) {
-	OBJECT obj = solver.object_list[index];
+	OBJECT obj = OBJECT(solver.object_list[index], solver.object_list.size(),solver.devicesCount);
 	std::string name = obj.get_type2();
 	obj.set_name(name + std::to_string(index+1));
 
 	solver.object_list.push_back(OBJECT(obj, solver.object_list.size(), solver.devicesCount));
 	int j = solver.object_list.size() - 1;
-	if (solver.object_list[j].type == VDBOBJECT)
-		solver.object_list.at(j).load_density_grid(obj.get_density_grid(), obj.get_initial_temp(), solver.deviceIndex);
+	if (solver.object_list[j].type == VDBOBJECT) {
+		solver.object_list.at(j).load_density_grid(solver.object_list[index].get_density_grid(),
+			solver.object_list[index].get_initial_temp(), solver.deviceIndex);
+	}
 	//solver.object_list.at(j).vdb_object = obj.vdb_object;
 
 	int current_item_id = 0;
