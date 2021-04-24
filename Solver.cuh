@@ -2,7 +2,6 @@
 #include "IO.h"
 #include "Simulation.cuh"
 #include "Renderer.cuh"
-#include "ObjIO.h"
 
 
 #define EXPERIMENTAL
@@ -503,6 +502,11 @@ public:
 
         if (!preserve_object_list || force) {
             OBJECT obj("object", 1, make_float3(0), 5, 0.5, object_list.size(), this->devicesCount);
+
+            obj.particle_filepath = "./input/obj/suzanne/";
+
+            obj.LoadObjects(getDomainResolution(), devicesCount, deviceIndex);
+            /*
             std::cout << "creating grid" << std::endl;
             cudaSetDevice(deviceIndex);
             float* grid = LoadAndVoxelize(getDomainResolution(), "./input/obj/suzanne.obj", 0.67, deviceIndex, false);
@@ -517,6 +521,8 @@ public:
 
 
             obj.load_density_grid(grid_3d, 5, deviceIndex);
+            */
+
 
             object_list.push_back(obj);
         }

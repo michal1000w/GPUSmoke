@@ -1493,7 +1493,6 @@ public:
         return (long long)resolution.x * (long long)resolution.y * (long long)resolution.z;
     }
     int deviceCount = 1;
-private:
     float* grid;
     float* grid_temp;
     float* grid_noise;
@@ -1502,6 +1501,7 @@ private:
     int3 resolution;
     
 
+private:
     std::vector<float*> vdb;
     std::vector<float*> vdb_temp;
     std::vector<float*> vdb_noise;

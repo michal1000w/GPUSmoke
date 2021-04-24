@@ -212,9 +212,56 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     //std::cout << cudaGetErrorString(cudaGetLastError());
                 }
             }
+
             
             if (current.get_type() == "particle") {
                 if (frame >= current.frame_range_min && frame < current.frame_range_max) {
+                    std::vector<std::thread> threads;
+
+
+                    /* //3.5fps
+                    threads.push_back(std::thread([&]() {
+                        for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
+                            impulse << <grid, block >> > (
+                                state.flame->readTargett(current_device),
+                                (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
+                                current.get_impulseTemp(),
+                                state.dim
+                                );
+                        }
+                    }));
+                    threads.push_back(std::thread([&]() {
+                        for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
+                            impulse << <grid, block >> > (
+                                state.temperature->readTargett(current_device),
+                                (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
+                                current.get_impulseTemp(),
+                                state.dim
+                                );
+                        }
+                        }));
+                    threads.push_back(std::thread([&]() {
+                        for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
+                            impulse << <grid, block >> > (
+                                state.density->readTargett(current_device),
+                                (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale), current.get_size(),
+                                current.get_impulseDensity(),
+                                state.dim
+                                );
+                        }
+                        }));
+                    threads.push_back(std::thread([&]() {
+                        for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
+                            particle_vel << < grid, block >> > (
+                                state.velocity->readTargett(current_device),
+                                (current.get_location() + current.positions[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale),
+                                current.size, current.velocities[(frame - current.frame_range_min) % current.positions.size()][zz] * current.scale,
+                                max_velocity, influence_on_velocity,
+                                state.dim
+                                );
+                        }
+                        }));
+                        */
                     for (int zz = 0; zz < current.positions[(frame - current.frame_range_min) % current.positions.size()].size(); zz++) {
                         impulse << <grid, block >> > (
                             state.flame->readTargett(current_device),
@@ -242,9 +289,16 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                             state.dim
                             );
                     }
+                    /*
+                    */
+
+
+
+
+                    for (auto& thread : threads)
+                       thread.join();
                 }
             }
-
 
 
 
@@ -316,6 +370,32 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 }
             }
             else if (current.get_type() == "object" && frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                    impulse_vdb_compressed << <grid, block >> > (
+                        state.flame->readTargett(current_device),
+                        current.get_location(),
+                        current.get_impulseTemp(),
+                        state.dim,
+                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                        current.get_initial_temp()
+                        );
+                    impulse_vdb_compressed << <grid, block >> > (
+                        state.temperature->readTargett(current_device),
+                        current.get_location(),
+                        current.get_impulseTemp(),
+                        state.dim,
+                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                        current.get_initial_temp()
+                        );
+
+                    impulse_vdb_compressed << <grid, block >> > (
+                        state.density->readTargett(current_device),
+                        current.get_location(),
+                        current.get_impulseDensity(),
+                        state.dim,
+                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                        0.7f
+                        );
+                /*
                 impulse_vdb << <grid, block >> > (
                     state.flame->readTargett(current_device),
                     current.get_location(),
@@ -340,6 +420,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                     state.dim
                     ,current.get_density_grid().get_grid_device()->at(current_device)
                     );
+                    */
             }
             /*
             else if (current.get_type() == "vdbs") {

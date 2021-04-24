@@ -1315,5 +1315,41 @@ __global__ void combine(T* dst, T* src, int3 vd) {
 
 
 
+__device__ __host__ inline bool checkVoxel(size_t x, size_t y, size_t z, int3 gridsize, const unsigned int* vtable){
+    if (x < 0 || y < 0 || z < 0 || x > gridsize.x || y > gridsize.y || z > gridsize.z)
+        return false;
 
+	size_t location = x + (y*gridsize.y) + (z*gridsize.y*gridsize.z);
+	size_t int_location = location / size_t(32);
+	unsigned int bit_pos = size_t(31) - (location % size_t(32)); // we count bit positions RtL, but array indices LtR
+	if ((vtable[int_location]) & (1 << bit_pos)){
+		return true;
+	}
+	return false;
+}
 
+template <typename T>
+__global__ void impulse_vdb_compressed(T* target, float3 c, T val, int3 vd, unsigned int* vdb, float temp = 1.0)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    //bool if_add = checkVoxel(x + (int)c.x, y + (int)c.y, z + (int)c.z, vd, vdb);
+    int3 vdd = vd;
+    vdd.x = minf(minf(vd.x, vd.y), vd.z);
+    vdd.y = minf(minf(vd.x, vd.y), vd.z);
+    vdd.z = minf(minf(vd.x, vd.y), vd.z);
+    bool if_add = checkVoxel(x+(int)c.x, y + (int)c.y, z + (int)c.z, vdd, vdb);
+
+    if (if_add) {
+        target[get_voxel(x, y, z, vd)] = temp;
+    }
+    else {
+        target[get_voxel(x, y, z, vd)] = 0;
+    }
+
+    //target[get_voxel(x, y, z, vd)] = get_voxel_density(x, y, z, vd, vdb);
+}

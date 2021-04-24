@@ -500,3 +500,87 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
 }
 
 
+unsigned int* LoadAndVoxelizeCompressed(int3 grid_size, std::string filename, float density, int deviceIndex, bool solidVoxelization, int &table_size) {
+    fprintf(stdout, "[I/O] Reading mesh from %s \n", filename.c_str());
+    trimesh::TriMesh* themesh = trimesh::TriMesh::read(filename.c_str());
+    themesh->need_faces(); // Trimesh: Unpack (possible) triangle strips so we have faces for sure
+    fprintf(stdout, "[Mesh] Number of triangles: %zu \n", themesh->faces.size());
+    fprintf(stdout, "[Mesh] Number of vertices: %zu \n", themesh->vertices.size());
+    fprintf(stdout, "[Mesh] Computing bbox \n");
+    themesh->need_bbox(); // Trimesh: Compute the bounding box (in model coordinates)
+
+    int gsize = min(min(grid_size.x, grid_size.y), grid_size.z);
+
+    // SECTION: Compute some information needed for voxelization (bounding box, unit vector, ...)
+    fprintf(stdout, "\n## VOXELISATION SETUP \n");
+    // Initialize our own AABox
+    AABox<glm::vec3> bbox_mesh(trimesh_to_glm(themesh->bbox.min), trimesh_to_glm(themesh->bbox.max));
+    // Transform that AABox to a cubical box (by padding directions if needed)
+    // Create voxinfo struct, which handles all the rest
+    voxinfo voxelization_info(createMeshBBCube<glm::vec3>(bbox_mesh), glm::uvec3(gsize, gsize, gsize), themesh->faces.size());
+    voxelization_info.print();
+    // Compute space needed to hold voxel table (1 voxel / bit)
+    size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)) / 8.0f);
+    //size_t vtable_size = static_cast<size_t>(ceil(static_cast<size_t>(voxelization_info.gridsize.x) * static_cast<size_t>(voxelization_info.gridsize.y) * static_cast<size_t>(voxelization_info.gridsize.z)));
+    unsigned int* vtable; // Both voxelization paths (GPU and CPU) need this
+
+    bool cuda_ok = false;
+    if (!forceCPU)
+    {
+        // SECTION: Try to figure out if we have a CUDA-enabled GPU
+        fprintf(stdout, "\n## CUDA INIT \n");
+        cuda_ok = true;// initCuda();
+        cuda_ok ? fprintf(stdout, "[Info] CUDA GPU found\n") : fprintf(stdout, "[Info] CUDA GPU not found\n");
+    }
+
+    // SECTION: The actual voxelization
+    if (cuda_ok && !forceCPU) {
+        // GPU voxelization
+        fprintf(stdout, "\n## TRIANGLES TO GPU TRANSFER \n");
+
+        float* device_triangles;
+        // Transfer triangles to GPU using either thrust or managed cuda memory
+        if (useThrustPath) {
+            //device_triangles = meshToGPU_thrust(themesh);
+        }
+        else { device_triangles = meshToGPU_managed(themesh); }
+
+        if (!useThrustPath) {
+            fprintf(stdout, "[Voxel Grid] Allocating %s of CUDA-managed UNIFIED memory for Voxel Grid\n", readableSize(vtable_size).c_str());
+            checkCudaErrors(cudaMallocManaged((void**)&vtable, vtable_size));
+        }
+        else {
+            // ALLOCATE MEMORY ON HOST
+            fprintf(stdout, "[Voxel Grid] Allocating %s kB of page-locked HOST memory for Voxel Grid\n", readableSize(vtable_size).c_str());
+            checkCudaErrors(cudaHostAlloc((void**)&vtable, vtable_size, cudaHostAllocDefault));
+        }
+        fprintf(stdout, "\n## GPU VOXELISATION \n");
+        if (solidVoxelization) {
+            voxelize_solid(voxelization_info, device_triangles, vtable, useThrustPath, (outputformat == OutputFormat::output_obj_cubes));
+        }
+        else {
+            voxelize(voxelization_info, device_triangles, vtable, useThrustPath, false);// (outputformat == OutputFormat::output_obj_cubes));
+        }
+    }
+    else {
+        // CPU VOXELIZATION FALLBACK
+        fprintf(stdout, "\n## CPU VOXELISATION \n");
+        if (!forceCPU) { fprintf(stdout, "[Info] No suitable CUDA GPU was found: Falling back to CPU voxelization\n"); }
+        else { fprintf(stdout, "[Info] Doing CPU voxelization (forced using command-line switch -cpu)\n"); }
+        // allocate zero-filled array
+        vtable = (unsigned int*)calloc(1, vtable_size);
+        /*
+        if (!solidVoxelization) {
+            cpu_voxelizer::cpu_voxelize_mesh(voxelization_info, themesh, vtable, (outputformat == OutputFormat::output_morton));
+        }
+        else {
+            cpu_voxelizer::cpu_voxelize_mesh_solid(voxelization_info, themesh, vtable, (outputformat == OutputFormat::output_morton));
+        }
+        */
+    }
+    
+    table_size = vtable_size;
+
+
+    return vtable;
+}

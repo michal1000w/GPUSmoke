@@ -3,6 +3,7 @@
 
 #include "BPPointCloud.h"
 #include "GetFileList.h"
+#include "ObjIO.h"
 
 ////////////////////////CONSTRUCTORS//////////////////////////////////
 /*
@@ -22,6 +23,31 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 }
 */
+void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
+	auto filelist = get_file_list(this->particle_filepath);
+
+	this->vdb_object = new GRID3D(resolution, deviceCount, deviceIndex);
+
+	for (int i = 0; i < filelist.size(); i++) {
+		std::vector<std::string> elements;
+		split(filelist[i], elements, '.');
+		if (elements.at(elements.size() - 1) != "obj") continue;
+
+		std::cout << i << "/" << filelist.size() << "\n";
+		int table_size = 0;
+		unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, false, table_size);
+		collisions.push_back(current); //wyciek pamieci
+		std::cout << "Table size: " << table_size << std::endl;
+	}
+
+
+	frame_range_min = 0;
+	if (filelist.size() > 2)
+		frame_range_max = filelist.size();
+	else
+		frame_range_max = 100;
+}
+
 void OBJECT::LoadParticles() {
 	auto filelist = get_file_list(this->particle_filepath);
 	for (int i = 0; i < filelist.size(); i++) {

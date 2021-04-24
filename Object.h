@@ -71,7 +71,7 @@ public:
 	void update();
 	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
 	void LoadParticles();
-
+	void LoadObjects(int3,int,int);
 
 	bool selected;
 	float Location[3];
@@ -104,6 +104,7 @@ public:
 
 
     GRID3D vdb_object;
+	std::vector<unsigned int*> collisions;
 private:
 	float impulseDensity;
 	float3 location;
