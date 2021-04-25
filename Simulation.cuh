@@ -371,6 +371,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
             else if (current.get_type() == "object") {
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
+                    /*
                     impulse_vdb_compressed << <grid, block >> > (
                         state.flame->readTargett(current_device),
                         current.get_location(),
@@ -395,6 +396,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
                         0.7f
                         );
+                    */
                     collision_vdb << <grid, block >> > (
                         state.collision->readTargett(current_device),
                         current.get_location(),
@@ -402,57 +404,9 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         state.dim,
                         current.collisions[(frame - current.frame_range_min) % current.collisions.size()]
                         );
-                    /*
-                        */
-
-
-                    /*
-                    impulse_vdb << <grid, block >> > (
-                        state.flame->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseTemp(),
-                        state.dim,
-                        current.get_density_grid().get_grid_device_temp()->at(current_device),
-                        current.get_initial_temp()
-                        );
-                    impulse_vdb << <grid, block >> > (
-                        state.temperature->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseTemp(),
-                        state.dim,
-                        current.get_density_grid().get_grid_device_temp()->at(current_device),
-                        current.get_initial_temp()
-                        );
-
-                    impulse_vdb << <grid, block >> > (
-                        state.density->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseDensity(),
-                        state.dim
-                        ,current.get_density_grid().get_grid_device()->at(current_device)
-                        );
-                        */
                 }
             }
-            /*
-            else if (current.get_type() == "vdbs") {
-                impulse_vdb_single << <grid, block >> > (
-                    state.temperature->readTarget(),
-                    current.get_location(),
-                    current.get_impulseTemp(),
-                    state.dim,
-                    current.get_density_grid().get_grid_device_temp(),
-                    current.get_initial_temp()
-                    );
-                impulse_vdb_single << <grid, block >> > (
-                    state.density->readTarget(),
-                    current.get_location(),
-                    current.get_impulseDensity(),
-                    state.dim
-                    , current.get_density_grid().get_grid_device()
-                    );
-            }
-            */
+                    
             else if (current.get_type() == "fff") {
                 if (current.square) {
                     force_field_force << < grid, block >> > (

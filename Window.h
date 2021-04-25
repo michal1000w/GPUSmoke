@@ -258,6 +258,7 @@ void UpdateSolver() {
 		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z)) {
 		solver.Clear_Simulation_Data2();
 		solver.ResetObjects1(); //loc rot scale
+		UpdateTimelinePartially();
 	}
 	else {
 		solver.Clear_Simulation_Data();

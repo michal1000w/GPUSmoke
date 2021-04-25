@@ -33,7 +33,6 @@ const long long LocLoc = std::pow(2 , (BLOCK_SIZE + (2 * PADDING)));
 
 
 
-
 ////////////////////////////////OLD///////////////////////////////////////
 
 
@@ -1391,8 +1390,57 @@ __global__ void collision(V* v_src, Z* temperature, Z* density, Z*flame, T* coll
 
     if (x >= vd.x || y >= vd.y || z >= vd.z) return;
 
-    float3 p = make_float3(float(x), float(y), float(z));
+    T current_status = collision[get_voxel(x, y, z, vd)];
 
+    if (current_status != 0) {
+        float highest = 0;
+        float3 highest_position;
+        for (int xx = -3; xx <= 3; xx++) {
+            for (int yy = -3; yy <= 3; yy++) {
+                for (int zz = -3; zz <= 3; zz++) {
+                    float value = collision[get_voxel(x, y, z, vd)];
+                    if (value != 0)
+                        highest = maxf(y, highest);
+                    highest_position = make_float3((float)x, (float)y, (float)z);
+                }
+            }
+        }
+        float3 p = make_float3(float(x), float(y), float(z));
+        
+        float dist = length(p - highest_position);
 
+        V vel = v_src[get_voxel(x, y, z, vd)];
+        Z temp = temperature[get_voxel(x, y, z, vd)];
+        Z flame = temperature[get_voxel(x, y, z, vd)];
 
+        float3 vector = make_float3(highest_position.x - p.x, highest_position.y - p.y, highest_position.z - p.z);
+
+        v_src[get_voxel(x, y, z, vd)] = (vel + vector * -1.0f);
+    }
 }
+
+
+/*
+float3 p = make_float3(float(x), float(y), float(z));
+
+    float dist = length(p - c);
+
+
+    if (dist <= radius) {
+        V vel = v_src[get_voxel(x, y, z, vd)];
+        T temp = temperature[get_voxel(x, y, z, vd)];
+        float3 vector = make_float3(c.x - p.x, c.y - p.y, c.z - p.z);
+
+        float direction = vel.y;
+
+        //v_src[get_voxel(x, y, z, vd)] = (-1.0*(vel*grad_scale)*vel) + (viscosity*grad_scale*grad_scale) - ((1.0/press) * grad_scale*press);
+
+        density[get_voxel(x, y, z, vd)] *= 0.95; //zanikanie density
+        v_src[get_voxel(x, y, z, vd)] = (vel + vector * -1.0f) * 0.1; //zanikanie momentu
+        if (temp <= 0.2 && direction >= 0)
+            temp += 0.1;
+        else if (temp >= -0.2 && direction < 0)
+            temp -= 0.1;
+        v_src[get_voxel(x, y, z, vd)].y = v_src[get_voxel(x, y, z, vd)].y + (temp * 2.0 * (1.0 / ((dist * dist)+EPSILON)));
+    }
+*/

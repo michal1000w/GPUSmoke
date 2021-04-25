@@ -17,7 +17,7 @@ __device__ float mix(float a, float b, float inbetween = 0.5) {
 
 
 __global__ void render_pixel(uint8_t* image, float* volume,
-    float* temper, int3 img_dims, int3 vol_dims, float step_size,
+    float* temper,float* collision, int3 img_dims, int3 vol_dims, float step_size,
     float3 light_dir, float3 cam_pos, float rotation, int steps,
     float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool render_shadows = true, float transparency_compensation = 1.0f, float shadow_quality = 1.0f)
@@ -77,9 +77,10 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             // At each step, cast occlusion ray towards light source
             float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
             float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+            float coll = get_cellF2(ray_pos, vd, collision); //dla obiektów
             ray_pos += ray_dir * empty_step_size * 3.0f;
             // Don't bother with occlusion ray if theres nothing there
-            if (c_density >= occ_thresh || temp >= occ_thresh) break;
+            if (c_density >= occ_thresh || temp >= occ_thresh || coll >= occ_thresh) break;
             step++;
             if (step == empty_steps) goto NOTHING;
         }
@@ -96,25 +97,47 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             // At each step, cast occlusion ray towards light source
             float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
             float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
+            float coll = get_cellF2(ray_pos, vd, collision); //dla obiektów
             if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
             float3 occ_pos = ray_pos;
             ray_pos += ray_dir * step_size;
             // Don't bother with occlusion ray if theres nothing there
-            if (c_density < occ_thresh && temp < occ_thresh) continue;
+            if (c_density < occ_thresh && temp < occ_thresh && coll < occ_thresh) continue;
             float transparency = 1.0;
 
-            if (render_shadows) {
+            if (coll > 0) {
 #pragma unroll
-                for (int occ = 0; occ < int((steps / 2) * shadow_quality); occ++) {
-                    transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
+                for (int occ = 0; occ < 2; occ++) {
+                    transparency *= maxf(get_cellF2(occ_pos, vd, collision), 0.0);
                     if (transparency > 1.0) transparency = 1.0; //beta
                     if (transparency < occ_thresh) break;
                     occ_pos += dir_to_light * step_size;
                 }
+
+                d_accum *= transparency;
+
+                const int pixel = 3 * (y * img_dims.x + x);
+                image[pixel + 0] = (uint8_t)(255.0 * d_accum);
+                image[pixel + 1] = (uint8_t)(255.0 * d_accum);
+                image[pixel + 2] = (uint8_t)(255.0 * d_accum);
+                return;
             }
             else {
-                transparency = transparency_compensation;
+
+                if (render_shadows) {
+#pragma unroll
+                    for (int occ = 0; occ < int((steps / 2) * shadow_quality); occ++) {
+                        transparency *= fmax(1.0 - get_cellF2(occ_pos, vd, volume), 0.0);
+                        if (transparency > 1.0) transparency = 1.0; //beta
+                        if (transparency < occ_thresh) break;
+                        occ_pos += dir_to_light * step_size;
+                    }
+                }
+                else {
+                    transparency = transparency_compensation;
+                }
             }
+
 
             d_accum *= fmax(1.0 - c_density, 0.0);
             d_accum2 *= (fmax(1 - temp, 0.0f) / Fire_Max_temp);
@@ -126,22 +149,22 @@ __global__ void render_pixel(uint8_t* image, float* volume,
                     B += (d_accum2 * 0.2f * temp);
                 }
                 else {
-                    R += d_accum2 * 1.0f * temp * mix(transparency, 1/maxf(c_density,0.01), fire_multiply);
-                    G += d_accum2 * 0.45f * temp * mix(transparency, 1/maxf(c_density, 0.01), fire_multiply);
-                    B += d_accum2 * 0.2f * temp * mix(transparency, 1/maxf(c_density, 0.01), fire_multiply);
+                    R += d_accum2 * 1.0f * temp * mix(transparency, 1 / maxf(c_density, 0.01), fire_multiply);
+                    G += d_accum2 * 0.45f * temp * mix(transparency, 1 / maxf(c_density, 0.01), fire_multiply);
+                    B += d_accum2 * 0.2f * temp * mix(transparency, 1 / maxf(c_density, 0.01), fire_multiply);
                 }
-                
+
             }
+
 
             R += d_accum * c_density * transparency;
             G += d_accum * c_density * transparency;
             B += d_accum * c_density * transparency;
 
-
             if (d_accum < occ_thresh) d_accum = 0;
             if (d_accum < occ_thresh && d_accum2 < occ_thresh) break;
+
         }
-        
 
         const int pixel = 3 * (y * img_dims.x + x);
         image[pixel + 0] = (uint8_t)(fmin(255.0 * R, 255.0));
@@ -528,7 +551,7 @@ __global__ void render_pixel_old(uint8_t* image, float* volume,
 }
 
 void render_fluid(uint8_t* render_target, int3 img_dims,
-    float* d_volume, float* temper, int3 vol_dims,
+    float* d_volume, float* temper, float* coll, int3 vol_dims,
     float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, 
     bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool legacy_renderer = false, bool render_shadows = true, float transparency_compensation = 1.0f,
@@ -569,7 +592,7 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
     }
     else {
         render_pixel << <grid, block >> > (
-            device_img, d_volume, temper, img_dims, vol_dims,
+            device_img, d_volume, temper, coll, img_dims, vol_dims,
             step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
             density_influence, fire_multiply, render_shadows, transparency_compensation,
             shadow_quality);
