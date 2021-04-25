@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 #ifdef OBJECTS_EXPERIMENTAL
     std::cout << "Generating example scene" << std::endl;
-    solver.ExampleScene(true);
+    solver.ExampleScene(true);//true
 #else
     solver.ExportVDBScene();
 #endif

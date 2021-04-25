@@ -124,6 +124,7 @@ public:
     bool UpsamplingDensity = true;
     bool UpsamplingTemperature = false;
     int frame;
+    bool LOCK = false;
 
     fluid_state* state;
 private:
@@ -235,7 +236,7 @@ public:
         if (lines[0] == "ERROR") return;
 
         std::cout << "Loading scene\n";
-        preserve_object_list = false;
+        //preserve_object_list = false;
         frame = 0;
 
 
@@ -273,7 +274,7 @@ public:
             //return;
         }
 
-        Clear_Simulation_Data();//czyżby znów tutaj?
+        //Clear_Simulation_Data();//czyżby znów tutaj?
 
         int zrobione = 0;
 
@@ -417,6 +418,7 @@ public:
 
         }
         UpdateDomainResolution();
+        ResetObjects();
         Initialize_Simulation();
     }
 
@@ -724,28 +726,31 @@ public:
         full_block = dim3(8, 8, 8);
 
         img = new uint8_t[3 * img_d.x * img_d.y];
-        DONE_FRAME = true;
+        DONE_FRAME = false;
     }
 
     void Clear_Simulation_Data() {
         
         GRID->free_noise();
+        //GRID->freeNoise(); //CUDA
         delete GRID;
         delete state;
         delete[] img;
         
         
+        
         if (!preserve_object_list || SAMPLE_SCENE == 2) {
-            for (auto i : object_list) {
-                i.free();
+            for (int i = 0; i < object_list.size(); i++) {
+                object_list[i].free();
             }
             object_list.clear();
         }
         
+
         printf("\nCUDA: %s\n", cudaGetErrorString(cudaGetLastError()));
 
-        cudaThreadSynchronize();
-        cudaThreadExit();
+        //cudaThreadSynchronize();
+        //cudaThreadExit();
     }
 
     void Clear_Simulation_Data2() {

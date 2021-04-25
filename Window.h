@@ -48,7 +48,6 @@ static int selectedEntry = -1;
 MySequence Timeline;
 
 
-
 //////////////////FUNCTIONS
 int sinresolution = 8;
 float sinmid = 20;
@@ -68,12 +67,24 @@ float sinoffset = 0.0;
 void UpdateTimelinePartially() {
 
 	for (int i = 0; i < Timeline.myItems.size(); i++) {
-		Timeline.myItems.at(i).mFrameStart = &solver.object_list[i].frame_range_min;
-		Timeline.myItems.at(i).mFrameEnd = &solver.object_list[i].frame_range_max;
+		Timeline.myItems[i].mFrameStart = &solver.object_list[i].frame_range_min;
+		Timeline.myItems[i].mFrameEnd = &solver.object_list[i].frame_range_max;
 	}
 
 }
 
+void ClearTimeline(int minn = 0) {
+	for (int object = solver.object_list.size()-1; object >= minn; object++) { //>=
+		//int t = solver.object_list[object].type;
+		solver.object_list[object].free();
+		solver.object_list[object].collisions.clear();
+		solver.object_list.erase(solver.object_list.begin() + object);
+		//Timeline.Del(object);
+		Timeline.myItems.erase(Timeline.myItems.begin() + object);
+		Timeline.rampEdit.erase(Timeline.rampEdit.begin() + object);
+	}
+	selectedEntry = -1;
+}
 
 void UpdateTimeline() {
 	
@@ -90,53 +101,53 @@ void UpdateTimeline() {
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		int current_item_id = 0;
 		for (int i = 0; i < EmitterCount; i++)
-			if (solver.object_list.at(j).get_type2() == itemse[i]) {
+			if (solver.object_list[j].get_type2() == itemse[i]) {
 				current_item_id = i;
 				break;
 			}
-		if (solver.object_list.at(j).get_type2() == "particle")
-			AddObject2(solver.object_list.at(j).type, j, 1);
-		else if (solver.object_list.at(j).type == VDBOBJECT)
-			AddObject2(solver.object_list.at(j).type, j, 3);
+		if (solver.object_list[j].get_type2() == "particle")
+			AddObject2(solver.object_list[j].type, j, 1);
+		else if (solver.object_list[j].type == VDBOBJECT)
+			AddObject2(solver.object_list[j].type, j, 3);
 		else
-			AddObject2(solver.object_list.at(j).type, j);
+			AddObject2(solver.object_list[j].type, j);
 	}
 }
 
 
 void UpdateAnimation() {
 	int frame = solver.frame;
-#pragma omp parallel for num_threads(4)
+//#pragma omp parallel for num_threads(4)
 	for (int j = 0; j < solver.object_list.size(); j++) {
 		if (solver.object_list[j].get_type2() == "explosion" && frame >= solver.object_list[j].frame_range_min &&
 			frame <= solver.object_list[j].frame_range_max) {
-			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0,frame));
+			solver.object_list[j].set_size(Timeline.rampEdit[j].GetPointYAtTime(0,frame));
 
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			float x = Timeline.rampEdit[j].GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x,y,z));
 		}
 		//if (solver.object_list[j].get_type2() == "emitter") {
 		else if (solver.object_list[j].type != PARTICLE && solver.object_list[j].type != VDBOBJECT){
-			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			solver.object_list[j].set_size(Timeline.rampEdit[j].GetPointYAtTime(0, frame));
+			float x = Timeline.rampEdit[j].GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 		else if (solver.object_list[j].type == PARTICLE){
-			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			solver.object_list[j].set_size(Timeline.rampEdit[j].GetPointYAtTime(0, frame));
+			float x = Timeline.rampEdit[j].GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 		else if (solver.object_list[j].type == VDBOBJECT) {
 
 			/*
 			float sizeee = solver.object_list[j].size;
-			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
+			solver.object_list[j].set_size(Timeline.rampEdit[j).GetPointYAtTime(0, frame));
 
 			if (solver.object_list[j].size != sizeee) {
 				int frame_start = solver.object_list[j].frame_range_min;
@@ -150,9 +161,9 @@ void UpdateAnimation() {
 			}
 			*/
 
-			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
-			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
-			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
+			float x = Timeline.rampEdit[j].GetPointYAtTime(CURVE_X, frame);
+			float y = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Y, frame);
+			float z = Timeline.rampEdit[j].GetPointYAtTime(CURVE_Z, frame);
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 	}
@@ -162,23 +173,23 @@ void AddObject2(int type, int j, int particle_system) {
 	type = max(0, type)%EmitterCount;
 	int current_item_id = 0;
 	for (int i = 0; i < EmitterCount; i++)
-		if (solver.object_list.at(j).get_type2() == itemse[i]) {
+		if (solver.object_list[j].get_type2() == itemse[i]) {
 			current_item_id = i;
 			break;
 		}
-	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list.at(j).frame_range_min,
-																&solver.object_list.at(j).frame_range_max, false });
+	Timeline.myItems.push_back(MySequence::MySequenceItem{ current_item_id, &solver.object_list[j].frame_range_min,
+																&solver.object_list[j].frame_range_max, false });
 
 	if (type == EXPLOSION || type == PARTICLE) {
-		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, particle_system));
 	}
 	else if (type == VDBOBJECT) {
-		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 			0, 5.f, 0, particle_system));
 	}
 	else {
-		Timeline.rampEdit.push_back(RampEdit(solver.object_list.at(j).frame_range_min, solver.object_list.at(j).frame_range_max,
+		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, 2));
 	}
 }
@@ -206,15 +217,15 @@ void DuplicateObject(int index) {
 	solver.object_list.push_back(OBJECT(obj, solver.object_list.size(), solver.devicesCount));
 	int j = solver.object_list.size() - 1;
 	if (solver.object_list[j].type == VDBOBJECT) {
-		solver.object_list.at(j).load_density_grid(solver.object_list[index].get_density_grid(),
+		solver.object_list[j].load_density_grid(solver.object_list[index].get_density_grid(),
 			solver.object_list[index].get_initial_temp(), solver.deviceIndex);
 	}
-	//solver.object_list.at(j).vdb_object = obj.vdb_object;
+	//solver.object_list[j).vdb_object = obj.vdb_object;
 
 	int current_item_id = 0;
 #pragma unroll
 	for (int i = 0; i < EmitterCount; i++)
-		if (solver.object_list.at(j).get_type2() == itemse[i]) {
+		if (solver.object_list[j].get_type2() == itemse[i]) {
 			current_item_id = i;
 			break;
 		}
@@ -255,12 +266,13 @@ void DeleteObject(const int object) {
 std::vector<std::thread> threads;
 
 
-void UpdateSolver(bool full = false) {
-
+void UpdateSolver(bool full = false, std::string filename = "") {
+	solver.LOCK = true;
 	solver.writing = true;
 	solver.THIS_IS_THE_END = true;
 	for (auto& thread : threads)
 		thread.join();
+
 
 	std::cout << "\nRestarting\n";
 	solver.ThreadsJoin();
@@ -281,29 +293,38 @@ void UpdateSolver(bool full = false) {
 		UpdateTimelinePartially();
 	}
 	else if (full) {
-		std::string filename = solver.OPEN_FOLDER;
-		filename = trim(filename);
-		//solver.Clear_Simulation_Data();
-		//solver.UpdateDomainResolution();
-		solver.ResetObjects(true);
+		//ClearTimeline(1);
+		solver.Clear_Simulation_Data();
 		solver.LoadSceneFromFile(filename);
 		//solver.Initialize_Simulation();
-		UpdateTimeline();
+		UpdateTimelinePartially();
 	}
-	else if (solver.preserve_object_list) {
+	else {// if (solver.preserve_object_list) {
 		solver.Clear_Simulation_Data();
 		solver.UpdateDomainResolution();
 		solver.ResetObjects();
 		solver.Initialize_Simulation();
 		UpdateTimelinePartially();
 	}
+	/*
 	else {
-		solver.ResetObjects(true);
+		solver.preserve_object_list = true;
+		ClearTimeline(1);
 		solver.Clear_Simulation_Data();
-		UpdateTimeline();
 		solver.UpdateDomainResolution();
 		solver.Initialize_Simulation();
+		UpdateTimeline();
+		UpdateAnimation();
+		ClearTimeline(0);
+		UpdateTimeline();
+
+		solver.LOCK = false;
+		solver.writing = false;
+		threads.clear();
+
+		return;
 	}
+	*/
 
 	if (!full) {
 		if (solver.SAMPLE_SCENE == 0)
@@ -311,6 +332,8 @@ void UpdateSolver(bool full = false) {
 		else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
 			solver.ExportVDBScene();
 	}
+	
+
 
 	//preparation
 	//solver.Initialize();
@@ -320,9 +343,10 @@ void UpdateSolver(bool full = false) {
 	
 	
 
-	
+	solver.LOCK = false;
 	solver.writing = false;
 	threads.clear();
+
 }
 
 
@@ -547,8 +571,15 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					solver.ThreadsJoin();
 					std::string filename = list[object];
 					filename = trim(filename);
-					solver.LoadSceneFromFile(filename);
+
+
+					solver.preserve_object_list = false;
+					UpdateSolver(true,filename);
 					UpdateTimeline();
+					solver.preserve_object_list = true;
+
+					//solver.LoadSceneFromFile(filename);
+					//UpdateTimeline();
 					OPEN_FILE_TAB = false;
 				}
 			}
@@ -723,7 +754,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		}
 		ImGui::SameLine();
 		ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
-		ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
+		//ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
 		ImGui::Text(("Frame: " + std::to_string(solver.frame)).c_str());
 	}
 	ImGui::End();
@@ -820,7 +851,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					prt.particle_filepath = temp_particle_path;
 					prt.LoadParticles();
 					if (prt.velocities.size() != 0) {
-						if (prt.velocities.at(0).size() != 0) {
+						if (prt.velocities[0].size() != 0) {
 							solver.object_list.push_back(prt);
 							int j = solver.object_list.size() - 1;
 							AddObject2(PARTICLE, j, 1);
@@ -909,12 +940,12 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					
 					ImGui::Checkbox(std::string("Edit Keyframe XYZ-" + std::to_string(object)).c_str(), &solver.object_list[object].edit_frame_translation);
 					if (solver.object_list[object].edit_frame_translation) {
-						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_X]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_X].at(position).x, solver.object_list[object].Location[0]));
-						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Y]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_Y].at(position).x, solver.object_list[object].Location[1]));
-						for (int position = 0; position < Timeline.rampEdit.at(object).mPointCount[CURVE_Z]; position++)
-							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(Timeline.rampEdit.at(object).mPts[CURVE_Z].at(position).x, solver.object_list[object].Location[2]));
+						for (int position = 0; position < Timeline.rampEdit[object].mPointCount[CURVE_X]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_X, position, ImVec2(Timeline.rampEdit[object].mPts[CURVE_X][position].x, solver.object_list[object].Location[0]));
+						for (int position = 0; position < Timeline.rampEdit[object].mPointCount[CURVE_Y]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_Y, position, ImVec2(Timeline.rampEdit[object].mPts[CURVE_Y][position].x, solver.object_list[object].Location[1]));
+						for (int position = 0; position < Timeline.rampEdit[object].mPointCount[CURVE_Z]; position++)
+							Timeline.rampEdit[object].EditPoint(CURVE_Z, position, ImVec2(Timeline.rampEdit[object].mPts[CURVE_Z][position].x, solver.object_list[object].Location[2]));
 					}
 				}
 
@@ -1335,11 +1366,13 @@ int Window(float* Img_res, float dpi) {
 		///////////////////////////////////////////////////
 		while (!glfwWindowShouldClose(window)) {
 			//clock_t startTime = clock();
+			if (solver.LOCK) continue;
 
 
 			UpdateAnimation();
 			//////////////////
 			//solver.Simulation_Frame();
+
 			if (threads.size() == 0) {
 				threads.push_back(std::thread([&]() {
 					while (true) {
@@ -1356,7 +1389,8 @@ int Window(float* Img_res, float dpi) {
 					}
 				}));
 			}
-			
+			/*
+			*/
 			 
 			 
 			//////////////////
