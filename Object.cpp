@@ -35,7 +35,7 @@ void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
 
 		std::cout << i << "/" << filelist.size() << "\n";
 		int table_size = 0;
-		unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, false, table_size);
+		unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, true, table_size); //false
 		collisions.push_back(current); //wyciek pamieci
 		std::cout << "Table size: " << table_size << std::endl;
 	}

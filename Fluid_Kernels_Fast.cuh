@@ -1394,13 +1394,16 @@ __global__ void collision(V* v_src, Z* temperature, Z* density, Z*flame, T* coll
 
     if (current_status != 0) {
         float highest = 0;
+        float lowest = 10000000;
         float3 highest_position;
         for (int xx = -3; xx <= 3; xx++) {
             for (int yy = -3; yy <= 3; yy++) {
                 for (int zz = -3; zz <= 3; zz++) {
                     float value = collision[get_voxel(x, y, z, vd)];
-                    if (value != 0)
+                    if (value != 0) {
                         highest = maxf(y, highest);
+                        lowest = minf(y, lowest);
+                    }
                     highest_position = make_float3((float)x, (float)y, (float)z);
                 }
             }
@@ -1415,7 +1418,7 @@ __global__ void collision(V* v_src, Z* temperature, Z* density, Z*flame, T* coll
 
         float3 vector = make_float3(highest_position.x - p.x, highest_position.y - p.y, highest_position.z - p.z);
 
-        v_src[get_voxel(x, y, z, vd)] = (vel + vector * -1.0f);
+        v_src[get_voxel(x, y, z, vd)] = (vel * vector * dist * -5.0f * (1.0 / ((highest-lowest)* (highest - lowest)+EPSILON)));
     }
 }
 
