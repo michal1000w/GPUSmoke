@@ -1355,6 +1355,25 @@ __global__ void impulse_vdb_compressed(T* target, float3 c, T val, int3 vd, unsi
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 template <typename T>
 __global__ void collision_vdb(T* target, float3 c, T val, int3 vd, unsigned int* vdb)
 {

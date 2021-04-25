@@ -133,6 +133,23 @@ void UpdateAnimation() {
 			solver.object_list[j].set_location(make_float3(x, y, z));
 		}
 		else if (solver.object_list[j].type == VDBOBJECT) {
+
+			/*
+			float sizeee = solver.object_list[j].size;
+			solver.object_list[j].set_size(Timeline.rampEdit.at(j).GetPointYAtTime(0, frame));
+
+			if (solver.object_list[j].size != sizeee) {
+				int frame_start = solver.object_list[j].frame_range_min;
+				int frame_end = solver.object_list[j].frame_range_max;
+				solver.object_list[j].collisions.clear();
+				int SIZEEEE = min(min(solver.getDomainResolution().x, solver.getDomainResolution().y), solver.getDomainResolution().z);
+				solver.object_list[j].LoadObjects(solver.getDomainResolution(),
+					solver.devicesCount, solver.deviceIndex, SIZEEEE * solver.object_list[j].size);
+				solver.object_list[j].frame_range_min = frame_start;
+				solver.object_list[j].frame_range_max = frame_end;
+			}
+			*/
+
 			float x = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_X, frame);
 			float y = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Y, frame);
 			float z = Timeline.rampEdit.at(j).GetPointYAtTime(CURVE_Z, frame);
@@ -220,6 +237,7 @@ void DeleteObject(const int object) {
 		solver.object_list[object].cudaFree();
 	*/
 	solver.object_list[object].free();
+	solver.object_list[object].collisions.clear();
 	solver.object_list.erase(solver.object_list.begin() + object);
 	//Timeline.Del(object);
 	Timeline.myItems.erase(Timeline.myItems.begin() + object);

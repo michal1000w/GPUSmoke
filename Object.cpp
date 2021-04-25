@@ -23,7 +23,7 @@ OBJECT::OBJECT(std::string type, float size, float initial_velocity, float veloc
 	this->Location[0] = location.x; this->Location[1] = location.y; this->Location[2] = location.z;
 }
 */
-void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
+void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex, int objresolution) {
 	auto filelist = get_file_list(this->particle_filepath);
 
 	//this->vdb_object = new GRID3D(resolution, deviceCount, deviceIndex);
@@ -33,11 +33,18 @@ void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
 		split(filelist[i], elements, '.');
 		if (elements.at(elements.size() - 1) != "obj" && elements.at(elements.size() -1) != "ply") continue;
 
-		std::cout << i << "/" << filelist.size() << "\n";
+		std::cout << i+1 << "/" << filelist.size() << "\n";
 		int table_size = 0;
-		unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, true, table_size); //false
-		collisions.push_back(current); //wyciek pamieci
-		std::cout << "Table size: " << table_size << std::endl;
+		if (objresolution == NULL) {
+			unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, true, table_size); //false
+			collisions.push_back(current); //wyciek pamieci
+			std::cout << "Table size: " << table_size << std::endl;
+		}
+		else {
+			unsigned int* current = LoadAndVoxelizeCompressed(resolution, filelist[i], 0.67, deviceIndex, true, table_size, objresolution); //false
+			collisions.push_back(current); //wyciek pamieci
+			std::cout << "Table size: " << table_size << std::endl;
+		}
 	}
 
 

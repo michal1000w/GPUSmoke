@@ -73,7 +73,7 @@ public:
 	void update();
 	void UpdateLocation() {this->location.x = Location[0];this->location.y = Location[1];this->location.z = Location[2];}
 	void LoadParticles();
-	void LoadObjects(int3,int,int);
+	void LoadObjects(int3,int,int,int a = NULL);
 
 	bool selected;
 	float Location[3];

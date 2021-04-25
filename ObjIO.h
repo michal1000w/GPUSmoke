@@ -378,7 +378,8 @@ bool useThrustPath = false;
 
 
 
-float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density = 0.7 , int deviceIndex = 0, bool solidVoxelization = true) {
+float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density = 0.7 , int deviceIndex = 0, 
+                    bool solidVoxelization = true, int objresolution = NULL) {
     fprintf(stdout, "[I/O] Reading mesh from %s \n", filename.c_str());
     trimesh::TriMesh* themesh = trimesh::TriMesh::read(filename.c_str());
     themesh->need_faces(); // Trimesh: Unpack (possible) triangle strips so we have faces for sure
@@ -388,6 +389,8 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
     themesh->need_bbox(); // Trimesh: Compute the bounding box (in model coordinates)
 
     int gsize = min(min(grid_size.x, grid_size.y), grid_size.z);
+    if (objresolution != NULL)
+        gsize = objresolution;
 
     // SECTION: Compute some information needed for voxelization (bounding box, unit vector, ...)
     fprintf(stdout, "\n## VOXELISATION SETUP \n");
@@ -500,7 +503,8 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
 }
 
 
-unsigned int* LoadAndVoxelizeCompressed(int3 grid_size, std::string filename, float density, int deviceIndex, bool solidVoxelization, int &table_size) {
+unsigned int* LoadAndVoxelizeCompressed(int3 grid_size, std::string filename, float density, int deviceIndex, 
+    bool solidVoxelization, int &table_size, int objresolution = NULL) {
     fprintf(stdout, "[I/O] Reading mesh from %s \n", filename.c_str());
     trimesh::TriMesh* themesh = trimesh::TriMesh::read(filename.c_str());
     themesh->need_faces(); // Trimesh: Unpack (possible) triangle strips so we have faces for sure
@@ -510,6 +514,8 @@ unsigned int* LoadAndVoxelizeCompressed(int3 grid_size, std::string filename, fl
     themesh->need_bbox(); // Trimesh: Compute the bounding box (in model coordinates)
 
     int gsize = min(min(grid_size.x, grid_size.y), grid_size.z);
+    if (objresolution != NULL)
+        gsize = objresolution;
 
     // SECTION: Compute some information needed for voxelization (bounding box, unit vector, ...)
     fprintf(stdout, "\n## VOXELISATION SETUP \n");

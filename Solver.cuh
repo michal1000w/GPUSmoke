@@ -530,6 +530,7 @@ public:
             OBJECT obj("object", 1, make_float3(0), 5, 0.9, object_list.size(), this->devicesCount);
 
             obj.particle_filepath = "./input/obj/suzanne/";
+            //obj.particle_filepath = "./input/obj/car/";
 
             obj.LoadObjects(getDomainResolution(), devicesCount, deviceIndex);
             /*
