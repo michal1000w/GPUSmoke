@@ -273,7 +273,7 @@ public:
             //return;
         }
 
-        Clear_Simulation_Data();
+        Clear_Simulation_Data();//czyżby znów tutaj?
 
         int zrobione = 0;
 
@@ -494,7 +494,7 @@ public:
         }
     }
 
-    void ResetObjects() {
+    void ResetObjects(bool full = false) {
         for (int i = 0; i < this->object_list.size(); i++) {
             object_list[i].reset();
 
@@ -503,9 +503,11 @@ public:
                 int frame_end = object_list[i].frame_range_max;
                 object_list[i].velocities.clear();
                 object_list[i].positions.clear();
-                object_list[i].LoadParticles();
-                object_list[i].frame_range_min = frame_start;
-                object_list[i].frame_range_max = frame_end;
+                if (!full) {
+                    object_list[i].LoadParticles();
+                    object_list[i].frame_range_min = frame_start;
+                    object_list[i].frame_range_max = frame_end;
+                }
             }
             else if (object_list[i].type == VDBOBJECT) {
                 //for (int z = 0; z < object_list[i].collisions.size(); z++)
@@ -513,9 +515,11 @@ public:
                 int frame_start = object_list[i].frame_range_min;
                 int frame_end = object_list[i].frame_range_max;
                 object_list[i].collisions.clear();
-                object_list[i].LoadObjects(New_DOMAIN_RESOLUTION, devicesCount, deviceIndex);
-                object_list[i].frame_range_min = frame_start;
-                object_list[i].frame_range_max = frame_end;
+                if (!full) {
+                    object_list[i].LoadObjects(New_DOMAIN_RESOLUTION, devicesCount, deviceIndex);
+                    object_list[i].frame_range_min = frame_start;
+                    object_list[i].frame_range_max = frame_end;
+                }
             }
         }
     }
@@ -526,34 +530,18 @@ public:
         //LoadTest();
 
 
+        /*
         if (!preserve_object_list || force) {
             OBJECT obj("object", 1, make_float3(0), 5, 0.9, object_list.size(), this->devicesCount);
 
             obj.particle_filepath = "./input/obj/suzanne/";
-            //obj.particle_filepath = "./input/obj/car/";
 
             obj.LoadObjects(getDomainResolution(), devicesCount, deviceIndex);
-            /*
-            std::cout << "creating grid" << std::endl;
-            cudaSetDevice(deviceIndex);
-            float* grid = LoadAndVoxelize(getDomainResolution(), "./input/obj/suzanne.obj", 0.67, deviceIndex, false);
-
-            std::cout << getDomainResolution().x << ";" << getDomainResolution().y << ";" << getDomainResolution().z << std::endl;
-            std::cout << getDomainResolution().x * getDomainResolution().y * getDomainResolution().z << std::endl;
-            std::cout << "copying grid" << std::endl;
-            GRID3D grid_3d(getDomainResolution().x, getDomainResolution().y, getDomainResolution().z, grid, devicesCount, deviceIndex);
-
-            std::cout << "pushing grid" << std::endl;
-            delete[] grid;
-
-
-            obj.load_density_grid(grid_3d, 5, deviceIndex);
-            */
-
-
+    
             object_list.push_back(obj);
         }
-        /*
+
+
         if (!preserve_object_list || force) {
             float temp = 5;
             float positionx = vol_d.x * 0.5;
@@ -579,8 +567,17 @@ public:
             prt.LoadParticles();
             object_list.push_back(prt);
         }
-
         */
+        if (!preserve_object_list || force) {
+            OBJECT temp2("explosion", 3.0f, 1, 0.3, 5, 0.9, make_float3(
+                    64, 5, 64), object_list.size(),
+                    this->devicesCount);
+                temp2.frame_range_min = 0;
+                temp2.frame_range_max = 30;
+                object_list.push_back(temp2);
+            
+        }
+
         
 
     }
@@ -740,7 +737,7 @@ public:
         
         if (!preserve_object_list || SAMPLE_SCENE == 2) {
             for (auto i : object_list) {
-                    i.free();
+                i.free();
             }
             object_list.clear();
         }

@@ -255,8 +255,9 @@ void DeleteObject(const int object) {
 std::vector<std::thread> threads;
 
 
-void UpdateSolver() {
+void UpdateSolver(bool full = false) {
 
+	solver.writing = true;
 	solver.THIS_IS_THE_END = true;
 	for (auto& thread : threads)
 		thread.join();
@@ -273,23 +274,43 @@ void UpdateSolver() {
 
 	if ((solver.New_DOMAIN_RESOLUTION.x == solver.getDomainResolution().x) &&
 		(solver.New_DOMAIN_RESOLUTION.y == solver.getDomainResolution().y) &&
-		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z)) {
+		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z) &&
+		!full && solver.preserve_object_list ) {
 		solver.Clear_Simulation_Data2();
 		solver.ResetObjects1(); //loc rot scale
 		UpdateTimelinePartially();
 	}
-	else {
+	else if (full) {
+		std::string filename = solver.OPEN_FOLDER;
+		filename = trim(filename);
+		//solver.Clear_Simulation_Data();
+		//solver.UpdateDomainResolution();
+		solver.ResetObjects(true);
+		solver.LoadSceneFromFile(filename);
+		//solver.Initialize_Simulation();
+		UpdateTimeline();
+	}
+	else if (solver.preserve_object_list) {
 		solver.Clear_Simulation_Data();
 		solver.UpdateDomainResolution();
 		solver.ResetObjects();
 		solver.Initialize_Simulation();
 		UpdateTimelinePartially();
 	}
+	else {
+		solver.ResetObjects(true);
+		solver.Clear_Simulation_Data();
+		UpdateTimeline();
+		solver.UpdateDomainResolution();
+		solver.Initialize_Simulation();
+	}
 
-	if (solver.SAMPLE_SCENE == 0)
-		solver.ExampleScene();		
-	else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
-		solver.ExportVDBScene();
+	if (!full) {
+		if (solver.SAMPLE_SCENE == 0)
+			solver.ExampleScene();
+		else if (solver.SAMPLE_SCENE == 1 || solver.SAMPLE_SCENE == 2)
+			solver.ExportVDBScene();
+	}
 
 	//preparation
 	//solver.Initialize();
@@ -496,11 +517,19 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("Enter filename");
 			//ImGui::InputText("Filename", solver.OPEN_FOLDER, IM_ARRAYSIZE(solver.OPEN_FOLDER));
 			if (ImGui::Button("Open")) {
-				solver.ThreadsJoin();
+				//solver.ThreadsJoin();
 				std::string filename = solver.OPEN_FOLDER;
 				filename = trim(filename);
-				solver.LoadSceneFromFile(filename);
-				UpdateTimeline();
+
+				//////////////////////////////
+				bool temporary = solver.preserve_object_list;
+				solver.preserve_object_list = false;
+				UpdateSolver(true);
+				solver.preserve_object_list = temporary;
+				//////////////////////////////
+
+				//solver.LoadSceneFromFile(filename);
+				//UpdateTimeline();
 				OPEN_FILE_TAB = false;
 			}
 			if (ImGui::Button("Close")) {
@@ -649,10 +678,7 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 5.1f);
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 150);
 		if (ImGui::Button("Simulate")) {
-			if (solver.SIMULATE == false)
-				solver.SIMULATE = true;
-			else
-				solver.SIMULATE = false;
+			solver.SIMULATE = !solver.SIMULATE;
 		}
 		ImGui::SliderFloat("Simulation speed", &solver.speed, 0.1f, 1.5f);
 

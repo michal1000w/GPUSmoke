@@ -47,6 +47,8 @@ void generateBitmapImage(unsigned char* image, int height, int width, const char
 
     int stride = (widthInBytes)+paddingSize;
 
+    std::experimental::filesystem::create_directory("./output");
+
     FILE* imageFile = fopen(imageFileName, "wb");
 
     
