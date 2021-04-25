@@ -434,7 +434,7 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
         }
         fprintf(stdout, "\n## GPU VOXELISATION \n");
         if (solidVoxelization) {
-            voxelize_solid(voxelization_info, device_triangles, vtable, useThrustPath, (outputformat == OutputFormat::output_obj_cubes));
+            voxelize_solid(voxelization_info, device_triangles, vtable, useThrustPath, false);// (outputformat == OutputFormat::output_obj_cubes));
         }
         else {
             voxelize(voxelization_info, device_triangles, vtable, useThrustPath, false);// (outputformat == OutputFormat::output_obj_cubes));
@@ -467,7 +467,7 @@ float* LoadAndVoxelize(int3 grid_size, std::string filename = "",float density =
 
     unsigned int sum = 0;
     unsigned int licznik = 0;
-    for (size_t x = 0; x < grid_size.x; x++) {
+    for (size_t x = 0; x < grid_size.x; x++) { //na tej osi b³¹d
         for (size_t y = 0; y < grid_size.y; y++) {
             for (size_t z = 0; z < grid_size.z; z++) {
                 if ((x < gsize && y < gsize && z < gsize)

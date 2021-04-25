@@ -31,7 +31,7 @@ void OBJECT::LoadObjects(int3 resolution, int deviceCount, int deviceIndex) {
 	for (int i = 0; i < filelist.size(); i++) {
 		std::vector<std::string> elements;
 		split(filelist[i], elements, '.');
-		if (elements.at(elements.size() - 1) != "obj") continue;
+		if (elements.at(elements.size() - 1) != "obj" && elements.at(elements.size() -1) != "ply") continue;
 
 		std::cout << i << "/" << filelist.size() << "\n";
 		int table_size = 0;
