@@ -877,7 +877,9 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::SliderFloat(("scale-" + std::to_string(object)).c_str(), &solver.object_list[object].scale, 0.01f, 10.f);
 			}
 
-
+			if (solver.object_list[object].type == VDBOBJECT) {
+				ImGui::Checkbox(("emitter-" + std::to_string(object)).c_str(), &solver.object_list[object].is_emitter);
+			}
 
 
 

@@ -371,39 +371,41 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
             else if (current.get_type() == "object") {
                 if (frame >= current.frame_range_min && frame <= current.frame_range_max) {
-                    /*
-                    impulse_vdb_compressed << <grid, block >> > (
-                        state.flame->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseTemp(),
-                        state.dim,
-                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
-                        current.get_impulseTemp()
-                        );
-                    impulse_vdb_compressed << <grid, block >> > (
-                        state.temperature->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseTemp(),
-                        state.dim,
-                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
-                        current.get_impulseTemp()
-                        );
-                    impulse_vdb_compressed << <grid, block >> > (
-                        state.density->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseDensity(),
-                        state.dim,
-                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
-                        0.7f
-                        );
-                    */
-                    collision_vdb << <grid, block >> > (
-                        state.collision->readTargett(current_device),
-                        current.get_location(),
-                        current.get_impulseDensity(),
-                        state.dim,
-                        current.collisions[(frame - current.frame_range_min) % current.collisions.size()]
-                        );
+                    if (current.is_emitter) {
+                        impulse_vdb_compressed << <grid, block >> > (
+                            state.flame->readTargett(current_device),
+                            current.get_location(),
+                            current.get_impulseTemp(),
+                            state.dim,
+                            current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                            current.get_impulseTemp()
+                            );
+                        impulse_vdb_compressed << <grid, block >> > (
+                            state.temperature->readTargett(current_device),
+                            current.get_location(),
+                            current.get_impulseTemp(),
+                            state.dim,
+                            current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                            current.get_impulseTemp()
+                            );
+                        impulse_vdb_compressed << <grid, block >> > (
+                            state.density->readTargett(current_device),
+                            current.get_location(),
+                            current.get_impulseDensity(),
+                            state.dim,
+                            current.collisions[(frame - current.frame_range_min) % current.collisions.size()],
+                            0.7f
+                            );
+                    }
+                    else {
+                        collision_vdb << <grid, block >> > (
+                            state.collision->readTargett(current_device),
+                            current.get_location(),
+                            current.get_impulseDensity(),
+                            state.dim,
+                            current.collisions[(frame - current.frame_range_min) % current.collisions.size()]
+                            );
+                    }
                 }
             }
                     

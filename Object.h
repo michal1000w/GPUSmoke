@@ -107,6 +107,7 @@ public:
 
     GRID3D vdb_object;
 	std::vector<unsigned int*> collisions;
+	bool is_emitter = false;
 private:
 	float impulseDensity;
 	float3 location;
