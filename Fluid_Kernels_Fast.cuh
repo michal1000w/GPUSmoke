@@ -1376,3 +1376,23 @@ __global__ void collision_vdb(T* target, float3 c, T val, int3 vd, unsigned int*
         target[get_voxel(x, y, z, vd)] = 1;
     }
 }
+
+
+
+
+
+template <typename V, typename T, typename Z>
+__global__ void collision(V* v_src, Z* temperature, Z* density, Z*flame, T* collision,
+    int3 vd, float ambient_temp)
+{
+    const int x = blockDim.x * blockIdx.x + threadIdx.x;
+    const int y = blockDim.y * blockIdx.y + threadIdx.y;
+    const int z = blockDim.z * blockIdx.z + threadIdx.z;
+
+    if (x >= vd.x || y >= vd.y || z >= vd.z) return;
+
+    float3 p = make_float3(float(x), float(y), float(z));
+
+
+
+}

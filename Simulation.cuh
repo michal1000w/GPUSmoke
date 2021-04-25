@@ -591,6 +591,29 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
+    collision << <grid, block >> > (
+        state.velocity->readTargett(current_device),
+        state.temperature->readTargett(current_device),
+        state.density->readTargett(current_device),
+        state.flame->readTargett(current_device),
+        state.collision->readTargett(current_device),
+        state.dim, AMBIENT_TEMPERATURE);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         // clear pressure
     impulse << <grid, block >> > (
         state.pressure->readTargett(current_device),
