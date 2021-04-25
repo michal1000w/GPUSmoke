@@ -117,8 +117,8 @@ public:
     bool THIS_IS_THE_END = false;
     bool writing = false;
     int deviceIndex = 0;
-
     int devicesCount = 1;
+    bool render_collision_objects = true;
 
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
@@ -796,7 +796,8 @@ public:
                 state->collision->readTargett(device),
                 vol_d, render_step_size, Light, Camera, rotation,
                 STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
-                legacy_renderer, render_shadows, transparency_compensation, shadow_quality);
+                legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
+                render_collision_objects);
             /*
             PrepareRender(img, img_d);
                 */
