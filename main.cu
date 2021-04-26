@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
     GetDesktopResolution(no_menu_bar_width, no_menu_bar_height);
     */
     int zoom = GetDpiForWindow(hd);
-    double dpi = (float)zoom / 100;
+    double dpi = static_cast<float>(zoom) / 100;
     /*
     switch (zoom) {
     case 96:

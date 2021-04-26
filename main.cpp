@@ -89,7 +89,7 @@ int main()
     if (DOMAIN_RESOLUTION.x * DOMAIN_RESOLUTION.y * DOMAIN_RESOLUTION.z <= 100000000)
         Medium_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS, Smoke_Dissolve, Ambient_Temperature, Fire_Max_Temperature, Smoke_And_Fire, time_step);
     else {
-        std::cout << "Domain resolution over 450^3 not supported yet" << std::endl;
+        std::cout << "Domain resolution over 450^3 not supported yet\n" << std::endl;
         //Huge_Scale(vol_d, img_d, img, light, object_list, cam, ACCURACY_STEPS, FRAMES, STEPS);
     }
 

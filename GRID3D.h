@@ -31,6 +31,7 @@
 
 #include <tbb/parallel_for.h>
 #include <tbb/atomic.h>
+#include "printUtils.h"
 
 #define SIZEOF_FLOAT3 (sizeof(float) * 3)
 //#define SIZEOF_FLOAT3 (sizeof(float3))
@@ -77,7 +78,7 @@ template <typename T>
 inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, int deviceIndex) {
     std::vector<std::thread> threads;
 
-    //std::cout << "ZEROOO(" << size << ")";
+    //printLn("ZEROOO(" << size << ")";
 
     auto lista = enumerate(deviceIndex, devices_count);
 
@@ -87,11 +88,11 @@ inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, 
             checkCudaErrors(cudaSetDevice(lista[device_id]));
 
 
-            std::cout << device_id;
+            printLn(device_id);
             checkCudaErrors(cudaMemsetAsync(gridd->at(device_id), 0, size));
             //checkCudaErrors(cudaMemcpy(&dst[device_id], &src, sizeof(float) * size, cudaMemcpyHostToDevice));
 
-            //std::cout << "Zeroed";
+            //printLn("Zeroed";
             cudaDeviceSynchronize();
             }));
     }
@@ -103,7 +104,7 @@ inline void multiGPU_clear(std::vector<T*>* gridd, int size, int devices_count, 
 inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float* src, int size, int deviceIndex) {
     std::vector<std::thread> threads;
 
-    std::cout << "CPPPPPP(" << dst->size() << ")";
+    printLn("CPPPPPP(" << dst->size() << ")");
 
     auto lista = enumerate(deviceIndex, devices_count);
 
@@ -113,11 +114,11 @@ inline void multiGPU_copyHTD(int devices_count, std::vector<float*>* dst, float*
             checkCudaErrors(cudaSetDevice(lista[device_id]));
 
 
-            std::cout << device_id;
+            printLn(device_id);
             checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src, sizeof(float) * size, cudaMemcpyHostToDevice));
             //checkCudaErrors(cudaMemcpy(&dst[device_id], &src, sizeof(float) * size, cudaMemcpyHostToDevice));
 
-            std::cout << "Copy";
+            printLn("Copy");
             cudaDeviceSynchronize();
             }));
     }
@@ -248,9 +249,9 @@ inline void multiGPU_copyn(int devices_count, std::vector<float*>* dst, std::vec
     {
         threads.push_back(std::thread([&, device_id]() {
             cudaSetDevice(lista[device_id]);
-            std::cout << "Oł shieeeeeeeeeeeeeet";
+            printLn("Cuda device set. ID: " << device_id << " Device: " << lista[device_id]);
 
-            std::cout << "COpy -> " << device_id << "  at  " << message << std::endl;
+            printLn("Copy -> " << device_id << "  at  " << message);
             checkCudaErrors(cudaMemcpyAsync(dst->at(device_id), src->at(device_id), sizeof(float) * size, type));
 
             cudaDeviceSynchronize();
@@ -296,7 +297,7 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, int deviceIndex, long 
         threads.push_back(std::thread([&, device_id]() {
             cudaSetDevice(lista[device_id]);
 
-            std::cout << device_id;
+            printLn(device_id);
 
 #ifndef HOSTALLOC
             checkCudaErrors(cudaMalloc((void**)&_dst[device_id], sizeof(T) * size));
@@ -305,14 +306,14 @@ inline std::vector<T*> multiGPU_malloc(int devices_count, int deviceIndex, long 
 #endif
 
             cudaDeviceSynchronize();
-            std::cout << device_id;
-         }));
+            printLn(device_id);
+            }));
     }
 
-    
+
     for (auto& thread : threads)
         thread.join();
-    std::cout << "Done";
+    printLn("Done");
 
     //allow_p2p_sharing(devices_count);
 
@@ -335,7 +336,7 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, int deviceIndex,
     {
         threads.push_back(std::thread([&, device_id]() {
             cudaSetDevice(lista[device_id]);
-            std::cout << device_id;
+            printLn(device_id);
 
 #ifndef HOSTALLOC
             checkCudaErrors(cudaMalloc((void**)&_dst[device_id], SIZEOF_FLOAT3 * size));
@@ -349,7 +350,7 @@ inline std::vector<float3*> multiGPU_malloc3(int devices_count, int deviceIndex,
 
     for (auto& thread : threads)
         thread.join();
-    std::cout << "Done";
+    printLn("Done");
 
     //allow_p2p_sharing(devices_count);
 
@@ -397,18 +398,18 @@ class GRID3D {
 
         if (vell) {
             grid_vel = new float3[size()];
-            grid_vel[0] = make_float3(SUPER_NULL,SUPER_NULL,SUPER_NULL);
+            grid_vel[0] = make_float3(SUPER_NULL, SUPER_NULL, SUPER_NULL);
         }
         if (!cuda_velocity_initialized) {
             cuda_velocity_initialized = true;
             grid_vel_gpu = multiGPU_malloc3(deviceCount, deviceIndex, size());
         }
 
-        
+
     }
     bool cuda_velocity_initialized = false;
 public:
-    GRID3D(int devicesCount=1, int deviceIndex=0) {
+    GRID3D(int devicesCount = 1, int deviceIndex = 0) {
         this->deviceCount = devicesCount;
         cudaSetDevice(deviceIndex);
         resolution.x = resolution.y = resolution.z = 1;
@@ -497,7 +498,7 @@ public:
         initNoiseGrid(deviceIndex);
     }
 
-    void load_from_device(int3 dim, float* grid_src, int deviceIndex,bool debug = false) {
+    void load_from_device(int3 dim, float* grid_src, int deviceIndex, bool debug = false) {
         freeOnlyGrid(); //free
         this->resolution = dim;
 #ifdef NEW_HOST_ALLOC
@@ -519,22 +520,22 @@ public:
     void load_from_device3D(int3 dim, float3* grid_src, int deviceIndex) {
 
         if (this->resolution.x == dim.x && this->resolution.y == dim.y && this->resolution.z == dim.z) {
-            //std::cout << "Copying";
+            //printLn("Copying";
             //checkCudaErrors(cudaMemcpyAsync(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost,0));
             multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
         }
         else {
-            //std::cout << "Free data";
+            //printLn("Free data";
             this->free_velocity();
             this->resolution = dim;
-            //std::cout << "Allocating memory";
+            //printLn("Allocating memory";
             grid_vel = new float3[size()];
-            //std::cout << "Copying";
+            //printLn("Copying";
             //checkCudaErrors(cudaMemcpyAsync(grid_vel, grid_src, SIZEOF_FLOAT3 * size(), cudaMemcpyDeviceToHost,0));
             multiGPU_copy(deviceCount, grid_vel, grid_src, size(), cudaMemcpyDeviceToHost, deviceIndex);
         }
         //cudaCheckError();
-        //std::cout << "Copied from device" << std::endl;
+        //printLn("Copied from device" << std::endl;
     }
 #endif
 
@@ -564,8 +565,8 @@ public:
         if (iter <= size())
             output = grid[iter];
         else {
-            std::cout << "GRID READ ERROR:\n";
-            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+            printLn("GRID READ ERROR:");
+            printLn("Max ID:   " << size() << "\nGiven ID: " << iter);
         }
         return output;
     }
@@ -576,8 +577,8 @@ public:
         if (iter <= size())
             output = grid[iter];
         else {
-            std::cout << "GRID READ ERROR:\n";
-            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+            printLn("GRID READ ERROR:");
+            printLn("Max ID:   " << size() << "\nGiven ID: " << iter);
         }
         return output;
     }
@@ -588,8 +589,8 @@ public:
         if (iter <= size())
             output = grid[iter];
         else {
-            std::cout << "GRID READ ERROR:\n";
-            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+            printLn("GRID READ ERROR:\n");
+            printLn("Max ID:   " << size() << "\nGiven ID: " << iter);
         }
         return output;
     }
@@ -600,8 +601,8 @@ public:
         if (iter <= size())
             output = grid[iter];
         else {
-            std::cout << "GRID READ ERROR:\n";
-            std::cout << "Max ID:   " << size() << "\nGiven ID: " << iter << "\n";
+            printLn("GRID READ ERROR:");
+            printLn("Max ID:   " << size() << "\nGiven ID: " << iter);
         }
         return output;
     }
@@ -625,7 +626,7 @@ public:
         }
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
-        std::cout << "But in the end" << std::endl;
+        printLn("But in the end");
         return *this;
     }
     GRID3D operator=(const GRID3D* rhs) {
@@ -636,7 +637,7 @@ public:
 
         grid = rhs->grid;
         grid_temp = rhs->grid_temp;
-        
+
         //grid_noise = new float[1];
         //grid_noise[0] = 0.0;
         //initNoiseGrid();
@@ -710,10 +711,10 @@ public:
         if (addNoise)
             this->addNoise();
         //checkCudaErrors(cudaMalloc((void**)&vdb_temp, sizeof(float) * size()));
-        std::cout << "Malloc";
+        printLn("Malloc");
         vdb_temp = multiGPU_malloc<float>(deviceCount, deviceIndex, size());
         //checkCudaErrors(cudaMemcpyAsync(vdb_temp, grid_temp, sizeof(float) * size(), cudaMemcpyHostToDevice,0));
-        std::cout << "Copy";
+        printLn("Copy");
         multiGPU_copyHTD(deviceCount, &vdb_temp, grid_temp, size(), deviceIndex);
 
         normalizeData();
@@ -735,15 +736,15 @@ public:
 #endif
     void copyToDeviceNoise(int NTS, int deviceIndex, int deviceCount = 1) {
         //checkCudaErrors(cudaMalloc((void**)&vdb_noise, sizeof(float) * NTS * NTS * NTS));
-        std::cout << "Malloc << " << NTS;
-        vdb_noise = multiGPU_malloc<float>(deviceCount, deviceIndex, NTS*NTS*NTS);
+        printLn("Malloc << " << NTS);
+        vdb_noise = multiGPU_malloc<float>(deviceCount, deviceIndex, NTS * NTS * NTS);
 
         //this->generateTile(NTS);
 
         //checkCudaErrors(cudaMemcpyAsync(vdb_noise, grid_noise, sizeof(float) * NTS * NTS * NTS, cudaMemcpyHostToDevice,0));
-        std::cout << "Copy(" << deviceCount << ")";
-        multiGPU_copyHTD(deviceCount, &vdb_noise, grid_noise, NTS*NTS*NTS, deviceIndex);
-        std::cout << "Endl\n";
+        printLn("Copy(" << deviceCount << ")");
+        multiGPU_copyHTD(deviceCount, &vdb_noise, grid_noise, NTS * NTS * NTS, deviceIndex);
+        printLn("Endl");
         //cudaCheckError();
     }
 
@@ -764,7 +765,7 @@ public:
         deletep(grid);
     }
     void free() {
-        //std::cout << "Free grid memory" << std::endl;
+        //printLn("Free grid memory" << std::endl;
         deletep(grid);
         deletep(grid_temp);
         //deletep(grid_noise);
@@ -893,7 +894,7 @@ public:
         else if (apply_method == 1)
             applyNoise2(intensity, noise_tile_size, offset, scale, frame, time_anim);
         else if (apply_method == 2)
-            applyCurl(intensity, noise_tile_size, offset, scale, frame,time_anim);
+            applyCurl(intensity, noise_tile_size, offset, scale, frame, time_anim);
 
     }
 
@@ -950,7 +951,7 @@ public:
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         int NTS2 = NTS * NTS;
         int NTS3 = NTS2 * NTS;
-        //std::cout << "Applying noise" << std::endl;
+        //printLn("Applying noise" << std::endl;
 
 
         //offset *= 1.4; //1.2
@@ -987,7 +988,7 @@ public:
             NTS = min(min(resolution.x, resolution.y), resolution.z);
         int NTS2 = NTS * NTS;
         int NTS3 = NTS2 * NTS;
-        //std::cout << "Applying noise" << std::endl;
+        //printLn("Applying noise" << std::endl;
 
         float tempp = 0.0;
         int THREADS = 16;
@@ -996,7 +997,7 @@ public:
         //weights
         //float* weights = new float[size()];
         //computeCoeff(grid_noise,NTS);
-        //std::cout << "Computed" << std::endl;
+        //printLn("Computed" << std::endl;
 
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
@@ -1030,34 +1031,34 @@ public:
 
         if (NTS == 0)
             NTS = min(min(resolution.x, resolution.y), resolution.z);
-        //std::cout << "Applying noise" << std::endl;
+        //printLn("Applying noise" << std::endl;
 
         int THREADS = 32;
         int sizee = ceil((double)resolution.x / (double)THREADS);
 
-        
+
         tbb::parallel_for(0, THREADS, [&](int i) {
             int end = (i * sizee) + (sizee);
             if (end > resolution.x) {
                 end = resolution.x;
             }
             for (int x = i * sizee; x < end; x++)
-        /*
-        for (int x = 0; x < resolution.x; x++){
-            */
+                /*
+                for (int x = 0; x < resolution.x; x++){
+                    */
                 for (int y = 0; y < resolution.y; y++)
                     for (int z = 0; z < resolution.z; z++) {
 
                         this->grid_vel[z * resolution.x * resolution.y + y * resolution.x + x]
-                                +=
+                            +=
                             evaluateCurl(make_float3(x, y, z), resolution, NTS, offset, scale, time_anim, frame % 128)
-                                * 
+                            *
                             (intensity);
 
                     }
             }
         );
-        //std::cout << "Done";
+        //printLn("Done";
     }
 #else
     void applyCurl(float intensity = 0.2f, int NTS = 0, float offset = 0.5, float scale = 0.1, int frame = 0,
@@ -1068,11 +1069,11 @@ public:
 
     void computeCoeff(float* input, int DIMS, float* tempIn1 = nullptr, float* tempIn2 = nullptr) {
         // generate tile
-        
+
         const int sx = resolution.x;
         const int sy = resolution.y;
         const int sz = resolution.z;
-        
+
         /*
         const int sx = DIMS;
         const int sy = DIMS;
@@ -1133,7 +1134,7 @@ public:
                     if (true) res += temp13[k * sx * sy + j * sx + i - sx * sy] + temp13[k * sx * sy + j * sx + i + sx * sy];
                     input[k * sy * sx + j * sx + i] = res * smoothingFactor;
                 }
-        
+
     }
 
     void generateTile(int NOISE_TILE_SIZE) {
@@ -1142,7 +1143,7 @@ public:
 
         float* noise3 = new float[n3d];
 
-        std::cout << "Generating 3x " << n << "^3 noise tile" << std::endl;
+        printLn("Generating 3x " << n << "^3 noise tile");
         float* temp13 = new float[n3d];
         float* temp23 = new float[n3d];
 
@@ -1452,7 +1453,7 @@ public:
         ADD_WEIGHTEDZ(-1, 1, 1);  ADD_WEIGHTEDZ(0, 1, 1);  ADD_WEIGHTEDZ(1, 1, 1);
         final.z = result;
 
-        //std::cout << "FINAL at = " << final.x <<";"<< final.y << ";" << final.z << std::endl; // DEBUG
+        //printLn("FINAL at = " << final.x <<";"<< final.y << ";" << final.z << std::endl; // DEBUG
         return final;
     }
 
@@ -1462,7 +1463,7 @@ public:
 
     inline float3 evaluateVec(float3 pos, int3 resolution, int NTS = 0, float offset = 0.5, float scale = 0.1,
         float time_anim = 0.1, int tile = 0) const {
-        //std::cout << "\nTILE: ";
+        //printLn("\nTILE: ";
         //std::cout << tile << ";";
         pos.x *= resolution.x;
         pos.y *= resolution.y;
@@ -1528,7 +1529,7 @@ public:
     float3* grid_vel;
 
     int3 resolution;
-    
+
     void clearAllObjects(int deviceIndex) {
         multiGPU_clear(&vdb, size(), deviceCount, deviceIndex);
         //multiGPU_clear(&vdb_temp, size(), deviceCount, deviceIndex);
@@ -1549,7 +1550,7 @@ private:
     std::vector<float*> vdb_temp;
     std::vector<float*> vdb_noise;
     std::vector<float3*> grid_vel_gpu;
-    
+
 
 
 

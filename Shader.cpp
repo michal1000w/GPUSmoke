@@ -88,11 +88,11 @@ unsigned int Shader::CreateShader(const std::string& vertexShader,
 }
 
 void Shader::Bind() const {
-	GLCall(glUseProgram(m_RendererID));
+	GLCall(glUseProgram(m_RendererID))
 }
 
 void Shader::UnBind() const {
-	GLCall(glUseProgram(0));
+	GLCall(glUseProgram(0))
 }
 
 int Shader::GetUniformLocation(const std::string& name) {
