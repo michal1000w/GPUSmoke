@@ -17,7 +17,7 @@ public:
     T* writeTargett(unsigned int device = 0) { return B[device]; }
     inline GRID3D* readToGrid(int device = 0, bool debug = false) {
         if (debug)
-            std::cout << "Reading Grid: ";
+            std::cout << "Reading Grid: \n";
         clock_t startTime = clock();
         GRID3D* output = new GRID3D(devicesCount);
         output->deviceCount = devicesCount;
@@ -31,13 +31,13 @@ public:
     
     inline GRID3D* readToGrid3D(int device = 0,bool debug = false) {
         if (debug) {
-            std::cout << " Reading Grid:";
+            std::cout << " Reading Grid: \n";
             std::cout << dim.x << "x" << dim.y << "x" << dim.z << std::endl;
         }
         clock_t startTime = clock();
         GRID3D* output = new GRID3D(dim,devicesCount);
         output->deviceCount = devicesCount;
-        if (debug) std::cout << "Copying..." << std::endl;
+        if (debug) std::cout << "Copying...\n" << std::endl;
         output->load_from_device3D(dim, readTargett(device),device);
         //std::cout << "Done";
         //output->set_pointer(new GRID3D(dim, readTarget()));
