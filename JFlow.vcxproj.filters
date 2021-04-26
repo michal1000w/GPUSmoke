@@ -136,6 +136,7 @@
     <ClInclude Include="Voxelizer.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="printUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
