@@ -192,6 +192,8 @@ void AddObject2(int type, int j, int particle_system) {
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, 2));
 	}
+
+	UpdateTimelinePartially();
 }
 
 void AddObject(int type) {
@@ -624,15 +626,15 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 		ImGui::Text("Example scenes");
 		const char* items[] = { "VDB","VDBFire", "Objects" };// , "vdb", "vdbs" };
-		static const char* current_item = "Objects";
+		static const char* current_item3 = "Objects";
 
-		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+		if (ImGui::BeginCombo("##combo", current_item3)) // The second parameter is the label previewed before opening the combo.
 		{
 			for (int n = 0; n < IM_ARRAYSIZE(items); n++)
 			{
-				bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+				bool is_selected = (current_item3 == items[n]); // You can store your selection however you want, outside or inside your objects
 				if (ImGui::Selectable(items[n], is_selected)) {
-					current_item = items[n];
+					current_item3 = items[n];
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
@@ -640,11 +642,11 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::EndCombo();
 		}
 		if (ImGui::Button("Load Scene")) {
-			if (current_item == "VDB")
+			if (current_item3 == "VDB")
 				solver.SAMPLE_SCENE = 1;
-			else if (current_item == "Objects")
+			else if (current_item3 == "Objects")
 				solver.SAMPLE_SCENE = 0;
-			else if (current_item == "VDBFire")
+			else if (current_item3 == "VDBFire")
 				solver.SAMPLE_SCENE = 2;
 			solver.preserve_object_list = false;
 			UpdateSolver();
@@ -765,16 +767,16 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Emitter type");
 		
-		static const char* current_item = "emitter";
+		static const char* current_object_emitter = "emitter";
 		int current_item_id = 0;
 
-		if (ImGui::BeginCombo("##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+		if (ImGui::BeginCombo("##combo", current_object_emitter)) // The second parameter is the label previewed before opening the combo.
 		{
 			for (int n = 0; n < IM_ARRAYSIZE(itemse); n++)
 			{
-				bool is_selected = (current_item == itemse[n]); // You can store your selection however you want, outside or inside your objects
+				bool is_selected = (current_object_emitter == itemse[n]); // You can store your selection however you want, outside or inside your objects
 				if (ImGui::Selectable(itemse[n], is_selected)) {
-					current_item = itemse[n];
+					current_object_emitter = itemse[n];
 				}
 				if (is_selected)
 					ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
@@ -831,22 +833,27 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			AddObject2(current_item_id,j);
 			*/
 			for (int i = 0; i < EmitterCount; i++)
-				if (current_item == itemse[i]) {
+				if (current_object_emitter == itemse[i]) {
 					current_item_id = i;
 					break;
 				}
-			if (current_item == "particle")
+			std::cout << current_item_id << std::endl;
+			std::cout << current_object_emitter << std::endl;
+			if (std::string(current_object_emitter) == "particle") {
 				AddParticleSystem = true;
-			else if (current_item == "object")
+			}
+			else if (std::string(current_object_emitter) == "object") {
 				AddObjectSystem = true;
-			else
-				AddObject(current_item_id);
+			}
+			else {
+				//AddObject(current_item_id);
+			}
 		}
 
-		if (AddParticleSystem && current_item == "particle") {
+		if (AddParticleSystem && std::string(current_object_emitter) == "particle") {
 			ImGui::InputText("filepath", temp_particle_path, IM_ARRAYSIZE(temp_particle_path));
 			if (std::experimental::filesystem::is_directory(temp_particle_path)) {
-				if (ImGui::Button("Confirm")) {
+				if (ImGui::Button("Confirm2")) {
 					OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_particle_path;
 					prt.LoadParticles();
@@ -861,10 +868,10 @@ void RenderGUI(bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 			}
 		}
-		if (AddObjectSystem && current_item == "object") {
+		if (AddObjectSystem && std::string(current_object_emitter) == "object") {
 			ImGui::InputText("filepath2", temp_object_path, IM_ARRAYSIZE(temp_object_path));
 			if (std::experimental::filesystem::is_directory(temp_object_path)) {
-				if (ImGui::Button("Confirm")) {
+				if (ImGui::Button("Confirm22")) {
 					OBJECT prt("object", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_object_path;
 					prt.LoadObjects(solver.getDomainResolution(),solver.devicesCount,solver.deviceIndex);

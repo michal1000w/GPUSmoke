@@ -166,7 +166,8 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
 
 
 
-
+    //clear collision list
+    checkCudaErrors(cudaMemsetAsync(state.collision->readTargett(current_device), 0.0, state.collision->byteCount()));
 
 
     if (DEBUG || true)
