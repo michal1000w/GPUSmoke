@@ -10,6 +10,7 @@
 class Renderer {
 public:
 	void Clear() const;
+	void SetColor(GLclampf R, GLclampf G, GLclampf B, GLclampf A) const;
 	void Draw(const VertexArray& va, const IndexBuffer& ib,
 		const Shader& shader) const;
 };

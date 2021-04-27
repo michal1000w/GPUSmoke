@@ -1530,6 +1530,9 @@ int Window(float* Img_res, float dpi) {
 
 		Renderer renderer;
 		solver.frame = 0;
+
+
+		renderer.SetColor(0.1, 0.1, 0.1, 1);
 		/////////////////////////////////////////////////
 		//////////////IMGUI/////////////////////////////
 		//Setup IMGUI

@@ -12,3 +12,7 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib,
 void Renderer::Clear() const{
 	GLCall(glClear(GL_COLOR_BUFFER_BIT))
 }
+
+void Renderer::SetColor(GLclampf R, GLclampf G, GLclampf B, GLclampf A) const {
+	GLCall(glClearColor(R,G,B,A))
+}
