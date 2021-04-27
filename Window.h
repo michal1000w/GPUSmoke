@@ -979,8 +979,8 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					current_item_id = i;
 					break;
 				}
-			std::cout << current_item_id << std::endl;
-			std::cout << current_object_emitter << std::endl;
+			//std::cout << current_item_id << std::endl;
+			//std::cout << current_object_emitter << std::endl;
 			if (std::string(current_object_emitter) == "particle") {
 				AddParticleSystem = true;
 			}
@@ -988,7 +988,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				AddObjectSystem = true;
 			}
 			else {
-				//AddObject(current_item_id);
+				AddObject(current_item_id);
 			}
 		}
 
