@@ -648,7 +648,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				DrawCombo(InterfaceScale, "Theme", selected_theme, theme_strings, ARRAYSIZE(theme_strings));
 
 
-				if (Knob("Rotation", &rot, -45, 45))
+				if (Knob("Rotation", &rot, -5, 5))
 					solver.setRotation(rot);
 			}
 			ImGui::EndChild();

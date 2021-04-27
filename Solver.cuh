@@ -103,7 +103,7 @@ public:
     float SCALE;
     bool INFLUENCE_SIM;
     float noise_intensity;
-    float time_anim = 0.5;
+    float time_anim = 1.0;
     float density_cutoff = 0.01;
     float max_velocity = 3.5f;
     float influence_on_velocity = 1.1f;
@@ -113,7 +113,7 @@ public:
     bool legacy_renderer = false;
     bool render_shadows = true;
     float transparency_compensation = 1.0f;
-    float shadow_quality = 1.0f;
+    float shadow_quality = 0.5f;
     bool THIS_IS_THE_END = false;
     bool writing = false;
     int deviceIndex = 0;
