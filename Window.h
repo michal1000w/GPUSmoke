@@ -305,6 +305,7 @@ void UpdateSolver(bool full = false, std::string filename = "") {
 		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z) &&
 		!full && solver.preserve_object_list ) {
 		solver.Clear_Simulation_Data2();
+		solver.InitGPUNoise(solver.NOISE_SC);
 		solver.ResetObjects1(); //loc rot scale
 		UpdateTimelinePartially();
 	}
