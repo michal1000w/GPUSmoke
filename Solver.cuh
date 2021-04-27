@@ -536,11 +536,8 @@ public:
         /*
         if (!preserve_object_list || force) {
             OBJECT obj("object", 1, make_float3(0), 5, 0.9, object_list.size(), this->devicesCount);
-
             obj.particle_filepath = "./input/obj/suzanne/";
-
             obj.LoadObjects(getDomainResolution(), devicesCount, deviceIndex);
-    
             object_list.push_back(obj);
         }
 

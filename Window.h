@@ -996,6 +996,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::InputText("filepath", temp_particle_path, IM_ARRAYSIZE(temp_particle_path));
 			if (std::experimental::filesystem::is_directory(temp_particle_path)) {
 				if (ImGui::Button("Confirm2")) {
+					solver.SIMULATE = false;
 					OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_particle_path;
 					prt.LoadParticles();
@@ -1006,6 +1007,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 							AddObject2(PARTICLE, j, 1);
 						}
 					}
+					solver.SIMULATE = true;
 					AddParticleSystem = false;
 				}
 			}
@@ -1014,6 +1016,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::InputText("filepath2", temp_object_path, IM_ARRAYSIZE(temp_object_path));
 			if (std::experimental::filesystem::is_directory(temp_object_path)) {
 				if (ImGui::Button("Confirm22")) {
+					solver.SIMULATE = false;
 					OBJECT prt("object", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_object_path;
 					prt.LoadObjects(solver.getDomainResolution(),solver.devicesCount,solver.deviceIndex);
@@ -1022,6 +1025,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 							int j = solver.object_list.size() - 1;
 							AddObject2(VDBOBJECT, j, 1);
 					}
+					solver.SIMULATE = true;
 					AddObjectSystem = false;
 				}
 			}
