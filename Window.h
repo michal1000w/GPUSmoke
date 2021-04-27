@@ -6,6 +6,7 @@
 #include "Renderer.h"
 #include "Texture.h"
 #include "Timeline.h"
+#include <toml.hpp>
 
 #include "Solver.cuh"
 extern Solver solver;
@@ -45,7 +46,13 @@ enum Themes
 	LIGHT
 };
 
-int selected_theme = DARK;
+toml::table windowConf = toml::parse("window.toml");
+
+
+
+std::optional<int> selected_themeConf = windowConf["window"]["current_theme"].value<int>();
+
+int selected_theme = selected_themeConf ? selected_themeConf.value() : DARK;
 
 const char* theme_strings[] = { "Dark", "Midnight", "Gray", "Light" };
 
@@ -638,6 +645,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			default:
 				ImGui::StyleColorsDark();
 			}
+
+			if (ImGui::Button("Save theme"))
+				windowConf.insert_or_assign("current_theme", selected_theme);
 
 				
 					

@@ -48,6 +48,7 @@
     <ClInclude Include="third_party\imgui\imstb_rectpack.h" />
     <ClInclude Include="third_party\imgui\imstb_textedit.h" />
     <ClInclude Include="third_party\imgui\imstb_truetype.h" />
+    <ClInclude Include="third_party\toml++\toml.hpp" />
     <ClInclude Include="Timeline.h" />
     <ClInclude Include="VertexArray.h" />
     <ClInclude Include="VertexBuffer.h" />
@@ -91,6 +92,7 @@
     <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="third_party\dlls\window.toml" />
     <None Include="third_party\openvdb_headers\bin\blosc.dll">
       <FileType>Document</FileType>
     </None>
@@ -104,7 +106,7 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{4AC2887C-CF72-405D-A7DF-FDEDD7398F6B}</ProjectGuid>
     <RootNamespace>JFlow</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -145,6 +147,7 @@
     <LibraryPath>third_party\openvdb_headers\bin;$(LibraryPath)</LibraryPath>
     <TargetName>JFlowAlpha</TargetName>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>third_party/toml++;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <VcpkgUseStatic>false</VcpkgUseStatic>
