@@ -274,7 +274,7 @@ void DeleteObject(const int object) {
 
 
 
-
+int frame = solver.frame;
 
 
 std::vector<std::thread> threads;
@@ -293,7 +293,7 @@ void UpdateSolver(bool full = false, std::string filename = "") {
 	//clearing
 	//solver.ClearCache();
 	solver.frame = 0;
-
+	frame = solver.frame;
 
 	solver.THIS_IS_THE_END = false;
 	//solver.SIMULATE = true;
@@ -1511,7 +1511,6 @@ int Window(float* Img_res, float dpi) {
 		bool helper_window = true;
 		bool confirm_button = false;
 		//std::thread* sim;
-		solver.DONE_FRAME = true;
 		/////////////////////////////////////////////////
 		//TImeline
 
@@ -1520,8 +1519,8 @@ int Window(float* Img_res, float dpi) {
 
 		solver.frame = 0;
 		solver.state->time_step = solver.speed * 0.1;
-		solver.DONE_FRAME = false;
-
+		solver.DONE_FRAME = true;
+		frame = solver.frame;
 
 		//UpdateSolver();
 		UpdateTimeline();
@@ -1530,19 +1529,29 @@ int Window(float* Img_res, float dpi) {
 			//clock_t startTime = clock();
 			if (solver.LOCK) continue;
 
+			frame = solver.frame;
 
-			UpdateAnimation();
+			if (frame == solver.frame && solver.DONE_FRAME) {
+				UpdateAnimation();
+				frame++;
+			}
 			//////////////////
 			//solver.Simulation_Frame();
 
 			if (threads.size() == 0) { //0
 				threads.push_back(std::thread([&]() {
 					while (true) {
-						clock_t startTime = clock();
 
-						solver.Simulation_Frame();
+						if (solver.frame == frame - 1) {
+							clock_t startTime = clock();
+							solver.DONE_FRAME = false;
 
-						fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+							solver.Simulation_Frame();
+
+							solver.DONE_FRAME = true;
+							fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+						}
+
 
 						if (solver.THIS_IS_THE_END) {
 							std::cout << "I'm breaking out" << std::endl;
