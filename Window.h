@@ -1721,7 +1721,8 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
-	solver.setCamera(solver.getCamera().x, solver.getCamera().y,
-		solver.getCamera().z + 2.5f * yOffset);
-	//std::cout <<"   "<< yOffset;
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y,
+			solver.getCamera().z + 2.5f * yOffset);
+	}
 }
