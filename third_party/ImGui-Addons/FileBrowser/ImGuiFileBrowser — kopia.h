@@ -13,8 +13,6 @@ namespace imgui_addons
             ImGuiFileBrowser();
             ~ImGuiFileBrowser();
 
-            float interface_scale = 1.0f;
-
             enum class DialogMode
             {
                 SELECT, //Select Directory Mode

@@ -305,6 +305,7 @@ void UpdateSolver(bool full = false, std::string filename = "") {
 		(solver.New_DOMAIN_RESOLUTION.z == solver.getDomainResolution().z) &&
 		!full && solver.preserve_object_list ) {
 		solver.Clear_Simulation_Data2();
+		solver.InitGPUNoise(solver.NOISE_SC);
 		solver.ResetObjects1(); //loc rot scale
 		UpdateTimelinePartially();
 	}
@@ -777,10 +778,11 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::OpenPopup("Save File");
 			SAVE_FILE_TAB = false;
 		}
-		ImGui::SetWindowFontScale(InterfaceScale);
-		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * DPI, 310 * DPI), ".txt")) //".txt,.jpg,.dll"
+		file_dialog.interface_scale = InterfaceScale;
+		
+		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * InterfaceScale, 310 * InterfaceScale), ".txt")) //".txt,.jpg,.dll"
 		{
-			ImGui::SetWindowFontScale(InterfaceScale);
+			
 			std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
 			std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
 			std::cout << file_dialog.ext << std::endl;              // Access ext separately (For SAVE mode)
@@ -869,14 +871,19 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 		ImGui::Text("Simulation Settings");
-		ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
-		ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
-		ImGui::SliderFloat("Flame Dissolve", &solver.Flame_Dissolve, 0.9f, 1.0f);
-		ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
-		ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
-		ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
-		ImGui::SliderFloat("Max Velocity", &solver.max_velocity, 0.0f, 20.0f);
-		ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 5.1f);
+		if (ImGui::CollapsingHeader("Simulation Settings", 0, true))
+		{
+			ImGui::SliderFloat("Ambient Temp", &solver.Ambient_Temperature, -10.0f, 100.0f);
+			ImGui::SliderFloat("Smoke Dissolve", &solver.Smoke_Dissolve, 0.93f, 1.0f);
+			ImGui::SliderFloat("Flame Dissolve", &solver.Flame_Dissolve, 0.9f, 1.0f);
+			ImGui::SliderFloat("Diverge rate", &solver.DIVERGE_RATE, 0.1f, 0.8f);
+			ImGui::SliderFloat("Buoyancy", &solver.Smoke_Buoyancy, 0.0f, 10.0f);
+			ImGui::SliderFloat("Pressure", &solver.Pressure, -1.5f, 0.0f);
+			ImGui::SliderFloat("Max Velocity", &solver.max_velocity, 0.0f, 20.0f);
+			ImGui::SliderFloat("Influence on Velocity", &solver.influence_on_velocity, 0.0f, 5.1f);
+			ImGui::Text("\n\n");
+		}
+		
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 150);
 		if (ImGui::Button("Simulate")) {
 			solver.SIMULATE = !solver.SIMULATE;
@@ -884,8 +891,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SliderFloat("Simulation speed", &solver.speed, 0.1f, 1.5f);
 
 
+		ImGui::Text("\n\n");
 		ImGui::Checkbox("Wavelet Upresing", &solver.Upsampling);
-		if (solver.Upsampling || true) {
+		if (solver.Upsampling) {
 			ImGui::SliderFloat("Offset", &solver.OFFSET, 0.0001f, 0.3f);
 			ImGui::SliderFloat("Scale", &solver.SCALE, 0.01f, 4.0f);
 			//ImGui::Checkbox("Simulation Influence", &solver.INFLUENCE_SIM);
@@ -904,21 +912,23 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		//ImGui::ColorEdit3("clear color", (float*)&clear_color);
 
 
-		ImGui::Text("Render Settings:");
-		ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
-		ImGui::Checkbox("Shadows render", &solver.render_shadows);
-		ImGui::Checkbox("Collision obj render", &solver.render_collision_objects);
-		ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 0.9, 2);
-		ImGui::SliderFloat("Fire Multiply", &solver.fire_multiply, 0, 1);
+		ImGui::Text("\n\nRender Settings:");
+		if (ImGui::CollapsingHeader("Render Settings", 0, true))
+		{
+			ImGui::Checkbox("Fire&Smoke render", &solver.Smoke_And_Fire);
+			ImGui::Checkbox("Shadows render", &solver.render_shadows);
+			ImGui::Checkbox("Collision obj render", &solver.render_collision_objects);
+			ImGui::SliderFloat("Fire Emission Rate", &solver.Fire_Max_Temperature, 0.9, 2);
+			ImGui::SliderFloat("Fire Multiply", &solver.fire_multiply, 0, 1);
+			ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
+			ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
+			if (!solver.render_shadows)
+				ImGui::SliderFloat("Transparency Compensation", &solver.transparency_compensation, 0.01, 1);
+			else
+				ImGui::SliderFloat("Shadow Quality", &solver.shadow_quality, 0.1, 2);
+			ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
+		}
 		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 2048);
-		ImGui::SliderFloat("Render Step Size", &solver.render_step_size, 0.5, 2);
-		ImGui::SliderFloat("Density", &solver.density_influence, 0, 2);
-		if (!solver.render_shadows)
-			ImGui::SliderFloat("Transparency Compensation", &solver.transparency_compensation, 0.01, 1);
-		else
-			ImGui::SliderFloat("Shadow Quality", &solver.shadow_quality, 0.1, 2);
-		ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
-
 		if (ImGui::Button("Reset")) {
 			UpdateSolver();
 		}
@@ -1409,6 +1419,8 @@ int Window(float* Img_res, float dpi) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	glfwWindowHint(GLFW_MAXIMIZED,1); //maximize the window at start
+
 
 	//create a windowed mode window
 	window = glfwCreateWindow(Img_res[0], Img_res[1], FULL_NAME.c_str(), NULL, NULL);
@@ -1431,6 +1443,7 @@ int Window(float* Img_res, float dpi) {
 
 	glfwMakeContextCurrent(window);
 
+	
 	
 
 	if (glewInit() != GLEW_OK)
@@ -1517,6 +1530,9 @@ int Window(float* Img_res, float dpi) {
 
 		Renderer renderer;
 		solver.frame = 0;
+
+
+		renderer.SetColor(0.1, 0.1, 0.1, 1);
 		/////////////////////////////////////////////////
 		//////////////IMGUI/////////////////////////////
 		//Setup IMGUI
@@ -1705,7 +1721,8 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
-	solver.setCamera(solver.getCamera().x, solver.getCamera().y,
-		solver.getCamera().z + 2.5f * yOffset);
-	//std::cout <<"   "<< yOffset;
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) {
+		solver.setCamera(solver.getCamera().x, solver.getCamera().y,
+			solver.getCamera().z + 2.5f * yOffset);
+	}
 }
