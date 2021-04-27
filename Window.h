@@ -1419,6 +1419,8 @@ int Window(float* Img_res, float dpi) {
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+	glfwWindowHint(GLFW_MAXIMIZED,1); //maximize the window at start
+
 
 	//create a windowed mode window
 	window = glfwCreateWindow(Img_res[0], Img_res[1], FULL_NAME.c_str(), NULL, NULL);
@@ -1441,6 +1443,7 @@ int Window(float* Img_res, float dpi) {
 
 	glfwMakeContextCurrent(window);
 
+	
 	
 
 	if (glewInit() != GLEW_OK)
