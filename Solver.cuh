@@ -34,7 +34,7 @@ std::vector<std::string> get_file_list2(std::string directory) {
 }
 
 std::string trim(const std::string& str,
-    const std::string& whitespace = " \t")
+    const std::string& whitespace = " \t\n\r")
 {
     const auto strBegin = str.find_first_not_of(whitespace);
     if (strBegin == std::string::npos)

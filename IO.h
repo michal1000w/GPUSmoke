@@ -765,7 +765,7 @@ int export_vdb(std::string filename, int3 domain_resolution) {
 
 
 int save_scene_to_file(std::string filename, std::vector<std::string> lines) {
-    filename = "scenes\\" + filename + ".txt";
+    //filename = "scenes\\" + filename + ".txt";
     
     std::ifstream myfile(filename);
     if (myfile.is_open()) {
