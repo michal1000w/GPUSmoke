@@ -40,6 +40,7 @@ unsigned char* createBitmapInfoHeader(int height, int width);
 
 void generateBitmapImage(unsigned char* image, int height, int width, const char* imageFileName)
 {
+
     int widthInBytes = width * BYTES_PER_PIXEL;
 
     unsigned char padding[3] = { 0, 0, 0 };
