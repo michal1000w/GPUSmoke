@@ -777,10 +777,11 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::OpenPopup("Save File");
 			SAVE_FILE_TAB = false;
 		}
-		ImGui::SetWindowFontScale(InterfaceScale);
-		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * DPI, 310 * DPI), ".txt")) //".txt,.jpg,.dll"
+		file_dialog.interface_scale = InterfaceScale;
+		
+		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * InterfaceScale, 310 * InterfaceScale), ".txt")) //".txt,.jpg,.dll"
 		{
-			ImGui::SetWindowFontScale(InterfaceScale);
+			
 			std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
 			std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
 			std::cout << file_dialog.ext << std::endl;              // Access ext separately (For SAVE mode)
