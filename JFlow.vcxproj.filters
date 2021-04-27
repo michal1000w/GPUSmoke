@@ -115,7 +115,7 @@
     <ClInclude Include="Fluid_Kernels_Fast.cuh">
       <Filter>Sources</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\Widgets\Utils\ImCurveEdit.h">
+    <ClInclude Include="ImCurveEdit.h">
       <Filter>ImGui</Filter>
     </ClInclude>
     <ClInclude Include="Timeline.h">
@@ -139,24 +139,9 @@
     <ClInclude Include="printUtils.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\Widgets\FileBrowser\ImGuiFileBrowser.h">
+    <ClInclude Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.h">
       <Filter>ImGui</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\imgui\Widgets\Utils\BezierWidget.hpp" />
-    <ClInclude Include="third_party\imgui\Widgets\FileBrowser\Dirent\dirent.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGizmo\imGuIZMOquat.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGizmo\vgConfig.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGizmo\vGizmo.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGizmo\vGizmoMath.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGizmo\vgMath.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGuiAl\button\imguial_button.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGuiAl\msgbox\imguial_msgbox.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGuiAl\sparkline\imguial_sparkline.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImGuiAl\term\imguial_term.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImNodes\imnodes.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImNodes\imnodes_internal.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImPlot\implot.h" />
-    <ClInclude Include="third_party\imgui\Widgets\ImPlot\implot_internal.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -257,22 +242,15 @@
     <ClCompile Include="third_party\imgui\imgui_tables.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\imgui\Widgets\Utils\ImCurveEdit.cpp">
+    <ClCompile Include="ImCurveEdit.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="Timeline.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\imgui\Widgets\FileBrowser\ImGuiFileBrowser.cpp">
+    <ClCompile Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
-    <ClCompile Include="third_party\imgui\Widgets\ImGizmo\imGuIZMOquat.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImGuiAl\msgbox\imguial_msgbox.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImGuiAl\term\imguial_term.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImNodes\imnodes.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImPlot\implot.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImPlot\implot_demo.cpp" />
-    <ClCompile Include="third_party\imgui\Widgets\ImPlot\implot_items.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="HugeScaleSolver.cu">
@@ -322,35 +300,5 @@
     <None Include="third_party\openvdb_headers\bin\blosc.dll">
       <Filter>Dll</Filter>
     </None>
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\CodingFontTobi.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\CousineBold.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\CousineBoldItalic.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\CousineItalic.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\CousineRegular.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\Crisp.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\DroidSans.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\DroidSansBold.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\FontAwesome4.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\FontAwesome5Brands400.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\FontAwesome5Regular400.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\FontAwesome5Solid900.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ForkAwesome.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\GoogleMaterialDesign.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\Ionicons.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\KarlaBold.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\KarlaBoldItalic.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\KarlaItalic.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\KarlaRegular.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\KenneyIcons.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\MaterialDesign.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\PixelCarnageMono.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggyClean.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggyCleanSZ.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggyCleanSZBP.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggySmall.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggySquare.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggySquareSZ.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggyTiny.inl" />
-    <None Include="third_party\imgui\Widgets\ImGuiAl\fonts\ProggyTinySZ.inl" />
   </ItemGroup>
 </Project>
