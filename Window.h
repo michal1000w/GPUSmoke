@@ -356,7 +356,9 @@ void UpdateSolver(bool full = false, std::string filename = "") {
 	//solver.Initialize_Simulation(); //tutaj
 	
 	
-
+	solver.frame = 0;
+	frame = solver.frame;
+	solver.DONE_FRAME = true;
 	solver.LOCK = false;
 	solver.writing = false;
 	threads.clear();
