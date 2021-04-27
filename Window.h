@@ -655,10 +655,10 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
+			/*
 	if (SAVE_FILE_TAB) {
 		ImGui::Begin("Save Panel");
 		{
-			/*
 			ImGui::Text("Enter filename");
 			ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
 			if (ImGui::Button("Save")) {
@@ -666,23 +666,10 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				filename = trim(filename);
 				solver.SaveSceneToFile(filename);
 				SAVE_FILE_TAB = false;
-			}*/
-			ImGui::OpenPopup("Save File");
-			ImGui::SetWindowFontScale(InterfaceScale);
-			if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700*DPI, 310*DPI), ".txt")) //".txt,.jpg,.dll"
-			{
-				ImGui::SetWindowFontScale(InterfaceScale);
-				std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
-				std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
-				std::cout << file_dialog.ext << std::endl;              // Access ext separately (For SAVE mode)
-				//Do writing of files based on extension here
-				std::string filename = file_dialog.selected_path;
-				filename = trim(filename);
-				solver.SaveSceneToFile(filename+file_dialog.ext);
-				SAVE_FILE_TAB = false;
 			}
 			
-			/*
+			
+			
 			if (ImGui::Button("Close")) {
 				SAVE_FILE_TAB = false;
 			}
@@ -695,10 +682,10 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::Text(name.c_str());
 			}
 			ImGui::EndChild();
-			*/
 		}
 		ImGui::End();
 	}
+			*/
 	if (OPEN_FILE_TAB) {
 		ImGui::Begin("Open Panel");
 		{
@@ -774,6 +761,8 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					save_panel = false;
 				}
 				ImGui::EndMenu();
+
+
 			}
 			if (ImGui::BeginMenu("Help")) {
 				if (ImGui::MenuItem("Help", "")) {
@@ -784,7 +773,23 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::EndMenuBar();
 		}
 
-
+		if (SAVE_FILE_TAB) {
+			ImGui::OpenPopup("Save File");
+			SAVE_FILE_TAB = false;
+		}
+		ImGui::SetWindowFontScale(InterfaceScale);
+		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * DPI, 310 * DPI), ".txt")) //".txt,.jpg,.dll"
+		{
+			ImGui::SetWindowFontScale(InterfaceScale);
+			std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+			std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
+			std::cout << file_dialog.ext << std::endl;              // Access ext separately (For SAVE mode)
+			//Do writing of files based on extension here
+			std::string filename = file_dialog.selected_path;
+			filename = trim(filename);
+			solver.SaveSceneToFile(filename + file_dialog.ext);
+			SAVE_FILE_TAB = false;
+		}
 
 
 		ImGui::Text("Example scenes");
