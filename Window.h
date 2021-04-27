@@ -7,6 +7,7 @@
 #include "Texture.h"
 #include "Timeline.h"
 
+
 #include "Solver.cuh"
 extern Solver solver;
 
@@ -24,6 +25,7 @@ extern Solver solver;
 //#include <imgui_tables.cpp>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
+#include <ImGuiFileBrowser.h>
 
 void AddObject2(int,int,int ps = 0);
 //#define WINDOWS7_BUILD
@@ -72,7 +74,7 @@ float sinoffset = 0.0;
 #define CURVE_Y 2
 #define CURVE_Z 3
 
-
+imgui_addons::ImGuiFileBrowser file_dialog;
 
 
 
@@ -356,7 +358,9 @@ void UpdateSolver(bool full = false, std::string filename = "") {
 	//solver.Initialize_Simulation(); //tutaj
 	
 	
-
+	solver.frame = 0;
+	frame = solver.frame;
+	solver.DONE_FRAME = true;
 	solver.LOCK = false;
 	solver.writing = false;
 	threads.clear();
@@ -651,10 +655,10 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
+			/*
 	if (SAVE_FILE_TAB) {
 		ImGui::Begin("Save Panel");
 		{
-			ImGui::SetWindowFontScale(InterfaceScale);
 			ImGui::Text("Enter filename");
 			ImGui::InputText("Filename", solver.SAVE_FOLDER, IM_ARRAYSIZE(solver.SAVE_FOLDER));
 			if (ImGui::Button("Save")) {
@@ -663,6 +667,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				solver.SaveSceneToFile(filename);
 				SAVE_FILE_TAB = false;
 			}
+			
+			
+			
 			if (ImGui::Button("Close")) {
 				SAVE_FILE_TAB = false;
 			}
@@ -678,6 +685,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		}
 		ImGui::End();
 	}
+			*/
 	if (OPEN_FILE_TAB) {
 		ImGui::Begin("Open Panel");
 		{
@@ -753,6 +761,8 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 					save_panel = false;
 				}
 				ImGui::EndMenu();
+
+
 			}
 			if (ImGui::BeginMenu("Help")) {
 				if (ImGui::MenuItem("Help", "")) {
@@ -763,7 +773,23 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::EndMenuBar();
 		}
 
-
+		if (SAVE_FILE_TAB) {
+			ImGui::OpenPopup("Save File");
+			SAVE_FILE_TAB = false;
+		}
+		ImGui::SetWindowFontScale(InterfaceScale);
+		if (file_dialog.showFileDialog("Save File", imgui_addons::ImGuiFileBrowser::DialogMode::SAVE, ImVec2(700 * DPI, 310 * DPI), ".txt")) //".txt,.jpg,.dll"
+		{
+			ImGui::SetWindowFontScale(InterfaceScale);
+			std::cout << file_dialog.selected_fn << std::endl;      // The name of the selected file or directory in case of Select Directory dialog mode
+			std::cout << file_dialog.selected_path << std::endl;    // The absolute path to the selected file
+			std::cout << file_dialog.ext << std::endl;              // Access ext separately (For SAVE mode)
+			//Do writing of files based on extension here
+			std::string filename = file_dialog.selected_path;
+			filename = trim(filename);
+			solver.SaveSceneToFile(filename + file_dialog.ext);
+			SAVE_FILE_TAB = false;
+		}
 
 
 		ImGui::Text("Example scenes");
@@ -1499,7 +1525,10 @@ int Window(float* Img_res, float dpi) {
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
 		ImGui_ImplGlfw_InitForOpenGL(window, true);
 		ImGui_ImplOpenGL3_Init((char*)glGetString(GL_NUM_SHADING_LANGUAGE_VERSIONS));
-		
+
+
+
+		/////Load theme	
 
 		//ImVec4 clear_color = ImVec4(0->45f, 0.55f, 0.60f, 1.00f);
 

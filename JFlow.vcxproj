@@ -40,6 +40,7 @@
     <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h" />
     <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu" />
     <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh" />
+    <ClInclude Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.h" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h" />
     <ClInclude Include="third_party\imgui\imconfig.h" />
@@ -73,6 +74,7 @@
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.cpp" />
     <ClCompile Include="third_party\imgui\backends\imgui_impl_glfw.cpp" />
     <ClCompile Include="third_party\imgui\backends\imgui_impl_opengl3.cpp" />
     <ClCompile Include="third_party\imgui\imgui.cpp" />
@@ -126,7 +128,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.2.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.3.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -160,7 +162,7 @@
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;NANOVDB_USE_BLOSC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
-      <AdditionalIncludeDirectories>third_party/GLFW/include;third_party/openvdb_headers/include;third_party/openvdb/nanovdb;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;third_party/trimesh2/build/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third_party/ImGui-Addons/FileBrowser;third_party/GLFW/include;third_party/openvdb_headers/include;third_party/openvdb/nanovdb;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;third_party/trimesh2/build/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -194,7 +196,7 @@ xcopy /y /d "third_party\dlls\*" "$(OutDir)"</Command>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;WIN64;NDEBUG;_CONSOLE;NANOVDB_USE_BLOSC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>third_party/GLFW/include;third_party/openvdb_headers/include;third_party/openvdb/nanovdb;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;third_party/trimesh2/build/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>third_party/ImGui-Addons/FileBrowser;third_party/GLFW/include;third_party/openvdb_headers/include;third_party/openvdb/nanovdb;third_party/all/include;third_party;third_party/usd/include;third_party/imgui;third_party/glm;third_party/trimesh2/build/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
@@ -234,6 +236,6 @@ xcopy /y /d "third_party\dlls\*" "$(OutDir)"</Command>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.2.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.3.targets" />
   </ImportGroup>
 </Project>

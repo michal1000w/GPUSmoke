@@ -139,6 +139,9 @@
     <ClInclude Include="printUtils.h">
       <Filter>Headers</Filter>
     </ClInclude>
+    <ClInclude Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -243,6 +246,9 @@
       <Filter>ImGui</Filter>
     </ClCompile>
     <ClCompile Include="Timeline.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\ImGui-Addons\FileBrowser\ImGuiFileBrowser.cpp">
       <Filter>ImGui</Filter>
     </ClCompile>
   </ItemGroup>
