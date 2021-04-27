@@ -25,7 +25,7 @@ extern Solver solver;
 //#include <imgui_tables.cpp>
 #include <imgui/misc/cpp/imgui_stdlib.h>
 #include <imgui/misc/single_file/imgui_single_file.h>
-#include <ImGuiFileBrowser.h>
+#include <Widgets/FileBrowser/ImGuiFileBrowser.h>
 
 void AddObject2(int,int,int ps = 0);
 //#define WINDOWS7_BUILD
@@ -64,6 +64,7 @@ MySequence Timeline;
 
 //////////////////FUNCTIO
 int sinresolution = 8;
+float rot = solver.getRotation(); // Global due to 2 things accessing it
 float sinmid = 20;
 float sinspeed = 0.1;
 float sinsize = 8;
@@ -98,6 +99,100 @@ void ClearTimeline(int minn = 0) {
 		Timeline.rampEdit.erase(Timeline.rampEdit.begin() + object);
 	}
 	selectedEntry = -1;
+}
+
+static bool Knob(const char* label, float* p_value, float v_min, float v_max)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	float radius_outer = 20.0f;
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImVec2 center = ImVec2(pos.x + radius_outer, pos.y + radius_outer);
+	float line_height = ImGui::GetTextLineHeight();
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+	float ANGLE_MIN = 3.141592f * 0.75f;
+	float ANGLE_MAX = 3.141592f * 2.25f;
+
+	ImGui::InvisibleButton(label, ImVec2(radius_outer * 2, radius_outer * 2 + line_height + style.ItemInnerSpacing.y));
+	bool value_changed = false;
+	bool is_active = ImGui::IsItemActive();
+	bool is_hovered = ImGui::IsItemActive();
+	if (is_active && io.MouseDelta.x != 0.0f)
+	{
+		float step = (v_max - v_min) / 200.0f;
+		*p_value += io.MouseDelta.x * step;
+		if (*p_value < v_min) *p_value = v_min;
+		if (*p_value > v_max) *p_value = v_max;
+		value_changed = true;
+	}
+
+	float t = (*p_value - v_min) / (v_max - v_min);
+	float angle = ANGLE_MIN + (ANGLE_MAX - ANGLE_MIN) * t;
+	float angle_cos = cosf(angle), angle_sin = sinf(angle);
+	float radius_inner = radius_outer * 0.40f;
+	draw_list->AddText(ImVec2(pos.x, pos.y + radius_outer * 2 + style.ItemInnerSpacing.y), ImGui::GetColorU32(ImGuiCol_Text), label);
+	draw_list->AddCircleFilled(center, radius_outer, ImGui::GetColorU32(ImGuiCol_FrameBg), 16);
+	draw_list->AddLine(ImVec2(center.x + angle_cos * radius_inner, center.y + angle_sin * radius_inner), ImVec2(center.x + angle_cos * (radius_outer - 2), center.y + angle_sin * (radius_outer - 2)), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
+	draw_list->AddCircleFilled(center, radius_inner, ImGui::GetColorU32(is_active ? ImGuiCol_FrameBgActive : is_hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), 16);
+
+	if (is_active || is_hovered)
+	{
+		ImGui::SetNextWindowPos(ImVec2(pos.x - style.WindowPadding.x, pos.y - line_height - style.ItemInnerSpacing.y - style.WindowPadding.y));
+		ImGui::BeginTooltip();
+		ImGui::Text("%.3f", *p_value);
+		ImGui::EndTooltip();
+	}
+
+	return value_changed;
+}
+
+static bool Knob(const char* label, int* p_value, int v_min, int v_max)
+{
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
+
+	float radius_outer = 20.0f;
+	ImVec2 pos = ImGui::GetCursorScreenPos();
+	ImVec2 center = ImVec2(pos.x + radius_outer, pos.y + radius_outer);
+	float line_height = ImGui::GetTextLineHeight();
+	ImDrawList* draw_list = ImGui::GetWindowDrawList();
+
+	float ANGLE_MIN = 3.141592f * 0.75f;
+	float ANGLE_MAX = 3.141592f * 2.25f;
+
+	ImGui::InvisibleButton(label, ImVec2(radius_outer * 2, radius_outer * 2 + line_height + style.ItemInnerSpacing.y));
+	bool value_changed = false;
+	bool is_active = ImGui::IsItemActive();
+	bool is_hovered = ImGui::IsItemActive();
+	if (is_active && io.MouseDelta.x != 0.0f)
+	{
+		float step = (v_max - v_min) / 200;
+		*p_value += io.MouseDelta.x * step;
+		if (*p_value < v_min) *p_value = v_min;
+		if (*p_value > v_max) *p_value = v_max;
+		value_changed = true;
+	}
+
+	float t = (*p_value - v_min) / (v_max - v_min);
+	float angle = ANGLE_MIN + (ANGLE_MAX - ANGLE_MIN) * t;
+	float angle_cos = cosf(angle), angle_sin = sinf(angle);
+	float radius_inner = radius_outer * 0.40f;
+	draw_list->AddCircleFilled(center, radius_outer, ImGui::GetColorU32(ImGuiCol_FrameBg), 16);
+	draw_list->AddLine(ImVec2(center.x + angle_cos * radius_inner, center.y + angle_sin * radius_inner), ImVec2(center.x + angle_cos * (radius_outer - 2), center.y + angle_sin * (radius_outer - 2)), ImGui::GetColorU32(ImGuiCol_SliderGrabActive), 2.0f);
+	draw_list->AddCircleFilled(center, radius_inner, ImGui::GetColorU32(is_active ? ImGuiCol_FrameBgActive : is_hovered ? ImGuiCol_FrameBgHovered : ImGuiCol_FrameBg), 16);
+	draw_list->AddText(ImVec2(pos.x, pos.y + radius_outer * 2 + style.ItemInnerSpacing.y), ImGui::GetColorU32(ImGuiCol_Text), label);
+
+	if (is_active || is_hovered)
+	{
+		ImGui::SetNextWindowPos(ImVec2(pos.x - style.WindowPadding.x, pos.y - line_height - style.ItemInnerSpacing.y - style.WindowPadding.y));
+		ImGui::BeginTooltip();
+		ImGui::Text("%i", *p_value);
+		ImGui::EndTooltip();
+	}
+
+	return value_changed;
 }
 
 void UpdateTimeline() {
@@ -527,10 +622,12 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Text("LCtrl+Scroll on animation panel\n - zoom in/out");
 			ImGui::Text("Space - pause simulation");
 			ImGui::Text("LCtrl+LM on slider - writing mode");
-
+			ImGui::BeginChild("##Misc settings", ImVec2(0,0), true);
 			ImGui::SliderFloat("Interface scale", &InterfaceScale, 0.9, 2.0f);
 			DrawCombo(DPI, "Theme", selected_theme, theme_strings, ARRAYSIZE(theme_strings));
-
+			if (Knob("Rotation", &rot, -45, 45))
+				solver.setRotation(rot);
+			ImGui::EndChild();
 
 			ImGuiStyle* style = &ImGui::GetStyle();
 			switch (selected_theme)
@@ -1649,9 +1746,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		/*Rotate*/
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
 			solver.setRotation(solver.getRotation() - 0.1f);
+			rot -= 0.1f;
 		}
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
 			solver.setRotation(solver.getRotation() + 0.1f);
+			rot += 0.1f;
 		}
 	}
 	else{ /*Left-Right*/

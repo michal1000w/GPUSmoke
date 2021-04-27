@@ -4,6 +4,8 @@
 #include "imgui_internal.h"
 #include <cstddef>
 
+#include "Widgets/Utils/ImCurveEdit.h"
+
 struct ImDrawList;
 struct ImRect;
 namespace ImSequencer
@@ -72,7 +74,6 @@ static const char* SequencerItemTypeNames[EmitterCount] = { "emitter","explosion
 
 
 #include <vector>
-#include "ImCurveEdit.h"
 #include <stdint.h>
 #include <set>
 #include <iostream>

@@ -1,6 +1,7 @@
-MIT License
+/*
+The MIT License (MIT)
 
-Copyright (c) 2019 gallickgunner
+Copyright (c) 2016 Andre Leiradella
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +20,35 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+*/
+
+#pragma once
+
+namespace ImGuiAl
+{
+  class MsgBox
+  {
+  public:
+    inline MsgBox() {}
+    virtual ~MsgBox();
+    
+    bool Init( const char* title, const char* icon, const char* text, const char** captions, bool show_checkbox = false );
+    int  Draw();
+    void Open();
+    
+    inline void AskAgain()
+    {
+      m_DontAskAgain = false;
+      m_Selected = 0;
+    }
+    
+  protected:
+    const char* m_Title;
+    const char* m_Icon;
+    const char* m_Text;
+    const char** m_Captions;
+    bool m_ShowCheckbox;
+    bool m_DontAskAgain;
+    int m_Selected;
+  };
+}
