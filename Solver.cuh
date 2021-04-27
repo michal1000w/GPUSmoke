@@ -127,14 +127,15 @@ public:
     bool LOCK = false;
 
     fluid_state* state;
+
+    int3 img_d;
+    uint8_t* img;
 private:
     int3 DOMAIN_RESOLUTION;
     int FRAMES;
     float Image_Resolution[2];
     float ZOOM;
     int3 vol_d;
-    int3 img_d;
-    uint8_t* img;
     float time_step;
     float rotation;
 
@@ -535,11 +536,8 @@ public:
         /*
         if (!preserve_object_list || force) {
             OBJECT obj("object", 1, make_float3(0), 5, 0.9, object_list.size(), this->devicesCount);
-
             obj.particle_filepath = "./input/obj/suzanne/";
-
             obj.LoadObjects(getDomainResolution(), devicesCount, deviceIndex);
-    
             object_list.push_back(obj);
         }
 
@@ -804,12 +802,13 @@ public:
             /*
             PrepareRender(img, img_d);
                 */
-            //generateBitmapImage(img, img_d.y, img_d.x, ("output/R" + pad_number(frame + 1) + ".bmp").c_str());
+            /*
             if (!this->writing) {
                 this->writing = true;
                 generateBitmapImage(img, img_d.y, img_d.x, std::string("./output/temp.bmp").c_str());
                 this->writing = false;
             }
+            */
         }
     }
 
@@ -870,7 +869,9 @@ public:
             Save(frame, device_id);
         }));
         */
+        writing = true;
         Render(frame, 0);
+        writing = false;
 
         if (SIMULATE)
             Save(frame, 0);

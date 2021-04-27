@@ -16,6 +16,7 @@ public:
 	~Texture();
 
 	void UpdateTexture(const std::string& path);
+	void UpdateTexture(unsigned char* image, unsigned int width, unsigned int height);
 
 
 	void Bind(unsigned int slot = 0) const;

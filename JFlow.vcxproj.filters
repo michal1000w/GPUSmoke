@@ -1,0 +1,298 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="cutil_math.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="double_buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Object.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Unified_Buffer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_Kernels.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_State.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Libraries.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="IO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Simulation.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.cuh">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\CNanoVDB.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\openvdb\nanovdb\nanovdb\NanoVDB.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="GRID3D.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBuffer.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="IndexBuffer.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexArray.h">
+      <Filter>OpenGL\Arrays</Filter>
+    </ClInclude>
+    <ClInclude Include="VertexBufferLayout.h">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClInclude>
+    <ClInclude Include="Renderer.h">
+      <Filter>OpenGL\Rendering</Filter>
+    </ClInclude>
+    <ClInclude Include="Window.h">
+      <Filter>OpenGL\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Common.h">
+      <Filter>OpenGL\Common</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>OpenGL\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>OpenGL\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="LoadTexture.h">
+      <Filter>OpenGL\Textures</Filter>
+    </ClInclude>
+    <ClInclude Include="Solver.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\blosc.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\tinyvdbio.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="openvdb-old\miniz.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imconfig.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imgui.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imgui_internal.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_rectpack.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_textedit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\imstb_truetype.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="APP_INFO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_Kernels_Faster.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_glfw.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Fluid_Kernels_Fast.cuh">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="ImCurveEdit.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="Timeline.h">
+      <Filter>ImGui</Filter>
+    </ClInclude>
+    <ClInclude Include="BPPointCloud.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="GetFileList.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="third_party\c-blosc\blosc\blosc-export.h">
+      <Filter>OpenVDB</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjIO.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Voxelizer.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+    <ClInclude Include="printUtils.h">
+      <Filter>Headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="OpenVDB">
+      <UniqueIdentifier>{e9d760ee-462c-4c44-9837-b269ad4cea5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
+      <UniqueIdentifier>{9d2cda9a-3438-4360-a86b-4c8fbcb63884}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headers">
+      <UniqueIdentifier>{7c1ccf3e-4ce9-4d16-9937-8ef1d784ae4c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImageConverters">
+      <UniqueIdentifier>{18f084c9-eb83-4c3e-97a5-372c59e0a5b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ImGui">
+      <UniqueIdentifier>{e6f43cb3-a0fd-4321-9555-3d8a7c58b999}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL">
+      <UniqueIdentifier>{5d1389bd-b4de-461c-9e0d-367897204c7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Shaders">
+      <UniqueIdentifier>{2b073d65-bce2-45fc-928a-f73e3a163e77}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Buffers">
+      <UniqueIdentifier>{986b549b-0223-43c0-a937-9546a0c4d031}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Arrays">
+      <UniqueIdentifier>{9f33d9e5-7db5-4183-9889-e08c5a33bc1e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Rendering">
+      <UniqueIdentifier>{406713f6-0702-48b9-9508-5f735fcd972b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Common">
+      <UniqueIdentifier>{d0acdae1-390e-4a07-b7e4-78be4f72f491}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="OpenGL\Textures">
+      <UniqueIdentifier>{a1f19660-5e7e-47f4-ad63-56722b0fb0f1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Dll">
+      <UniqueIdentifier>{2889f796-11fd-4c69-a0d1-710028ba09bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="CUDAVoxelizer">
+      <UniqueIdentifier>{1accb6ec-44f6-45f7-b4ba-ef1e7a3462c0}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="double_buffer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Object.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="Unified_Buffer.cpp">
+      <Filter>Sources</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexBuffer.cpp">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="IndexBuffer.cpp">
+      <Filter>OpenGL\Buffers</Filter>
+    </ClCompile>
+    <ClCompile Include="VertexArray.cpp">
+      <Filter>OpenGL\Arrays</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>OpenGL\Shaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Renderer.cpp">
+      <Filter>OpenGL\Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>OpenGL\Textures</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb-old\tinyvdbio.cc">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="openvdb-old\miniz.c">
+      <Filter>OpenVDB</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_demo.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_draw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_widgets.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="third_party\imgui\imgui_tables.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="ImCurveEdit.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Timeline.cpp">
+      <Filter>ImGui</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="HugeScaleSolver.cu">
+      <Filter>Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="openvdb\read_nanovdb_sphere_accessor_cuda.cu">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="openvdb\common.h">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="openvdb\ComputePrimitives.h">
+      <Filter>OpenVDB</Filter>
+    </CudaCompile>
+    <CudaCompile Include="main.cu">
+      <Filter>Sources</Filter>
+    </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cuh">
+      <Filter>CUDAVoxelizer</Filter>
+    </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize.cu">
+      <Filter>CUDAVoxelizer</Filter>
+    </CudaCompile>
+    <CudaCompile Include="third_party\cuda_voxelizer\src\voxelize_solid.cu">
+      <Filter>CUDAVoxelizer</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="x64\Release\Shaders.shader">
+      <Filter>OpenGL\Shaders</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\boost_system-vc140-mt-1_63.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\Half.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\openvdb.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\tbb.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\zlib.dll">
+      <Filter>Dll</Filter>
+    </None>
+    <None Include="third_party\openvdb_headers\bin\blosc.dll">
+      <Filter>Dll</Filter>
+    </None>
+  </ItemGroup>
+</Project>
