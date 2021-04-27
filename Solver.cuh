@@ -119,6 +119,7 @@ public:
     int deviceIndex = 0;
     int devicesCount = 1;
     bool render_collision_objects = true;
+    bool wait = false;
 
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
@@ -853,7 +854,6 @@ public:
 
 
         state->time_step = speed * 0.1; //beta
-        DONE_FRAME = false;
         std::cout << "\rFrame " << frame + 1 << "  -  ";
         
         if (SIMULATE)
@@ -881,7 +881,6 @@ public:
 
         if (SIMULATE)
             frame++;
-        DONE_FRAME = true;
     }
     std::vector<std::thread> threads;
     std::thread* spawn() {
