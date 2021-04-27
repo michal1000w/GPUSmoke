@@ -1425,23 +1425,33 @@ int Window(float* Img_res, float dpi) {
 
 		if (Image.x == Window.x) range_x = 1.0f;
 		if (Image.y == Window.y) range_y = 1.0f;
+
+		/*
 		float positions[] = {
 			-1.0f,	    -1.0f,		0.0f, 0.0f, //lewy dó³
 			 range_x,   -1.0f,		1.0f, 0.0f,
 			 range_x,	 range_y,	1.0f, 1.0f,
 			-1.0f,		 range_y,	0.0f, 1.0f
 		};
+		*/
+		float positions[] = {
+			-1.0f,	    range_y,		0.0f, 0.0f, //lewy dó³
+			 range_x,   range_y,		1.0f, 0.0f,
+			 range_x,	  -1.0f,		1.0f, 1.0f,
+			-1.0f,		  -1.0f,		0.0f, 1.0f
+		};
+
 		unsigned int indices[] = {
 			0,1,2,
 			2,3,0
 		};
 
-		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
-		GLCall(glEnable(GL_BLEND));
+		GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA))
+		GLCall(glEnable(GL_BLEND))
 		///////////////////////////////////////////////
 		unsigned int vao;
-		GLCall(glGenVertexArrays(1, &vao));//1
-		GLCall(glBindVertexArray(vao));
+		GLCall(glGenVertexArrays(1, &vao))//1
+		GLCall(glBindVertexArray(vao))
 
 		///////////////////////////////////////////////
 		VertexArray va;
@@ -1521,7 +1531,7 @@ int Window(float* Img_res, float dpi) {
 			//////////////////
 			//solver.Simulation_Frame();
 
-			if (threads.size() == 0) {
+			if (threads.size() == 0) { //0
 				threads.push_back(std::thread([&]() {
 					while (true) {
 						clock_t startTime = clock();
@@ -1545,9 +1555,8 @@ int Window(float* Img_res, float dpi) {
 			//Texture texture("output/R" + pad_number(frame) + ".bmp");
 			//texture.UpdateTexture("output/R" + pad_number(solver.frame) + ".bmp");
 			if (!solver.writing) {
-				solver.writing = true;
-				texture.UpdateTexture("./output/temp.bmp");
-				solver.writing = false;
+				//texture.UpdateTexture("./output/temp.bmp");
+				texture.UpdateTexture(solver.img,solver.img_d.x,solver.img_d.y);
 				texture.Bind(/*slot*/0);
 			}
 			//shader.SetUniform1i("u_Texture", /*slot*/0);
@@ -1570,8 +1579,8 @@ int Window(float* Img_res, float dpi) {
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 			
 
-			GLCall(glfwSwapBuffers(window));
-			GLCall(glfwPollEvents());
+			GLCall(glfwSwapBuffers(window))
+			GLCall(glfwPollEvents())
 
 			//fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
 		}
