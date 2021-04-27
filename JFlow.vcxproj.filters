@@ -139,7 +139,6 @@
     <ClInclude Include="printUtils.h">
       <Filter>Headers</Filter>
     </ClInclude>
-    <ClInclude Include="third_party\toml++\toml.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="OpenVDB">
@@ -295,6 +294,5 @@
     <None Include="third_party\openvdb_headers\bin\blosc.dll">
       <Filter>Dll</Filter>
     </None>
-    <None Include="third_party\dlls\window.toml" />
   </ItemGroup>
 </Project>

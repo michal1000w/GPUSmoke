@@ -158,7 +158,7 @@ public:
             return false;
         }
         else {
-            return true; // return 2?
+            return 2;
         }
     }
 
