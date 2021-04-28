@@ -1767,7 +1767,8 @@ int Window(float* Img_res, float dpi) {
 
 
 			ImGui::SetWindowFontScale(InterfaceScale);
-			ImGui::SetNextWindowSize(ImVec2(solver.img_d.x+10, solver.img_d.y+10), FirstUseEver);
+			if (FirstUseEver)
+				ImGui::SetNextWindowSize(ImVec2(solver.img_d.x+10, solver.img_d.y+10), FirstUseEver);
 			ImGui::Begin("Viewport");
 			{
 				if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows))

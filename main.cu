@@ -181,7 +181,7 @@ int main(int argc, char* argv[]) {
     std::cout << width << "x" << height << std::endl;
 
     float Window_Resolution[2] = { width, height };
-    float Image_Resolution[2] = { 900, 1024 };
+    float Image_Resolution[2] = { 480, 640 };
     std::cout << "Setting image resolution" << std::endl;
     solver.setImageResolution(Image_Resolution[0], Image_Resolution[1]);
 
