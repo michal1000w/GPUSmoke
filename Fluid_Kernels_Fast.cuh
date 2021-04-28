@@ -465,7 +465,7 @@ __global__ void force_field_wind(T* target, float3 c,
 }
 
 template <typename T>
-__global__ void force_field_turbulance(T* target, float3 c,
+__global__ void force_field_turbulence(T* target, float3 c,
     float radius, float force, float freq, int3 vd, int frame)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
@@ -492,7 +492,7 @@ __global__ void force_field_turbulance(T* target, float3 c,
 }
 
 template <typename V, typename T>
-__global__ void force_field_turbulance2(T* v_src, T* v_dest, V* noise, float radius, float3 c,
+__global__ void force_field_turbulence2(T* v_src, T* v_dest, V* noise, float radius, float3 c,
     int3 vd, float intensity, float offset, float scale, int frame = 1, float time_anim = 0.5f, float NOISE_R = 64)
 {
     const int x = blockDim.x * blockIdx.x + threadIdx.x;

@@ -224,7 +224,7 @@ std::string OBJECT::get_type2() {
 	else if (this->type == FORCE_FIELD_POWER)
 		return "power";
 	else if (this->type == FORCE_FIELD_TURBULANCE)
-		return "turbulance";
+		return "turbulence";
 	else if (this->type == FORCE_FIELD_WIND)
 		return "wind";
 	else if (this->type == COLLISION_SPHERE)
@@ -248,7 +248,7 @@ void OBJECT::set_type(std::string type) {
 		this->type = FORCE_FIELD_FORCE;
 	else if (type == "FFieldPOWER" || type == "power" || type == "ffp")
 		this->type = FORCE_FIELD_POWER;
-	else if (type == "FFieldTURBULANCE" || type == "turbulance" || type == "fft")
+	else if (type == "FFieldTURBULANCE" || type == "turbulence" || type == "fft")
 		this->type = FORCE_FIELD_TURBULANCE;
 	else if (type == "FFieldWIND" || type == "wind" || type == "ffw")
 		this->type = FORCE_FIELD_WIND;

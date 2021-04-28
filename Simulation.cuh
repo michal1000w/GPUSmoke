@@ -447,7 +447,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                 }
             }
             else if (current.get_type() == "fft") {
-                force_field_turbulance2 << <grid, block >> > (
+                force_field_turbulence2 << <grid, block >> > (
                     state.velocity->readTargett(current_device),
                     state.velocity->readTargett(current_device),
                     state.noise->readTargett(current_device),
@@ -464,7 +464,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             /*
             
                 if (current.square) {
-                    force_field_turbulance << < grid, block >> > (
+                    force_field_turbulence << < grid, block >> > (
                         state.velocity->readTargett(current_device),
                         current.get_location(), current.size,
                         current.force_strength * current.force_strength, current.set_vel_freq + current.velocity_frequence,
@@ -473,7 +473,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
                         );
                 }
                 else {
-                    force_field_turbulance << < grid, block >> > (
+                    force_field_turbulence << < grid, block >> > (
                         state.velocity->readTargett(current_device),
                         current.get_location(), current.size,
                         current.force_strength, current.set_vel_freq + current.velocity_frequence,
@@ -538,7 +538,7 @@ void simulate_fluid(fluid_state& state, std::vector<OBJECT>& object_list,
             }
         }
 
-    //environment turbulance
+    //environment turbulence
     divergence << <grid, block >> > (
         state.velocity->readTargett(current_device),
         state.diverge->readTargett(current_device), state.dim, Diverge_Rate);//0.5
@@ -881,7 +881,7 @@ void AddObjects(fluid_state& state, std::vector<OBJECT>& object_list, bool DEBUG
             }
             else if (current.get_type() == "fft") {
                 if (current.square) {
-                    force_field_turbulance << < grid, block >> > (
+                    force_field_turbulence << < grid, block >> > (
                         state.velocity->readTargett(current_device),
                         current.get_location(), current.size,
                         current.force_strength * current.force_strength, current.set_vel_freq + current.velocity_frequence,
@@ -890,7 +890,7 @@ void AddObjects(fluid_state& state, std::vector<OBJECT>& object_list, bool DEBUG
                         );
                 }
                 else {
-                    force_field_turbulance << < grid, block >> > (
+                    force_field_turbulence << < grid, block >> > (
                         state.velocity->readTargett(current_device),
                         current.get_location(), current.size,
                         current.force_strength, current.set_vel_freq + current.velocity_frequence,

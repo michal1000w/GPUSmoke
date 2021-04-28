@@ -62,7 +62,7 @@ int selected_theme = DARK;
 const char* theme_strings[] = { "Dark", "Midnight", "Gray", "Light" };
 
 
-const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulance", "wind", "sphere", "particle", "object" };
+const char* itemse[] = { "emitter", "explosion" , "force", "power", "turbulence", "wind", "sphere", "particle", "object" };
 bool TimelineInitialized = false;
 bool AddParticleSystem = false;
 bool AddObjectSystem = false;
@@ -1308,8 +1308,8 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::SameLine();
 				ImGui::Checkbox(("Square-" + std::to_string(object)).c_str(), &solver.object_list[object].square);
 				if (solver.object_list[object].type == FORCE_FIELD_TURBULANCE) {
-					ImGui::SliderFloat(("turbulance frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, 20);
-					ImGui::SliderFloat(("turbulance scale-" + std::to_string(object)).c_str(), &solver.object_list[object].scale, 0.005, 1.3);
+					ImGui::SliderFloat(("turbulence frequence-" + std::to_string(object)).c_str(), &solver.object_list[object].velocity_frequence, 0.0, 20);
+					ImGui::SliderFloat(("turbulence scale-" + std::to_string(object)).c_str(), &solver.object_list[object].scale, 0.005, 1.3);
 				}
 				if (solver.object_list[object].type == FORCE_FIELD_WIND)
 					ImGui::SliderFloat3(("wind direction-" + std::to_string(object)).c_str(), solver.object_list[object].force_direction, -1, 1);

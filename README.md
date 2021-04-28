@@ -12,8 +12,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 ### Prerequisites
 
 1. Download and install [Visual Studio 2019](https://visualstudio.microsoft.com/vs/)
-2. Download and install [CUDA Toolkit 10.1 Update 2](https://developer.nvidia.com/cuda-10.1-download-archive-update2)
-3. Download, install and add to path [FFmpeg](https://www.ffmpeg.org/download.html)
+2. Download and install [CUDA Toolkit 11.3](https://developer.nvidia.com/cuda-10.1-download-archive-update2)
 
 ### Building
 
@@ -49,9 +48,9 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 * [x] Sparse and Multi-Threaded vdb saving
 * [ ] Host memory usage for Huge Scale Simulations (resolution over 512^3)
 * [ ] Adaptive Domain - probably won't be faster in case of smoke simulation, however I'll need to do more research
-* [ ] Object Collision
+* [x] Object Collision
     * [x] Initial sphere collision
-    * [ ] More complex geometry
+    * [x] More complex geometry
 * [x] Simple Forces --> (Wind, Turbulance, Noise)
 * [x] Preset creator (LOAD/SAVE)
 * [x] Fix Density over 1.0 issue
@@ -65,9 +64,9 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
     * [x] Import
     * [x] Export
     * Works but slowly
-* [ ] Obj import
+* [x] Obj import
 * [ ] Simple Blender integration
-* [ ] Faster and better Render Engine
+* [x] Faster and better Render Engine
 
 ### Long Term
 * [ ] Smoke adaptive resolution
