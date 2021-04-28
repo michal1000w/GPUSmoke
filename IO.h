@@ -407,8 +407,8 @@ openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float
     if (DEBUG)
         std::cout << "Initialize...\n";
 
-
-    openvdb::math::Coord dim2(grid_info->resolution.x, grid_info->resolution.y, grid_info->resolution.z);
+    
+    openvdb::math::Coord dim2(grid_info->resolution.z, grid_info->resolution.y, grid_info->resolution.x);
     openvdb::tools::Dense<float> dense(dim2);
 
     float* data = dense.data();
