@@ -393,14 +393,14 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
 
 
-openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,GRID3D* grid_info, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
+openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* grid_info, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst->background();
     const ValueT inside = -outside;
     int padding = int(openvdb::math::RoundUp(openvdb::math::Abs(outside)));
 
     //get bounding box
-    int3 dim = grid_info->get_resolution();
+    int3 dim = *grid_info;
 
     grid_dst->tree().clearAllAccessors();
 
@@ -408,13 +408,13 @@ openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float
         std::cout << "Initialize...\n";
 
     
-    openvdb::math::Coord dim2(grid_info->resolution.z, grid_info->resolution.y, grid_info->resolution.x);
+    openvdb::math::Coord dim2(grid_info->z, grid_info->y, grid_info->x);
     openvdb::tools::Dense<float> dense(dim2);
 
     float* data = dense.data();
 
     //copying
-    cudaMemcpyAsync(data, grid_src, grid_info->size() * sizeof(float), cudaMemcpyDeviceToHost);
+    cudaMemcpyAsync(data, grid_src, grid_info->x * grid_info->y * grid_info->z * sizeof(float), cudaMemcpyDeviceToHost);
 
     openvdb::tools::copyFromDense<openvdb::tools::Dense<float>, openvdb::FloatGrid>(dense, *grid_dst, 0.025);
 
@@ -436,7 +436,7 @@ openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float
 
 
 int export_openvdb_experimental(std::string folder, std::string filename, int3 domain_resolution,
-    GRID3D* grid_info, float* density, float* temperature, float* flame, bool DEBUG = false) {
+    float* density, float* temperature, float* flame, bool DEBUG = false) {
     filename = folder + filename + ".vdb";
 
     std::cout << "|| Saving OpenVDB: ";
@@ -483,7 +483,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        auto upgrid = create_grid_gpu(grids_dst[i], grids_src[i], grid_info, /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
+        auto upgrid = create_grid_gpu(grids_dst[i], grids_src[i], &domain_resolution, /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
         //auto upgrid = create_grid_gpu(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
 
 
@@ -535,7 +535,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
     if (DEBUG)
         std::cout << "Grids saved" << std::endl;
 
-    grid_info->free();
+    //grid_info->free();
     grids_dst.clear();
     grids_src.clear();
     grids->clear();
@@ -704,10 +704,11 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+        //auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
         //auto upgrid = create_grid_gpu(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
 
-
+        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
+        auto upgrid = grids_dst[i];
 #endif
         
         //grids_dst[i]->saveFloatAsHalf();

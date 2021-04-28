@@ -958,6 +958,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::InputInt("Start frame", &solver.EXPORT_START_FRAME);
 		ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
 		ImGui::InputText("Cache Folder", solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
+		ImGui::Checkbox("Multithreaded export", &solver.MultithreadedExport);
 		if (ImGui::Button("Export VDB")) {
 			solver.ClearCache();
 			solver.EXPORT_VDB = true;

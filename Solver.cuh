@@ -120,6 +120,7 @@ public:
     int devicesCount = 1;
     bool render_collision_objects = true;
     bool wait = false;
+    bool MultithreadedExport = true;
 
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
@@ -816,15 +817,6 @@ public:
     void Save(int frame, int device = 0) {
         cudaSetDevice(deviceIndex);
         if (EXPORT_VDB && frame >= EXPORT_START_FRAME) {
-            //std::cout << "C:";
-            auto grid = state->density->readToGrid(device);
-            //std::cout << "D";
-            auto gridt = state->flame->readToGrid(device);
-            //std::cout << ";T";
-            grid->combine_with_temp_grid(gridt);
-            //std::cout << ";";
-            auto gridf = state->temperature->readToGrid(device);
-
             std::string FOLDER = EXPORT_FOLDER;
             FOLDER = trim(FOLDER);
 
@@ -832,19 +824,32 @@ public:
                 std::experimental::filesystem::create_directory("./output");
             }
 
-            //export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
-            export_openvdb_experimental(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), state->density->readToGrid(device),
-                state->density->readTargett(device), state->temperature->readTargett(device), state->flame->readTargett(device), /*DEBUG*/ false);
+            if (this->MultithreadedExport) {
+                export_openvdb_experimental(FOLDER, "frame." + std::to_string(frame), this->DOMAIN_RESOLUTION,
+                    state->density->readTargett(device), state->temperature->readTargett(device), state->flame->readTargett(device), /*DEBUG*/ false);
+            }
+            else {
+                //std::cout << "C:";
+                auto grid = state->density->readToGrid(device);
+                //std::cout << "D";
+                auto gridt = state->flame->readToGrid(device);
+                //std::cout << ";T";
+                grid->combine_with_temp_grid(gridt);
+                //std::cout << ";";
+                auto gridf = state->temperature->readToGrid(device);
+                export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
+
+                gridf->free();
+                delete gridf;
+
+                delete gridt;
+                grid->free();
+                delete grid;
+            }
 
             if (frame >= EXPORT_END_FRAME)
                 EXPORT_VDB = false;
 
-            gridf->free();
-            delete gridf;
-
-            delete gridt;
-            grid->free();
-            delete grid;
         }
     }
 
