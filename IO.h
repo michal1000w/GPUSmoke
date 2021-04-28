@@ -477,8 +477,8 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         std::cout << "Starting threads" << std::endl;
 
     std::mutex mtx1;
-    //tbb::parallel_for(0, 3, [&](int i) {
-        for (int i = 0; i < 3; i++){
+    tbb::parallel_for(0, 3, [&](int i) {
+    //    for (int i = 0; i < 3; i++){
 #ifndef THREADED_SAVE
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
@@ -506,7 +506,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         //grids->push_back(grids_dst[i]);
         grids->push_back(upgrid);
         }
-    //);
+    );
 
     if (DEBUG)
         std::cout << "Grids copied" << std::endl;

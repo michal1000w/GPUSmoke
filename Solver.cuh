@@ -828,6 +828,10 @@ public:
             std::string FOLDER = EXPORT_FOLDER;
             FOLDER = trim(FOLDER);
 
+            if (!std::experimental::filesystem::exists("./output")) {
+                std::experimental::filesystem::create_directory("./output");
+            }
+
             //export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
             export_openvdb_experimental(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), state->density->readToGrid(device),
                 state->density->readTargett(device), state->temperature->readTargett(device), state->flame->readTargett(device), /*DEBUG*/ false);
