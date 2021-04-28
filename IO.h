@@ -473,7 +473,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
 
 
-void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, bool DEBUG = false) {
+void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
 
 
     using ValueT = typename openvdb::FloatGrid::ValueType;
@@ -487,8 +487,12 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
         std::cout << dim.x << ";" << dim.y << ";" << dim.z << std::endl;
 
     // Get a voxel accessor.
-
-    float* grid_src_arr = grid_src->get_grid();
+    float* grid_src_arr = nullptr;
+    if (INDEX == 0 || INDEX == 2)
+        grid_src_arr = grid_src->get_grid();
+    else
+        grid_src_arr = grid_src->get_grid_temp();
+    
     if (DEBUG)
         std::cout << "Copying..." << std::endl;
 
@@ -582,7 +586,7 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         //auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
 
 
-        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
+        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
         auto upgrid = grids_dst[i];
 #endif
         
@@ -653,88 +657,6 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
 
     return 1;
 }
-
-
-
-
-
-int export_openvdb_old(std::string filename, int3 domain_resolution, GRID3D* grid_dst, GRID3D* grid_temp, bool DEBUG = false) {
-    filename = "output/cache/" + filename + ".vdb";
-
-    std::cout << " || Saving OpenVDB:  ";
-    //clock_t startTime = clock();
-
-
-    openvdb::GridPtrVecPtr grids(new openvdb::GridPtrVec);
-    /////////////////////////////////////
-    openvdb::FloatGrid::Ptr grid =
-        openvdb::FloatGrid::create(/*background value=*/0.0);
-    clock_t startTime = clock();
-
-
-
-    create_grid_sthr(*grid, grid_dst, /*center=*/openvdb::Vec3f(0, 0, 0));
-
-    grid_dst->free();
-    // Associate some metadata with the grid.
-    //grid->insertMeta("radius", openvdb::FloatMetadata(50.0));
-    ////////////////////////////////////////////////////////
-    openvdb::FloatGrid::Ptr grid_temp2 =
-        openvdb::FloatGrid::create(/*background value=*/0.0);
-    //clock_t startTime = clock();
-
-    create_grid_sthr(*grid_temp2, grid_temp, /*center=*/openvdb::Vec3f(0, 0, 0));
-
-    grid_temp->free();
-
-    ////////////////////////////////////////////////////////
-    //reduce size
-    grid_temp2->saveFloatAsHalf();
-    grid->saveFloatAsHalf();
-    ////////////////////////////////////////////////////////
-    grid->setName("density");
-    grids->push_back(grid);
-    grid_temp2->setName("temperature");
-    grids->push_back(grid_temp2);
-    ////////////////////////////////////////////////////////
-
-
-
-    std::cout << (clock() - startTime);
-    startTime = clock();
-
-    ////////////////////////////////////////////////////////
-
-    /*
-    openvdb::io::File file(filename);
-    file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION);
-    file.write({ grid, grid_temp2 });
-    file.close();
-    */
-
-
-    std::ofstream ofile(filename, std::ios_base::binary);
-    openvdb::io::Stream(ofile).write(*grids);
-
-    grids->clear();
-    grid->clearGridClass();
-    grid->clearMetadata();
-    grid->clear();
-    grid_temp2->clear();
-    grid_temp2->clearGridClass();
-    grid_temp2->clearMetadata();
-    std::cout << " ; " << (clock() - startTime) << "     ";
-
-    //    grid->clear();
-
-    return 1;
-}
-
-
-
-
-
-
 
 
 
