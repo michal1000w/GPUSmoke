@@ -134,7 +134,7 @@ int main(int argc, char* argv[]) {
     GetDesktopResolution(no_menu_bar_width, no_menu_bar_height);
     */
     int zoom = GetDpiForWindow(hd);
-    double dpi = static_cast<float>(zoom) / 100;
+    double dpi = static_cast<float>(zoom) / 96;
     /*
     switch (zoom) {
     case 96:
@@ -162,6 +162,16 @@ int main(int argc, char* argv[]) {
     int no_menu_bar_width = 1400;
     int no_menu_bar_height = 800;
     double dpi = 1;
+
+    SetProcessDPIAware(); //true
+    HDC screen = GetDC(NULL);
+    double hPixelsPerInch = GetDeviceCaps(screen, LOGPIXELSX);
+    double vPixelsPerInch = GetDeviceCaps(screen, LOGPIXELSY);
+    ReleaseDC(NULL, screen);
+    int zoom = (hPixelsPerInch + vPixelsPerInch) * 0.5;
+
+    dpi = zoom / 96.0f;
+
 #endif
     std::cout << "DPI: " << dpi << std::endl;
     int width = no_menu_bar_width * dpi;
