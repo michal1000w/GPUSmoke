@@ -301,7 +301,7 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
     const auto processor_count = std::thread::hardware_concurrency();
 
-    int THREADS = 6 ; //4
+    int THREADS = 4 ; //4
 
     // Get a voxel accessor.
     float* grid_src_arr = nullptr;
@@ -333,6 +333,39 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
 
     ////////////////////// current ~720
+    
+    tbb::mutex mtx2;
+    tbb::task_scheduler_init initt(THREADS);
+
+    tbb::parallel_for(tbb::blocked_range<int>(0, dim.x), [&](tbb::blocked_range<int> tbbx) {
+        mtx2.lock();
+        auto gd = grid_dst->deepCopy();
+        mtx2.unlock();
+        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
+        for (int x = tbbx.begin(); x < tbbx.end(); x++) {
+
+
+            for (int y = 0; y < dim.y; y++) {
+                for (int z = 0; z < dim.z; z++) {
+                    float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
+                    if (val < 0.025) continue; //beta
+                    accessors.setValue(openvdb::Coord(x, y, z), val);
+                }
+            }
+        }
+
+
+        gd->pruneGrid(0); //beta
+
+        mtx2.lock();
+        grid_dst->tree().combine(gd->tree(), Local::add);
+        //grid_dst->pruneGrid(0);
+        mtx2.unlock();
+        //gd->tree().clearAllAccessors();
+        });
+
+
+    /*
     std::mutex mtx2;
     tbb::parallel_for(0, THREADS, [&](int i) {
         auto gd = grid_dst->deepCopy();
@@ -346,13 +379,6 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         }
         for (int x = i * sizee; x < end; x++){
     
-    /*
-    tbb::task_scheduler_init initt(2);
-    tbb::parallel_for(tbb::blocked_range<int>(0, dim.x), [&](tbb::blocked_range<int> tbbx) {
-        auto gd = grid_dst->deepCopy();
-        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
-        for (int x = tbbx.begin(); x < tbbx.end(); x++) {
-        */
 
 
 
@@ -373,7 +399,17 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         grid_dst->pruneGrid(0);
         //gd->tree().clearAllAccessors();
     });
-    
+    */
+
+
+
+
+
+
+
+
+
+
     /*
     for (int i = 0; i < THREADS; i++) {
         //grid_dst.tree().combine(grids[i]->tree(), Local::add);
@@ -460,6 +496,7 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
     for (int x = 0; x < dim.x; x++) {
         for (int y = 0; y < dim.y; y++) {
             for (int z = 0; z < dim.z; z++) {
+                if (grid_src_arr[z * dim.y * dim.x + y * dim.x + x] < 0.025) continue; //beta
                 accessor.setValue(openvdb::Coord(x, y, z), grid_src_arr[z * dim.y * dim.x + y * dim.x + x]);
             }
         }
@@ -475,8 +512,17 @@ void create_grid_sthr(openvdb::FloatGrid& grid_dst, GRID3D* grid_src, const open
     if (DEBUG)
         std::cout << "Transforming\n";
     openvdb::tools::signedFloodFill(tree);
+
+
+
+    float voxel_size = 0.1;
+    auto transform = openvdb::math::Transform::createLinearTransform(/*voxel size=*/voxel_size); //Skala œwiatowa
+    const openvdb::math::Vec3d offset(float(-dim.x) / 2., 0, float(-dim.z) / 2.);
+    transform->preTranslate(offset); //center the grid
+    transform->postRotate(1.571, openvdb::math::X_AXIS); // poprawa rotacji dla blendera
     grid_dst.setTransform(
-        openvdb::math::Transform::createLinearTransform(/*voxel size=*/0.1));
+        transform
+    );
 }
 
 
@@ -533,7 +579,11 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+        //auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+
+
+        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
+        auto upgrid = grids_dst[i];
 #endif
         
         //grids_dst[i]->saveFloatAsHalf();
