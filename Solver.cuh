@@ -828,7 +828,9 @@ public:
             std::string FOLDER = EXPORT_FOLDER;
             FOLDER = trim(FOLDER);
 
-            export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
+            //export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
+            export_openvdb_experimental(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), state->density->readToGrid(device),
+                state->density->readTargett(device), state->temperature->readTargett(device), state->flame->readTargett(device), /*DEBUG*/ false);
 
             if (frame >= EXPORT_END_FRAME)
                 EXPORT_VDB = false;
