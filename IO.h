@@ -18,8 +18,9 @@
 #include "BPPointCloud.h"
 
 //#include "OpenVDB/tinyvdbio.h"
-
-
+#include <openvdb/tools/Dense.h>
+#include <openvdb/tools/DenseSparseTools.h>
+#include <openvdb/Types.h>
 
 
 
@@ -311,133 +312,41 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
         grid_src_arr = grid_src->get_grid_temp();
 
 
-    //std::cout << "Grid gotten...\n";
 
-    int sizee = ceil((double)dim.x / (double)THREADS);
 
-    //////////////////////
-    std::vector<openvdb::FloatGrid::Ptr> grids;
-    std::vector<openvdb::FloatGrid::Accessor> accessors;
 
-    /*
-    for (int i = 0; i < THREADS; i++) {
-        //grids.push_back(grid_dst.deepCopy());
-        grids.push_back(grid_dst.copyWithNewTree());
-        accessors.push_back(grids[i]->getAccessor());
-    }
-    */
-    if (DEBUG)
-        std::cout << "Starting...\n";
 
-    
+    openvdb::math::Coord dim2(grid_src->resolution.x,grid_src->resolution.y, grid_src->resolution.z);
+    openvdb::tools::Dense<float> dense(dim2);
+
+    float *data = dense.data();
+    //std::cout << "value at origin: " << data[0] << std::endl;
 
 
     ////////////////////// current ~720
     
-    tbb::mutex mtx2;
     tbb::task_scheduler_init initt(THREADS);
 
     tbb::parallel_for(tbb::blocked_range<int>(0, dim.x), [&](tbb::blocked_range<int> tbbx) {
-        mtx2.lock();
-        auto gd = grid_dst->deepCopy();
-        mtx2.unlock();
-        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
         for (int x = tbbx.begin(); x < tbbx.end(); x++) {
-
 
             for (int y = 0; y < dim.y; y++) {
                 for (int z = 0; z < dim.z; z++) {
                     float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
                     if (val < 0.025) continue; //beta
-                    accessors.setValue(openvdb::Coord(x, y, z), val);
+                    data[z * dim.y * dim.x + y * dim.x + x] = val;
                 }
             }
         }
-
-
-        gd->pruneGrid(0); //beta
-
-        mtx2.lock();
-        grid_dst->tree().combine(gd->tree(), Local::add);
-        //grid_dst->pruneGrid(0);
-        mtx2.unlock();
-        //gd->tree().clearAllAccessors();
         });
 
 
-    /*
-    std::mutex mtx2;
-    tbb::parallel_for(0, THREADS, [&](int i) {
-        auto gd = grid_dst->deepCopy();
-        //grid_dst.saveFloatAsHalf();
-        openvdb::FloatGrid::Accessor accessors = gd->getAccessor();
-
-
-        int end = (i * sizee) + (sizee);
-        if (end > dim.x) {
-            end = dim.x;
-        }
-        for (int x = i * sizee; x < end; x++){
-    
 
 
 
-            for (int y = 0; y < dim.y; y++) {
-                for (int z = 0; z < dim.z; z++) {
-                    float val = grid_src_arr[z * dim.y * dim.x + y * dim.x + x];
-                    if (val < 0.025) continue; //beta
-                    accessors.setValue(openvdb::Coord(x, y, z), val);
-                }
-            }
-        }
+    openvdb::tools::copyFromDense<openvdb::tools::Dense<float>, openvdb::FloatGrid>(dense, *grid_dst, 0.001);
 
-
-        gd->pruneGrid(0); //beta
-
-        std::lock_guard<std::mutex> lock(mtx2);
-        grid_dst->tree().combine(gd->tree(), Local::add);
-        grid_dst->pruneGrid(0);
-        //gd->tree().clearAllAccessors();
-    });
-    */
-
-
-
-
-
-
-
-
-
-
-    /*
-    for (int i = 0; i < THREADS; i++) {
-        //grid_dst.tree().combine(grids[i]->tree(), Local::add);
-        grids[i]->tree().clearAllAccessors();
-    }
-    */
-    if (DEBUG)
-        std::cout << "Free memory" << std::endl;
-    //grid_src->free();
-
-    //std::cout << "In the eeeend\n";
-    openvdb::tools::signedFloodFill(grid_dst->tree());
-
-
-
-    /////////Upsample
-    /*
-    openvdb::FloatGrid::Ptr dest = openvdb::FloatGrid::create();
-    const float voxelSize = 0.1;
-    dest->setTransform(openvdb::math::Transform::createLinearTransform(voxelSize));
-    // Resample the input grid into the output grid, reproducing
-    // the level-set sphere at a smaller voxel size.
-    openvdb::tools::resampleToMatch<openvdb::tools::QuadraticSampler>(*grid_dst, *dest);
-    ////////Upres
-    openvdb::tools::foreach(dest->beginValueAll(), Local::noise);
-    //TODO
-    */
-
+    grid_dst->pruneGrid(0);
 
     float voxel_size = 0.1;
     auto transform = openvdb::math::Transform::createLinearTransform(/*voxel size=*/voxel_size); //Skala œwiatowa
@@ -583,11 +492,11 @@ int export_openvdb(std::string folder,std::string filename, int3 domain_resoluti
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
-        //auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
+        auto upgrid = create_grid_mt(grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0),i, DEBUG);
 
 
-        create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
-        auto upgrid = grids_dst[i];
+        //create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
+        //auto upgrid = grids_dst[i];
 #endif
         
         //grids_dst[i]->saveFloatAsHalf();
