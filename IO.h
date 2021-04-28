@@ -416,7 +416,6 @@ openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float
     //copying
     cudaMemcpyAsync(data, grid_src, grid_info->size() * sizeof(float), cudaMemcpyDeviceToHost);
 
-
     openvdb::tools::copyFromDense<openvdb::tools::Dense<float>, openvdb::FloatGrid>(dense, *grid_dst, 0.025);
 
     grid_dst->pruneGrid(0);
@@ -478,8 +477,8 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         std::cout << "Starting threads" << std::endl;
 
     std::mutex mtx1;
-    tbb::parallel_for(0, 3, [&](int i) {
-        //for (int i = 0; i < 3; i++){
+    //tbb::parallel_for(0, 3, [&](int i) {
+        for (int i = 0; i < 3; i++){
 #ifndef THREADED_SAVE
         create_grid_sthr(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0), DEBUG);
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
@@ -507,7 +506,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         //grids->push_back(grids_dst[i]);
         grids->push_back(upgrid);
         }
-    );
+    //);
 
     if (DEBUG)
         std::cout << "Grids copied" << std::endl;
