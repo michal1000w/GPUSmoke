@@ -541,7 +541,7 @@ void DrawCombo(float dpi, const char* name, int& variable, bool (*items_getter)(
 
 
 
-
+bool ALLOW_SCROLL = 0;
 
 
 static const ImGuiDataTypeInfo GDataTypeInfo[] =
@@ -1529,7 +1529,6 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
-
 #include <Windows.h>
 #include <WinUser.h>
 
@@ -1539,6 +1538,8 @@ int Window(float* Img_res, float dpi) {
 #endif // WINDOWS7_BUILD
 	
 	InterfaceScale = dpi;
+
+	bool FirstUseEver = true;
 	
 	GLFWwindow* window;
 
@@ -1760,9 +1761,46 @@ int Window(float* Img_res, float dpi) {
 
 			//std::thread GUI_THR( RenderGUI ,std::ref(SAVE_FILE_TAB), std::ref(OPEN_FILE_TAB), std::ref(fps), std::ref(progress), std::ref(save_panel));
 			RenderGUI(dpi, SAVE_FILE_TAB, OPEN_FILE_TAB, fps, progress, save_panel, helper_window, confirm_button, Image);
+
+			/////
+			//Viewer window
+
+
+			ImGui::SetWindowFontScale(InterfaceScale);
+			ImGui::SetNextWindowSize(ImVec2(solver.img_d.x+10, solver.img_d.y+10), FirstUseEver);
+			ImGui::Begin("Viewport");
+			{
+				if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows))
+					ALLOW_SCROLL = true;
+				else
+					ALLOW_SCROLL = false;
+				// Using a Child allow to fill all the space of the window.
+				// It also alows customization
+				ImGui::BeginChild("View");
+				// Get the size of the child (i.e. the whole draw size of the windows).
+				//ImVec2 wsize(solver.img_d.x,solver.img_d.y);
+				ImVec2 wsize = ImGui::GetWindowSize();
+				ImGui::Image((ImTextureID)1/*texture id*/, wsize, ImVec2(0, 0), ImVec2(1, 1)); //noflip
+
+
+				// Because I use the texture from OpenGL, I need to invert the V from the UV.
+				//ImGui::Image((ImTextureID)1/*texture id*/, wsize, ImVec2(0, 1), ImVec2(1, 0));
+				ImGui::EndChild();
+			}
+			ImGui::End();
+
+			/////
+
+
+
+
+
+
+
+
+			//renderer.Draw(va, ib, shader);
 			//New Frame//////////////////
 
-			renderer.Draw(va, ib, shader);
 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -1771,7 +1809,9 @@ int Window(float* Img_res, float dpi) {
 			GLCall(glfwSwapBuffers(window))
 			GLCall(glfwPollEvents())
 
-			//fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+				//fps = 1.0 / ((double(clock() - startTime) / (double)CLOCKS_PER_SEC));
+			if (FirstUseEver)
+				FirstUseEver = false;
 		}
 		solver.THIS_IS_THE_END = true;
 		std::cout << "Threads join together" << std::endl;
@@ -1854,7 +1894,7 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods) {
 }
 
 void scrollCallback(GLFWwindow* window, double xOffset, double yOffset) {
-	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow)) {
+	if (!ImGui::IsWindowHovered(ImGuiHoveredFlags_AnyWindow) || ALLOW_SCROLL) {
 		solver.setCamera(solver.getCamera().x, solver.getCamera().y,
 			solver.getCamera().z + 2.5f * yOffset);
 	}
