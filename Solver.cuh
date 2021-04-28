@@ -121,6 +121,7 @@ public:
     bool render_collision_objects = true;
     bool wait = false;
     bool MultithreadedExport = true;
+    bool SparseExport = true;
 
     bool UpsamplingVelocity = true;
     bool UpsamplingDensity = true;
@@ -837,7 +838,7 @@ public:
                 grid->combine_with_temp_grid(gridt);
                 //std::cout << ";";
                 auto gridf = state->temperature->readToGrid(device);
-                export_openvdb(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, /*DEBUG*/ false);
+                export_openvdb_single(FOLDER, "frame." + std::to_string(frame), grid->get_resolution(), grid, gridf, SparseExport, /*DEBUG*/ false);
 
                 gridf->free();
                 delete gridf;
