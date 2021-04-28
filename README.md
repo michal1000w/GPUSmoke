@@ -12,7 +12,7 @@ This code leverages NVIDIA GPUs to create smoke simulations quickly and efficien
 ### Prerequisites
 
 1. Download and install [Visual Studio 2019](https://visualstudio.microsoft.com/vs/)
-2. Download and install [CUDA Toolkit 11.3](https://developer.nvidia.com/cuda-10.1-download-archive-update2)
+2. Download and install [CUDA Toolkit 11.3](https://developer.nvidia.com/cuda-downloads)
 
 ### Building
 
