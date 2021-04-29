@@ -964,7 +964,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 
 
 
-			const char* compressions[] = { "None","BLOSC", "Selective" };
+			const char* compressions[] = { "None","BLOSC", "ZIP" };
 			static const char* curr_compression = "BLOSC";
 
 			if (ImGui::BeginCombo("##combocp", curr_compression)) // The second parameter is the label previewed before opening the combo.
@@ -976,13 +976,13 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 						curr_compression = compressions[n];
 						std::string the_chosen_one = curr_compression;
 						if (the_chosen_one == "None") {
-							solver.CURRENT_COMPRESSION_TYPE = 0;
+							solver.CURRENT_COMPRESSION_TYPE = openvdb::io::COMPRESS_NONE;
 						}
 						else if (the_chosen_one == "BLOSC") {
-							solver.CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION;
+							solver.CURRENT_COMPRESSION_TYPE = openvdb::io::COMPRESS_BLOSC;
 						}
-						else if (the_chosen_one == "Selective") {
-							solver.CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_SELECTIVE_COMPRESSION;
+						else if (the_chosen_one == "ZIP") {
+							solver.CURRENT_COMPRESSION_TYPE = openvdb::io::COMPRESS_ZIP;
 						}
 					}
 					if (is_selectedcp)

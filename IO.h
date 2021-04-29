@@ -751,7 +751,7 @@ int export_openvdb_single(std::string folder,std::string filename, int3 domain_r
 
     //kolejnoœæ
     openvdb::io::File file(filename);
-    file.setCompression(openvdb::io::COMPRESS_ACTIVE_MASK | openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION //     9.6 ->  600
+    file.setCompression(openvdb::io::COMPRESS_ACTIVE_MASK | openvdb::io::COMPRESS_BLOSC //     9.6 ->  600
                         //openvdb::OPENVDB_FILE_VERSION_BOOL_LEAF_OPTIMIZATION //9 -> 1400
                         );
     file.write({ grid, grid_temp2, grid_temp3 });
