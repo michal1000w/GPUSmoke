@@ -393,7 +393,8 @@ openvdb::FloatGrid::Ptr create_grid_mt(openvdb::FloatGrid::Ptr& grid_dst, GRID3D
 
 
 
-void create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* grid_info, const openvdb::Vec3f& c, int INDEX, bool DEBUG = false) {
+void create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* grid_info, const openvdb::Vec3f& c, int INDEX,
+                    float SparseCutoff, bool DEBUG = false) {
     using ValueT = typename openvdb::FloatGrid::ValueType;
     const ValueT outside = grid_dst->background();
     const ValueT inside = -outside;
@@ -416,7 +417,7 @@ void create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* gr
     //copying
     cudaMemcpyAsync(data, grid_src, grid_info->x * grid_info->y * grid_info->z * sizeof(float), cudaMemcpyDeviceToHost);
 
-    openvdb::tools::copyFromDense<openvdb::tools::Dense<float>, openvdb::FloatGrid>(dense, *grid_dst, 0.025,/*serial*/ false);
+    openvdb::tools::copyFromDense<openvdb::tools::Dense<float>, openvdb::FloatGrid>(dense, *grid_dst, SparseCutoff,/*serial*/ false);
 
     //grid_dst->pruneGrid(0);
 
@@ -436,7 +437,7 @@ void create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* gr
 
 
 int export_openvdb_experimental(std::string folder, std::string filename, int3 domain_resolution,
-    float* density, float* temperature, float* flame,int compression_type,int FullHalf, bool DEBUG = false) {
+    float* density, float* temperature, float* flame,int compression_type,int FullHalf,float SparseCutoff, bool DEBUG = false) {
     filename = folder + filename + ".vdb";
 
     std::cout << "|| Saving OpenVDB: ";
@@ -484,7 +485,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
         //create_grid_mt(*grids_dst[i], grids_src[i], /*center=*/openvdb::Vec3f(0, 0, 0));
 #else
         //auto upgrid = create_grid_gpu(grids_dst[i], grids_src[i], &domain_resolution, /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
-        create_grid_gpu(*grids_dst[i], grids_src[i], &domain_resolution, /*center=*/openvdb::Vec3f(0, 0, 0), i, DEBUG);
+        create_grid_gpu(*grids_dst[i], grids_src[i], &domain_resolution, /*center=*/openvdb::Vec3f(0, 0, 0), i, SparseCutoff, DEBUG);
 
 
 #endif

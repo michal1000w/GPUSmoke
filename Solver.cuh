@@ -122,6 +122,7 @@ public:
     bool wait = false;
     bool MultithreadedExport = true;
     bool SparseExport = true;
+    float SparseCutoff = 0.025;
 
     int CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION;
     int FullHalf = 1;
@@ -831,7 +832,7 @@ public:
             if (this->MultithreadedExport) {
                 export_openvdb_experimental(FOLDER, "frame." + std::to_string(frame), this->DOMAIN_RESOLUTION,
                     state->density->readTargett(device), state->temperature->readTargett(device), state->flame->readTargett(device),
-                    CURRENT_COMPRESSION_TYPE ,FullHalf,/*DEBUG*/ false);
+                    CURRENT_COMPRESSION_TYPE ,FullHalf,SparseCutoff,/*DEBUG*/ false);
             }
             else {
                 //std::cout << "C:";

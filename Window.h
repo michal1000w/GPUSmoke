@@ -959,6 +959,11 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::InputText("Cache Folder", solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
 		ImGui::Checkbox("Multithreaded export", &solver.MultithreadedExport);
 		if (solver.MultithreadedExport) {
+			ImGui::Text("(0 means the best quality)");
+			ImGui::SliderFloat("Sparse Cutoff", &solver.SparseCutoff, 0, 0.25);
+
+
+
 			const char* compressions[] = { "None","BLOSC", "Selective" };
 			static const char* curr_compression = "BLOSC";
 
