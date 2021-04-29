@@ -524,7 +524,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
     //kolejnoœæ
     openvdb::io::File file(filename);
     //file.setInstancingEnabled(true);
-    file.setCompression( openvdb::io::COMPRESS_ACTIVE_MASK | compression_type 
+    file.setCompression( compression_type == 0 ? 0 : openvdb::io::COMPRESS_ACTIVE_MASK | compression_type 
                         //openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION  // 100kl/142MB
                        //|openvdb::OPENVDB_FILE_VERSION_NODE_MASK_COMPRESSION // 100kl/142MB
                        //|openvdb::OPENVDB_FILE_VERSION_SELECTIVE_COMPRESSION //100kl/163MB
