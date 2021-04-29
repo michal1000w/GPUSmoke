@@ -436,7 +436,7 @@ openvdb::FloatGrid::Ptr create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float
 
 
 int export_openvdb_experimental(std::string folder, std::string filename, int3 domain_resolution,
-    float* density, float* temperature, float* flame, bool DEBUG = false) {
+    float* density, float* temperature, float* flame,int compression_type, bool DEBUG = false) {
     filename = folder + filename + ".vdb";
 
     std::cout << "|| Saving OpenVDB: ";
@@ -521,8 +521,11 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
 
     //kolejnoœæ
     openvdb::io::File file(filename);
-    file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION //     9.6 ->  600
-                        //openvdb::OPENVDB_FILE_VERSION_BOOL_LEAF_OPTIMIZATION //9 -> 1400
+    file.setCompression(compression_type 
+                        //openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION  // 100kl/142MB
+                       //|openvdb::OPENVDB_FILE_VERSION_NODE_MASK_COMPRESSION // 100kl/142MB
+                       //|openvdb::OPENVDB_FILE_VERSION_SELECTIVE_COMPRESSION //100kl/163MB
+                       //| openvdb::OPENVDB_FILE_VERSION_INTERNALNODE_COMPRESSION //100/142MB
     );
     file.write({ grid_density, grid_temperature, grid_flame });
     file.close();

@@ -37,7 +37,6 @@ extern Solver solver;
 
 
 
-
 void AddObject2(int,int,int ps = 0);
 
 
@@ -959,6 +958,35 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
 		ImGui::InputText("Cache Folder", solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
 		ImGui::Checkbox("Multithreaded export", &solver.MultithreadedExport);
+		if (solver.MultithreadedExport) {
+			const char* compressions[] = { "None","BLOSC", "Selective" };
+			static const char* curr_compression = "BLOSC";
+
+			if (ImGui::BeginCombo("##combocp", curr_compression)) // The second parameter is the label previewed before opening the combo.
+			{
+				for (int n = 0; n < IM_ARRAYSIZE(compressions); n++)
+				{
+					bool is_selectedcp = (curr_compression == compressions[n]); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(compressions[n], is_selectedcp)) {
+						curr_compression = compressions[n];
+						std::string the_chosen_one = curr_compression;
+						if (the_chosen_one == "None") {
+							solver.CURRENT_COMPRESSION_TYPE = 0;
+						}
+						else if (the_chosen_one == "BLOSC") {
+							solver.CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION;
+						}
+						else if (the_chosen_one == "Selective") {
+							solver.CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_SELECTIVE_COMPRESSION;
+						}
+					}
+					if (is_selectedcp)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
+			
+		}
 		if (!solver.MultithreadedExport) {
 			ImGui::Checkbox("Sparse export", &solver.SparseExport);
 		}
