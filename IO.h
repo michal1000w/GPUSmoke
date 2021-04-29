@@ -412,6 +412,7 @@ void create_grid_gpu(openvdb::FloatGrid::Ptr& grid_dst, float* grid_src,int3* gr
     openvdb::math::Coord dim2(grid_info->z, grid_info->y, grid_info->x);
     openvdb::tools::Dense<float> dense(dim2);
 
+
     float* data = dense.data();
 
     //copying
@@ -523,7 +524,7 @@ int export_openvdb_experimental(std::string folder, std::string filename, int3 d
     //kolejnoœæ
     openvdb::io::File file(filename);
     //file.setInstancingEnabled(true);
-    file.setCompression(compression_type 
+    file.setCompression( openvdb::io::COMPRESS_ACTIVE_MASK | compression_type 
                         //openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION  // 100kl/142MB
                        //|openvdb::OPENVDB_FILE_VERSION_NODE_MASK_COMPRESSION // 100kl/142MB
                        //|openvdb::OPENVDB_FILE_VERSION_SELECTIVE_COMPRESSION //100kl/163MB
@@ -750,7 +751,7 @@ int export_openvdb_single(std::string folder,std::string filename, int3 domain_r
 
     //kolejnoœæ
     openvdb::io::File file(filename);
-    file.setCompression(openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION //     9.6 ->  600
+    file.setCompression(openvdb::io::COMPRESS_ACTIVE_MASK | openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION //     9.6 ->  600
                         //openvdb::OPENVDB_FILE_VERSION_BOOL_LEAF_OPTIMIZATION //9 -> 1400
                         );
     file.write({ grid, grid_temp2, grid_temp3 });
