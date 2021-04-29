@@ -985,6 +985,36 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				}
 				ImGui::EndCombo();
 			}
+
+
+
+
+
+
+
+			const char* typee[] = { "Full","Half" };
+			static const char* curr_typee = "Half";
+
+			if (ImGui::BeginCombo("##comboct", curr_typee)) // The second parameter is the label previewed before opening the combo.
+			{
+				for (int n = 0; n < IM_ARRAYSIZE(typee); n++)
+				{
+					bool is_selectedtp = (curr_typee == typee[n]); // You can store your selection however you want, outside or inside your objects
+					if (ImGui::Selectable(typee[n], is_selectedtp)) {
+						curr_typee = typee[n];
+						std::string the_chosen_one2 = curr_typee;
+						if (the_chosen_one2 == "Full") {
+							solver.FullHalf = 0;
+						}
+						else if (the_chosen_one2 == "Half") {
+							solver.FullHalf = 1;
+						}
+					}
+					if (is_selectedtp)
+						ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+				}
+				ImGui::EndCombo();
+			}
 			
 		}
 		if (!solver.MultithreadedExport) {
