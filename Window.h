@@ -1144,8 +1144,16 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			else
 				ImGui::SliderFloat("Shadow Quality", &solver.shadow_quality, 0.1, 2);
 			ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
+			if (!solver.legacy_renderer) {
+				ImGui::SliderInt("Render samples", &solver.RENDER_SAMPLES, 2, 128);
+			}
 		}
-		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 2048);
+		if (solver.legacy_renderer) {
+			ImGui::SliderInt("Render steps", &solver.STEPS, 128, 2048);
+		}
+		else {
+			ImGui::SliderInt("Render steps", &solver.STEPS, 16, 512);
+		}
 		
 	}
 	ImGui::End();

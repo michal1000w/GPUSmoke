@@ -10,7 +10,8 @@
 
 #include "Fluid_State.cuh"
 //#include "Fluid_State_Huge.cuh"
-
+#include <curand.h>
+#include <curand_kernel.h>
 
 
 //block size jak najmniejszy

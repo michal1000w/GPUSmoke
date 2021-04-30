@@ -123,6 +123,7 @@ public:
     bool MultithreadedExport = true;
     bool SparseExport = true;
     float SparseCutoff = 0.025;
+    int RENDER_SAMPLES = 8;
 
     int CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION;
     int FullHalf = 1;
@@ -798,25 +799,28 @@ public:
 
 
         if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
-            render_fluid(
-                img, img_d,
-                state->density->readTargett(device),
-                state->flame->readTargett(device),
-                state->collision->readTargett(device),
-                vol_d, render_step_size, Light, Camera, rotation,
-                STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
-                legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
-                render_collision_objects);
-            /*
-            PrepareRender(img, img_d);
-                */
-            /*
-            if (!this->writing) {
-                this->writing = true;
-                generateBitmapImage(img, img_d.y, img_d.x, std::string("./output/temp.bmp").c_str());
-                this->writing = false;
+            if (this->legacy_renderer) {
+                render_fluid(
+                    img, img_d,
+                    state->density->readTargett(device),
+                    state->flame->readTargett(device),
+                    state->collision->readTargett(device),
+                    vol_d, render_step_size, Light, Camera, rotation,
+                    STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
+                    legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
+                    render_collision_objects);
             }
-            */
+            else {
+                render_fluid_new(
+                    img, img_d,
+                    state->density->readTargett(device),
+                    state->flame->readTargett(device),
+                    state->collision->readTargett(device),
+                    vol_d, render_step_size, Light, Camera, rotation,
+                    STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
+                    legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
+                    render_collision_objects, RENDER_SAMPLES);
+            }
         }
     }
 
