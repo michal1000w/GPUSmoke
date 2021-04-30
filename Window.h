@@ -68,6 +68,7 @@ bool AddObjectSystem = false;
 char temp_object_path[512] = { "./input/obj/suzanne/" };
 char temp_particle_path[512] = { "./input/exp2/" };
 static int selectedEntry = -1;
+bool sync_frames = true;
 MySequence Timeline;
 
 
@@ -956,6 +957,27 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::Text("Exporting settings");
 		ImGui::InputInt("Start frame", &solver.EXPORT_START_FRAME);
 		ImGui::InputInt("End frame", &solver.EXPORT_END_FRAME);
+
+		solver.EXPORT_START_FRAME = max(solver.EXPORT_START_FRAME, 0);
+		solver.EXPORT_END_FRAME = max(solver.EXPORT_END_FRAME, 1);
+
+		ImGui::Checkbox("Sync with Timeline", &sync_frames);
+
+		if (sync_frames) {
+			solver.START_FRAME = solver.EXPORT_START_FRAME;
+			solver.END_FRAME = solver.EXPORT_END_FRAME;
+		}
+		else {
+			//synchronization
+			if (solver.EXPORT_END_FRAME > solver.END_FRAME) {
+				solver.END_FRAME = solver.EXPORT_END_FRAME;
+			}
+			if (solver.EXPORT_START_FRAME < solver.START_FRAME) {
+				solver.START_FRAME = solver.EXPORT_START_FRAME;
+			}
+		}
+
+
 		ImGui::InputText("Cache Folder", solver.EXPORT_FOLDER, IM_ARRAYSIZE(solver.EXPORT_FOLDER));
 		ImGui::Checkbox("Multithreaded export", &solver.MultithreadedExport);
 		if (solver.MultithreadedExport) {
@@ -1424,7 +1446,12 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		
 		
 		if (solver.START_FRAME < 0) solver.START_FRAME = 0;
-		if (solver.END_FRAME < 0) solver.END_FRAME = 0;
+		if (solver.END_FRAME < 1) solver.END_FRAME = 1;
+
+		if (sync_frames) {
+			solver.EXPORT_START_FRAME = solver.START_FRAME;
+			solver.EXPORT_END_FRAME = solver.END_FRAME;
+		}
 
 		//Timeline.mFrameMin = solver.START_FRAME;
 		//Timeline.mFrameMax = solver.END_FRAME;
