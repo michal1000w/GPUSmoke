@@ -132,6 +132,7 @@ public:
     bool UpsamplingTemperature = false;
     int frame;
     bool LOCK = false;
+    bool RENDER = true;
 
     fluid_state* state;
 
@@ -886,9 +887,11 @@ public:
             Save(frame, device_id);
         }));
         */
-        writing = true;
-        Render(frame, 0);
-        writing = false;
+        if (RENDER) {
+            writing = true;
+            Render(frame, 0);
+            writing = false;
+        }
 
         if (SIMULATE)
             Save(frame, 0);

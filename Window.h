@@ -328,7 +328,6 @@ void AddObject2(int type, int j, int particle_system) {
 		Timeline.rampEdit.push_back(RampEdit(solver.object_list[j].frame_range_min, solver.object_list[j].frame_range_max,
 			(float)solver.getDomainResolution().x / 2.f, 5.f, (float)solver.getDomainResolution().z / 2.f, 2));
 	}
-
 	UpdateTimelinePartially();
 }
 
@@ -1244,7 +1243,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::InputText("filepath", temp_particle_path, IM_ARRAYSIZE(temp_particle_path));
 			if (std::experimental::filesystem::is_directory(temp_particle_path)) {
 				if (ImGui::Button("Confirm2")) {
+					bool simtemp = solver.SIMULATE;
 					solver.SIMULATE = false;
+					solver.RENDER = false;
 					OBJECT prt("particle", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_particle_path;
 					prt.LoadParticles();
@@ -1255,7 +1256,8 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 							AddObject2(PARTICLE, j, 1);
 						}
 					}
-					solver.SIMULATE = true;
+					solver.SIMULATE = simtemp;
+					solver.RENDER = true;
 					AddParticleSystem = false;
 				}
 			}
@@ -1264,7 +1266,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::InputText("filepath2", temp_object_path, IM_ARRAYSIZE(temp_object_path));
 			if (std::experimental::filesystem::is_directory(temp_object_path)) {
 				if (ImGui::Button("Confirm22")) {
+					bool simtemp = solver.SIMULATE;
 					solver.SIMULATE = false;
+					solver.RENDER = false;
 					OBJECT prt("object", 1.0f, make_float3(0, 0, 0), 5.0, 0.8, solver.object_list.size(), solver.devicesCount);
 					prt.particle_filepath = temp_object_path;
 					prt.LoadObjects(solver.getDomainResolution(),solver.devicesCount,solver.deviceIndex);
@@ -1273,7 +1277,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 							int j = solver.object_list.size() - 1;
 							AddObject2(VDBOBJECT, j, 1);
 					}
-					solver.SIMULATE = true;
+					solver.SIMULATE = simtemp;
+					solver.RENDER = true;
+					AddParticleSystem = false;
 					AddObjectSystem = false;
 				}
 			}
