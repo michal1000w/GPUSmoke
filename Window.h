@@ -1105,9 +1105,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		}
 		
 		ImGui::SliderInt("Simulation accuracy", &solver.ACCURACY_STEPS, 1, 150);
-		if (ImGui::Button("Simulate")) {
-			solver.SIMULATE = !solver.SIMULATE;
-		}
+		
 		ImGui::SliderFloat("Simulation speed", &solver.speed, 0.1f, 1.5f);
 
 
@@ -1149,13 +1147,7 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
 		}
 		ImGui::SliderInt("Render samples", &solver.STEPS, 128, 2048);
-		if (ImGui::Button("Reset")) {
-			UpdateSolver();
-		}
-		ImGui::SameLine();
-		ImGui::Text(("FPS: " + std::to_string(fps)).c_str());
-		//ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
-		ImGui::Text(("Frame: " + std::to_string(solver.frame)).c_str());
+		
 	}
 	ImGui::End();
 	/////////////////////////////
@@ -1452,6 +1444,22 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			solver.EXPORT_START_FRAME = solver.START_FRAME;
 			solver.EXPORT_END_FRAME = solver.END_FRAME;
 		}
+
+		//ImGui::SameLine();
+		ImGui::Text("Frame: %d",solver.frame);
+
+		if (ImGui::Button("Reset")) {
+			UpdateSolver();
+		}
+		ImGui::SameLine();
+		ImGui::Text("FPS: %f",fps);
+		//ImGui::Checkbox("Preserve object list", &solver.preserve_object_list);
+		if (ImGui::Button(solver.SIMULATE?"Pause":"Simulate")) {
+			solver.SIMULATE = !solver.SIMULATE;
+		}
+
+
+
 
 		//Timeline.mFrameMin = solver.START_FRAME;
 		//Timeline.mFrameMax = solver.END_FRAME;
