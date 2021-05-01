@@ -640,16 +640,18 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			ImGui::SetWindowFontScale(InterfaceScale);
 
 			ImGui::Text("Useful shortcuts:");
-
-			ImGui::Text("W/A/S/D - Camera movement");
-			ImGui::Text("Q/Z - Camera up/down");
-			ImGui::Text("Left mouse + A/D - Camera rotation");
-			ImGui::Text("R - reset simulation");
-			ImGui::Text("F - stop exporting");
-			ImGui::Text("LM double click on curve - new point");
-			ImGui::Text("LCtrl+Scroll on animation panel\n - zoom in/out");
-			ImGui::Text("Space - pause simulation");
-			ImGui::Text("LCtrl+LM on slider - writing mode");
+			if (ImGui::CollapsingHeader("Shortcuts", 0, true))
+			{
+				ImGui::Text("W/A/S/D - Camera movement");
+				ImGui::Text("Q/Z - Camera up/down");
+				ImGui::Text("Left mouse + A/D - Camera rotation");
+				ImGui::Text("R - reset simulation");
+				ImGui::Text("F - stop exporting");
+				ImGui::Text("LM double click on curve - new point");
+				ImGui::Text("LCtrl+Scroll on animation panel\n - zoom in/out");
+				ImGui::Text("Space - pause simulation");
+				ImGui::Text("LCtrl+LM on slider - writing mode");
+			}
 
 			ImGui::BeginChild("##Misc settings", ImVec2(0, 0), true);
 			{
@@ -1164,12 +1166,12 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 				ImGui::SliderFloat("Transparency Compensation", &solver.transparency_compensation, 0.01, 1);
 			else
 				ImGui::SliderFloat("Shadow Quality", &solver.shadow_quality, 0.1, 2);
-			ImGui::Checkbox("Legacy render", &solver.legacy_renderer);
-			if (!solver.legacy_renderer) {
+			ImGui::Checkbox("Path Traced render", &solver.legacy_renderer);
+			if (solver.legacy_renderer) {
 				ImGui::SliderInt("Render samples", &solver.RENDER_SAMPLES, 2, 128);
 			}
 		}
-		if (solver.legacy_renderer) {
+		if (!solver.legacy_renderer) {
 			ImGui::SliderInt("Render steps", &solver.STEPS, 128, 2048);
 		}
 		else {

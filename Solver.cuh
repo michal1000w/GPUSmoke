@@ -802,7 +802,7 @@ public:
 
 
         if (!(EXPORT_VDB && frame >= EXPORT_START_FRAME)) { //RenderFrame
-            if (this->legacy_renderer) {
+            if (!this->legacy_renderer) {
                 render_fluid(
                     img, img_d,
                     state->density->readTargett(device),
