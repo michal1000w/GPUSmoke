@@ -1170,6 +1170,9 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 			if (solver.legacy_renderer) {
 				ImGui::SliderInt("Render samples", &solver.RENDER_SAMPLES, 2, 128);
 			}
+			ImGui::Checkbox("Domain bounding box", &solver.BBOX);
+			if (solver.BBOX)
+				ImGui::SliderInt("Bbox line thickness", &solver.BBOX_THICKNESS, 2, 128);
 		}
 		if (!solver.legacy_renderer) {
 			ImGui::SliderInt("Render steps", &solver.STEPS, 128, 2048);

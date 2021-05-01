@@ -21,7 +21,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
     float3 light_dir, float3 cam_pos, float rotation, int steps,
     float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool render_shadows = true, float transparency_compensation = 1.0f, float shadow_quality = 1.0f,
-    bool render_collision = true)
+    bool render_collision = true, bool BBOX = false, int thickness = 6)
 {
     step_size *= 512.0 / float(steps); //beta
 
@@ -80,6 +80,17 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
             float coll = get_cellF2(ray_pos, vd, collision); //dla obiektów
             ray_pos += ray_dir * empty_step_size * 3.0f;
+
+            //some bbox vector math
+            if (BBOX && (ray_pos.x >= 0 && ray_pos.x <= vd.x && ray_pos.y >= 0 && ray_pos.y <= vd.y && ray_pos.z >= 0 && ray_pos.z <= vd.z) &&
+                ((((ray_pos.x <= thickness || ray_pos.y <= thickness) || (ray_pos.x >= vd.x - thickness || ray_pos.y >= vd.y - thickness)) && (ray_pos.z <= thickness || ray_pos.z >= vd.z - thickness)) ||
+                    ((ray_pos.y <= thickness || ray_pos.y >= vd.y - thickness) && ((ray_pos.x <= thickness || ray_pos.z <= thickness) || (ray_pos.x >= vd.x - thickness || ray_pos.z >= vd.z - thickness))
+                        && (ray_pos.x <= thickness || ray_pos.x >= vd.x - thickness))
+                    )
+                )
+                goto BBOX;
+
+
             // Don't bother with occlusion ray if theres nothing there
             if (c_density >= occ_thresh || temp >= occ_thresh || coll >= occ_thresh) break;
             step++;
@@ -99,6 +110,7 @@ __global__ void render_pixel(uint8_t* image, float* volume,
             float c_density = get_cellF2(ray_pos, vd, volume) * density_influence;
             float temp = get_cellF2(ray_pos, vd, temper); //dla ognia
             float coll = get_cellF2(ray_pos, vd, collision); //dla obiektów
+
             if (c_density > 1.0) c_density = MAX_DENSITY; //bo �le si� renderuje beta
             float3 occ_pos = ray_pos;
             ray_pos += ray_dir * step_size;
@@ -182,6 +194,13 @@ NOTHING:
     image[pixel + 1] = (uint8_t)(0);
     image[pixel + 2] = (uint8_t)(0);
     return;
+
+BBOX:
+    const int pixel2 = 3 * (y * img_dims.x + x);
+    image[pixel2 + 0] = (uint8_t)(255);
+    image[pixel2 + 1] = (uint8_t)(255);
+    image[pixel2 + 2] = (uint8_t)(255);
+    return;
 }
 
 
@@ -190,7 +209,7 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
     float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f, 
     bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool legacy_renderer = false, bool render_shadows = true, float transparency_compensation = 1.0f,
-    float shadow_quality = 1.0f, bool render_collision = true) {
+    float shadow_quality = 1.0f, bool render_collision = true, bool BBOX = false, int thickness = 6) {
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -224,7 +243,7 @@ void render_fluid(uint8_t* render_target, int3 img_dims,
             device_img, d_volume, temper, coll, img_dims, vol_dims,
             step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
             density_influence, fire_multiply, render_shadows, transparency_compensation,
-            shadow_quality, render_collision);
+            shadow_quality, render_collision, BBOX, thickness);
 
 
     // Read image back
@@ -303,13 +322,17 @@ __global__ void render_pixel_new(curandState* globalState, uint8_t* image, float
     float3 light_dir, float3 cam_pos, float rotation, int steps,
     float Fire_Max_temp = 5.0f, bool Smoke_And_Fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool render_shadows = true, float transparency_compensation = 1.0f, float shadow_quality = 1.0f,
-    bool render_collision = true, float random_noise = 0)
+    bool render_collision = true, float random_noise = 0, int BBOX_THICKNESS = 6, bool BBOX = false)
 {
     step_size *= 512.0 / float(steps); //beta
 
     const int x = blockDim.x * blockIdx.x + threadIdx.x;
     const int y = blockDim.y * blockIdx.y + threadIdx.y;
     if (x >= img_dims.x || y >= img_dims.y) return;
+
+
+    int thickness = BBOX_THICKNESS;
+
 
 
 
@@ -381,6 +404,16 @@ __global__ void render_pixel_new(curandState* globalState, uint8_t* image, float
             float coll = get_cellF2(ray_pos, vd, collision); //dla obiektów
             ray_pos += ray_dir * empty_step_size * 3.0f;
             // Don't bother with occlusion ray if theres nothing there
+
+            //some bbox vector math
+            if (BBOX &&(ray_pos.x >= 0 && ray_pos.x <= vd.x && ray_pos.y >= 0 && ray_pos.y <= vd.y && ray_pos.z >= 0 && ray_pos.z <= vd.z)&&
+                ((((ray_pos.x <= thickness || ray_pos.y <= thickness) || (ray_pos.x >= vd.x - thickness || ray_pos.y >= vd.y - thickness)) && (ray_pos.z <= thickness || ray_pos.z >= vd.z - thickness)) ||
+                ((ray_pos.y <= thickness || ray_pos.y >= vd.y - thickness) && ((ray_pos.x <= thickness || ray_pos.z <= thickness) || (ray_pos.x >= vd.x - thickness || ray_pos.z >= vd.z - thickness))
+                    && (ray_pos.x <= thickness || ray_pos.x >= vd.x - thickness))
+                    )
+                )
+                goto BBOX;
+
             if (c_density >= occ_thresh || temp >= occ_thresh || coll >= occ_thresh) break;
             step++;
             if (step == empty_steps) goto NOTHING;
@@ -482,6 +515,12 @@ NOTHING:
     image[pixel + 1] = (uint8_t)(0);
     image[pixel + 2] = (uint8_t)(0);
     return;
+BBOX:
+    const int pixel2 = 3 * (y * img_dims.x + x);
+    image[pixel2 + 0] = (uint8_t)(255);
+    image[pixel2 + 1] = (uint8_t)(255);
+    image[pixel2 + 2] = (uint8_t)(255);
+    return;
 }
 
 
@@ -515,7 +554,7 @@ void render_fluid_new(uint8_t* render_target, int3 img_dims,
     float step_size, float3 light_dir, float3 cam_pos, float rotation, int STEPS, float Fire_Max_Temp = 5.0f,
     bool Smoke_and_fire = false, float density_influence = 0.2, float fire_multiply = 0.5f,
     bool legacy_renderer = false, bool render_shadows = true, float transparency_compensation = 1.0f,
-    float shadow_quality = 1.0f, bool render_collision = true, int RenderSamples = 8) {
+    float shadow_quality = 1.0f, bool render_collision = true, int RenderSamples = 8, int BBOX_THICKNESS = 6, bool BBOX = false) {
 
     float measured_time = 0.0f;
     cudaEvent_t start, stop;
@@ -562,14 +601,14 @@ void render_fluid_new(uint8_t* render_target, int3 img_dims,
         device_img, d_volume, temper, coll, img_dims, vol_dims,
         step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
         density_influence, fire_multiply, render_shadows, transparency_compensation,
-        shadow_quality, render_collision);
+        shadow_quality, render_collision,0, BBOX_THICKNESS, BBOX);
 
     for (int sample = 0; sample < RenderSamples-1; sample++) {
         render_pixel_new << <grid, block >> > ( devStates,
             device_img_temp, d_volume, temper, coll, img_dims, vol_dims,
             step_size, light_dir, cam_pos, rotation, STEPS, Fire_Max_Temp, Smoke_and_fire,
             density_influence, fire_multiply, render_shadows, transparency_compensation,
-            shadow_quality, render_collision);
+            shadow_quality, render_collision,0, BBOX_THICKNESS, BBOX);
 
         average << < grid, block >> > (device_img, device_img_temp, img_dims);
 

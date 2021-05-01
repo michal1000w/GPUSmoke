@@ -127,6 +127,8 @@ public:
     bool SparseExport = true;
     float SparseCutoff = 0.025;
     int RENDER_SAMPLES = 8;
+    int BBOX_THICKNESS = 6;
+    bool BBOX = false;
 
     int CURRENT_COMPRESSION_TYPE = openvdb::OPENVDB_FILE_VERSION_BLOSC_COMPRESSION;
     int FullHalf = 1;
@@ -811,7 +813,7 @@ public:
                     vol_d, render_step_size, Light, Camera, rotation,
                     STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
                     legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
-                    render_collision_objects);
+                    render_collision_objects, BBOX, BBOX_THICKNESS);
             }
             else {
                 render_fluid_new(
@@ -822,7 +824,7 @@ public:
                     vol_d, render_step_size, Light, Camera, rotation,
                     STEPS, Fire_Max_Temperature, Smoke_And_Fire, density_influence, fire_multiply,
                     legacy_renderer, render_shadows, transparency_compensation, shadow_quality,
-                    render_collision_objects, RENDER_SAMPLES);
+                    render_collision_objects, RENDER_SAMPLES, BBOX_THICKNESS, BBOX);
             }
         }
     }
