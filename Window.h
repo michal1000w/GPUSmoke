@@ -30,6 +30,7 @@ extern Solver solver;
 
 //LEGACY BUILD SETTINGS/////////////////////
 //#define WINDOWS7_BUILD
+//#define CUDA102
 
 
 
@@ -1070,22 +1071,42 @@ void RenderGUI(float DPI, bool& SAVE_FILE_TAB, bool& OPEN_FILE_TAB, float& fps,
 		ImGui::SetWindowFontScale(InterfaceScale);
 		ImGui::Text("Domain Resolution");
 
+		float ratiox = float(MAX_BOK * MAX_BOK) / float(solver.New_DOMAIN_RESOLUTION.y * solver.New_DOMAIN_RESOLUTION.z);
+		float ratioy = float(MAX_BOK * MAX_BOK) / float(solver.New_DOMAIN_RESOLUTION.x * solver.New_DOMAIN_RESOLUTION.z);
+		float ratioz = float(MAX_BOK * MAX_BOK) / float(solver.New_DOMAIN_RESOLUTION.x * solver.New_DOMAIN_RESOLUTION.y);
+		/*
+		float ratiox = float(MAX_BOK * 2.0f) / float(solver.New_DOMAIN_RESOLUTION.y + solver.New_DOMAIN_RESOLUTION.z);
+		float ratioy = float(MAX_BOK * 2.0f) / float(solver.New_DOMAIN_RESOLUTION.x + solver.New_DOMAIN_RESOLUTION.z);
+		float ratioz = float(MAX_BOK * 2.0f) / float(solver.New_DOMAIN_RESOLUTION.x + solver.New_DOMAIN_RESOLUTION.y);
+		*/
 
+		int maxx = round(MAX_BOK * ratiox);
+		int maxy = round(MAX_BOK * ratioy);
+		int maxz = round(MAX_BOK * ratioz);
+		
 
+		bool change = false;
 
-		int maxx = round(MAX_BOK * ratioo);
-		int maxy = round(MAX_BOK * ratioo);
-		int maxz = round(MAX_BOK * ratioo);
 
 		ImGui::SliderInt("x", &solver.New_DOMAIN_RESOLUTION.x, 2, maxx);
+		if (ImGui::IsItemActive()) {
+		}
 		ImGui::SliderInt("y", &solver.New_DOMAIN_RESOLUTION.y, 2, maxy);
 		ImGui::SliderInt("z", &solver.New_DOMAIN_RESOLUTION.z, 2, maxz);
+
+
 
 		solver.New_DOMAIN_RESOLUTION.x = min(solver.New_DOMAIN_RESOLUTION.x, maxx);
 		solver.New_DOMAIN_RESOLUTION.y = min(solver.New_DOMAIN_RESOLUTION.y, maxy);
 		solver.New_DOMAIN_RESOLUTION.z = min(solver.New_DOMAIN_RESOLUTION.z, maxz);
 
-		ratioo = (MAX_BOK * 3.f) / float(solver.New_DOMAIN_RESOLUTION.x + solver.New_DOMAIN_RESOLUTION.y + solver.New_DOMAIN_RESOLUTION.z);
+		//ratioo = float(MAX_VOXEL_COUNT) / float(solver.New_DOMAIN_RESOLUTION.x * solver.New_DOMAIN_RESOLUTION.y * solver.New_DOMAIN_RESOLUTION.z);
+
+		
+
+
+
+
 
 
 
@@ -1652,6 +1673,16 @@ int Window(float* Img_res, float dpi) {
 #ifndef WINDOWS7_BUILD
 	SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE); //skalowanie globalne //bez _V2 chyba lepsze
 #endif // WINDOWS7_BUILD
+
+
+	cudaDeviceProp deviceProperties;
+	cudaGetDeviceProperties(&deviceProperties, solver.deviceIndex);
+	MAX_BOK = std::cbrt(((deviceProperties.totalGlobalMem/sizeof(float))/12/*attributes count*/) / 2/*double buffer*/);
+	MAX_VOXEL_COUNT = MAX_BOK * MAX_BOK * MAX_BOK;
+
+	std::cout << "Maximum side: " << MAX_BOK << std::endl;
+
+
 	
 	InterfaceScale = dpi;
 

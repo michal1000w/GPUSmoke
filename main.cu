@@ -13,6 +13,7 @@ extern Solver solver;
 
 /////////////////////////////////
 //section experimental
+#ifndef CUDA102
 void EnableP2Psharing(unsigned int devices_count = 1) {
     std::cout << "Enabling P2P sharing..." << std::endl;
     for (unsigned int i = 0; i < devices_count; i++) {
@@ -27,7 +28,7 @@ void EnableP2Psharing(unsigned int devices_count = 1) {
         }
     }
 }
-
+#endif
 /////////////////////////////////
 
 #include "wtypes.h"
@@ -78,6 +79,7 @@ int main(int argc, char* argv[]) {
     cudaSetDevice(Best_Device_Index);
     std::cout << "Choosing device: " << Best_Device_Index << std::endl;
 
+#ifndef CUDA102
 #ifndef WINDOWS7_BUILD
     if (false) {
         cudaDeviceProp deviceProperties;
@@ -88,6 +90,7 @@ int main(int argc, char* argv[]) {
 #endif // !WINDOWS7_BUILD
 
     EnableP2Psharing(devicesCount);
+#endif
     cudaSetDevice(Best_Device_Index);
 
 #ifdef EXPERIMENTAL

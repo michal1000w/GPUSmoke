@@ -8,9 +8,12 @@
 #define OBJECTS_EXPERIMENTAL
 #define CPU_WAVELET false
 
-#define MAX_BOK 490.0f
-#define MAX_VOXEL_COUNT MAX_BOK*MAX_BOK*MAX_BOK*2.0
+//#define MAX_BOK 490.0f
+//#define MAX_VOXEL_COUNT MAX_BOK*MAX_BOK*MAX_BOK*2.0
 float ratioo = 1.0f;
+
+int MAX_BOK = 490;
+long long MAX_VOXEL_COUNT = MAX_BOK * MAX_BOK * MAX_BOK * 2;
 
 
 __global__ void uint_to_float(float* dst, unsigned int* src, int n)
