@@ -2,6 +2,9 @@
 
 Interactive speed GPU rendering of smoke
 
+## CUDA Only
+This program requires a CUDA compatible GPU. AMD GPUs are not supported.
+
 ## Introduction
 
 To create nice looking smoke is an expensive operation. 
